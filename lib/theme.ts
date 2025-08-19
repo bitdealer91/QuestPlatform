@@ -1,0 +1,15 @@
+export const palette = {
+	bg: "var(--bg)",
+	bgAlt: "var(--bg-alt)",
+	card: "var(--card)",
+	primary: "var(--primary)",
+	accent: "var(--accent)",
+	ok: "var(--ok)",
+	warn: "var(--warn)",
+	danger: "var(--danger)",
+	text: "var(--text)",
+	muted: "var(--muted)",
+	ring: "var(--ring)",
+	outline: "var(--outline)",
+	shadow: "var(--shadow)",
+};

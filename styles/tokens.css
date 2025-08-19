@@ -1,0 +1,13 @@
+:root{
+	--bg:#0b0a14; --bg-alt:#120f22;
+	--card:rgba(25,21,44,.72); --card-elev:rgba(30,26,52,.85);
+	--primary:#b26cff; --accent:#45d6ff; --ok:#59f3c1; --warn:#ffd166; --danger:#ff6b6b;
+	--text:#eef1ff; --muted:#a7a9c8;
+	--outline:rgba(255,255,255,.08); --ring:rgba(182,112,255,.55);
+	--shadow:0 16px 40px rgba(0,0,0,.45), 0 0 0 1px var(--outline);
+	--radius:18px; --radius-lg:22px; --radius-xl:28px;
+}
+
+@media (prefers-color-scheme: dark){
+	:root{ color-scheme: dark; }
+}

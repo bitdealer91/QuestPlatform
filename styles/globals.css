@@ -1,0 +1,42 @@
+@import "./tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #__next { height: 100%; }
+
+body{
+	background-color: var(--bg);
+	color: var(--text);
+}
+
+.bg-galaxy{
+	background-image: url('/assets/background.png');
+	background-size: cover;
+	background-position: center;
+}
+
+.focus-ring:focus{ outline: 2px solid var(--ring); outline-offset: 2px; }
+
+@keyframes pop{
+	0%{ transform: scale(.8); opacity:.6 }
+	60%{ transform: scale(1.15); opacity:1 }
+	100%{ transform: scale(1); }
+}
+
+.animate-pop{ animation: pop .28s ease-out; }
+
+@keyframes bob{
+	0%,100%{ transform: translateY(0) }
+	50%{ transform: translateY(-6%) }
+}
+
+@keyframes loadingWidth{
+	0%{ width:0% }
+	100%{ width:100% }
+}
+
+.animate-loading{
+	animation: loadingWidth 1.4s ease-in-out infinite;
+}
