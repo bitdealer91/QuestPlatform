@@ -8,6 +8,7 @@ import Badge from '@/components/ui/Badge';
 import { toast } from '@/components/ui/Toast';
 import TaskDetail from '@/components/Galaxy/TaskDetail';
 import { useAccount } from 'wagmi';
+import { addVerifiedTask, getUserStats } from '@/lib/progress';
 
 export default function TaskDrawer({ weekId, onClose }: { weekId: number | null; onClose: () => void }){
 	const open = weekId != null;
@@ -19,6 +20,14 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
     const active = useMemo(() => tasks?.find(t => t.id === activeId) || tasks?.[0] || null, [tasks, activeId]);
     const { address } = useAccount();
     const [verifiedIds, setVerifiedIds] = useState<Set<string>>(new Set());
+    
+    // Функция для принудительного обновления GalaxyMap
+    const forceGalaxyUpdate = () => {
+        // Создаем событие для обновления GalaxyMap
+        window.dispatchEvent(new CustomEvent('galaxy:progress-updated', {
+            detail: { address, verifiedIds: Array.from(verifiedIds) }
+        }));
+    };
 
 	useEffect(() => {
 		setActiveId(null);
@@ -42,12 +51,30 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 	}, [open, weekId, address]);
 
 	const handleVerified = (taskId: string) => {
+		console.log('🎯 handleVerified called for task:', taskId);
+		console.log('🎯 Current address:', address);
+		console.log('🎯 Active task:', active);
+		
+		// Обновляем локальное состояние
 		setTasks(prev => prev?.map(t => t.id === taskId ? { ...t, status: 'done' as const } : t) || prev);
 		setVerifiedIds(prev => {
 			const next = new Set(prev); next.add(taskId);
 			if (address) localStorage.setItem(`somnia:verified:${address.toLowerCase()}`, JSON.stringify(Array.from(next)));
 			return next;
 		});
+		
+		// Обновляем глобальный прогресс
+		if (address && active) {
+			console.log('🎯 Updating global progress...');
+			const newProgress = addVerifiedTask(address, taskId, active);
+			console.log('🎯 New progress:', newProgress);
+			
+			// Принудительно обновляем GalaxyMap
+			forceGalaxyUpdate();
+		} else {
+			console.log('🎯 Cannot update progress: address or active task missing');
+		}
+		
 		toast.success('Verified ✅', 'Reward granted.');
 	};
 
@@ -57,7 +84,20 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 				<div className="flex h-full">
 					<aside className="w-[38%] shrink-0 border-r border-[color:var(--outline)] overflow-y-auto" role="listbox" aria-label="Task list">
 						<div className="p-3">
-							{loading && <div className="text-sm text-[color:var(--muted)]">Loading tasks…</div>}
+							{loading && (
+								<div className="space-y-3">
+									<div className="text-sm text-[color:var(--muted)] text-center">Loading tasks...</div>
+									{/* Skeleton loader */}
+									{[1, 2, 3].map(i => (
+										<div key={i} className="animate-pulse">
+											<div className="h-16 rounded-[var(--radius)] bg-white/5 border border-[color:var(--outline)] p-3">
+												<div className="h-4 bg-white/10 rounded w-3/4 mb-2"></div>
+												<div className="h-3 bg-white/10 rounded w-1/2"></div>
+											</div>
+										</div>
+									))}
+								</div>
+							)}
 							{error && <div className="text-sm text-[color:var(--danger)]">{error}</div>}
 							{!loading && !error && tasks?.map((t) => {
 								const isActive = active?.id === t.id;
@@ -91,6 +131,14 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 									href: active.href,
 									xp: active.reward.xp,
 									star: active.reward.star,
+									// Добавляем данные о брендинге
+									brand: active.brand,
+									logo: active.logo,
+									brand_color: active.brand_color,
+									logo_variant: active.logo_variant,
+									tags: active.tags,
+									// Добавляем категорию
+									category: active.category,
 								}}
 								walletAddress={address || undefined}
 								currentWeek={weekId || 0}

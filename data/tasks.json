@@ -1,0 +1,30 @@
+{
+  "programStart": "2024-01-01T00:00:00Z",
+  "weeks": 8,
+  "tasks": [
+    {
+      "week": 1,
+      "day": 1,
+      "id": "mint",
+      "title": "Mint MetaEggs: Dmitry NFT",
+      "description": "Mint an NFT from the MetaEggs: Dmitry collection on Dreava Launchpad. Dmitry is the Gaming Community Manager of Somnia Network and an absolute legend!",
+      "type": "action",
+      "href": "https://dreava.art/launchpad/collection/0x7a3c9ad059dde70780d7a1e9dbfbf3f34ab39850",
+      "xp": 50,
+      "star": true,
+      "tags": ["on-chain", "nft", "mint", "dreava", "metaeggs"],
+      "category": "NFT Launchpad",
+      "verify_method": "onchain",
+      "verify_params": { 
+        "check": "transfer_event",
+        "contract": "0x7a3c9ad059dde70780d7a1e9dbfbf3f34ab39850",
+        "rpcUrl": "https://dream-rpc.somnia.network"
+      },
+      "brand": "dreava.art",
+      "logo": "/brands/dreavalogo.png",
+      "brand_color": "#6366F1",
+      "logo_variant": "light"
+    }
+  ]
+}
+

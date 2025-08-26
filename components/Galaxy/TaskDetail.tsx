@@ -23,6 +23,7 @@ export type TaskDetailProps = {
 		logo?: string;
 		brand_color?: string;
 		logo_variant?: 'light'|'dark';
+		category?: string;
 		verify_api?: {
 			url: string;
 			method: 'GET'|'POST';
@@ -43,19 +44,42 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 	const canVerify = !!walletAddress && !loading && status !== 'verified';
 	const liveRegionRef = useRef<HTMLDivElement | null>(null);
 
-	useEffect(() => { setStatus('idle'); setLastError(null); }, [task?.id]);
+	// Проверяем, был ли таск уже верифицирован
+	useEffect(() => {
+		if (walletAddress && task?.id) {
+			// Проверяем localStorage на наличие верифицированного таска
+			const verifiedTasks = JSON.parse(localStorage.getItem(`somnia:verified:${walletAddress.toLowerCase()}`) || '[]') as string[];
+			if (verifiedTasks.includes(task.id)) {
+				setStatus('verified');
+			} else {
+				setStatus('idle');
+				setLastError(null);
+			}
+		}
+	}, [task?.id, walletAddress]);
 
 	useEffect(() => {
 		if (!liveRegionRef.current) return;
-		const msg = status === 'pending' ? 'Verification in progress…' : status === 'verified' ? 'Verified. Reward granted.' : status === 'error' ? 'Couldn’t verify yet. Complete the action and try again.' : '';
+		const msg = status === 'pending' ? 'Verification in progress…' : status === 'verified' ? 'Verified. Reward granted.' : status === 'error' ? 'Couldn\'t verify yet. Complete the action and try again.' : '';
 		if (msg) liveRegionRef.current.textContent = msg;
 	}, [status]);
 
 	const handleVerify = useCallback(async () => {
 		if (!canVerify) return;
-		setLoading(true); setStatus('pending'); setLastError(null);
+		
+		// Сбрасываем статус error при повторной попытке
+		if (status === 'error') {
+			setStatus('idle');
+			setLastError(null);
+		}
+		
+		setStatus('pending');
+		setLoading(true); 
+		
 		try {
-			const res = await verifyExternal(walletAddress!, task.id);
+			// При повторной попытке после ошибки принудительно обновляем
+			const force = status === 'error';
+			const res = await verifyExternal(walletAddress!, task.id, undefined, force);
 			if (res?.completed) {
 				setStatus('verified');
 				onVerified?.(task.id);
@@ -70,7 +94,7 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 			setLastError(e?.message || 'Verification failed');
 			toast.error('Verification failed', 'Please try again.');
 		} finally { setLoading(false); }
-	}, [canVerify, onVerified, task.id, task.star, task.xp, walletAddress]);
+	}, [canVerify, onVerified, task.id, task.star, task.xp, walletAddress, status]);
 
 	const tips = useMemo(() => [
 		'Ensure you used the connected wallet.',
@@ -97,14 +121,29 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 				logo: task.logo,
 				brand_color: task.brand_color,
 				logo_variant: task.logo_variant,
+				category: task.category,
 			}} />
 
-			<RewardSummary xp={task.xp} star={task.star} />
+			<RewardSummary xp={task.xp} star={task.star} status={status} />
 
 			{task.description && (
 				<p className="text-sm text-[color:var(--muted)] leading-relaxed max-w-[65ch]">
 					{task.description}
 				</p>
+			)}
+
+			{/* Теги задачи */}
+			{task.tags && task.tags.length > 0 && (
+				<div className="flex items-center gap-2 flex-wrap">
+					{task.tags.map((tag) => (
+						<span
+							key={tag}
+							className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[color:var(--accent)]/10 text-[color:var(--accent)] border border-[color:var(--accent)]/20"
+						>
+							{tag}
+						</span>
+					))}
+				</div>
 			)}
 
 			{/* Optional checklist placeholder; hook up when steps exist on task */}
@@ -123,7 +162,22 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 				>
 					{status === 'pending' && 'Verification in progress…'}
 					{status === 'verified' && 'Verified. Reward granted.'}
-					{status === 'error' && 'Couldn’t verify yet. Complete the action and try again.'}
+					{status === 'error' && (
+						<div className="flex items-center justify-between">
+							<span>Couldn't verify yet. Complete the action and try again.</span>
+							{walletAddress && (
+								<button
+									onClick={() => {
+										setStatus('idle');
+										setLastError(null);
+									}}
+									className="text-xs bg-[color:var(--accent)] text-white px-3 py-1.5 rounded-md hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] transition-opacity"
+								>
+									🔄 Try Again
+								</button>
+							)}
+						</div>
+					)}
 				</div>
 			)}
 
@@ -143,5 +197,3 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 		</motion.section>
 	);
 }
-
-

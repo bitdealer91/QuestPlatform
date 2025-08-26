@@ -24,9 +24,9 @@ export default function Header(){
 	};
 
 	return (
-		<header className="sticky top-0 z-40">
+		<header className="absolute top-[var(--safe-top)] left-[var(--safe-left)] right-[var(--safe-right)] z-40 pt-3">
 			<div className="mx-auto w-full px-4">
-				<div className="mt-3 h-[72px] w-full rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)]/70 backdrop-blur-xl shadow-elevated flex items-center justify-between">
+				<div className="h-[72px] w-full rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)]/70 backdrop-blur-xl shadow-elevated flex items-center justify-between">
 					<div className="flex items-center gap-3 pl-3">
 						<Image src="/assets/somnia-logo.svg" alt="Somnia" width={24} height={24} />
 						<span className="font-semibold tracking-tight">Somnia Quests</span>

@@ -17,7 +17,7 @@ export function AppKitProvider({ children }: { children: React.ReactNode }) {
 		const adapter = new WagmiAdapter({
 			projectId,
 			networks: [somniaTestnet],
-			transports: { [somniaTestnet.id]: http(process.env.NEXT_PUBLIC_RPC_URL || "https://dream-rpc.somnia.network/") },
+			transports: { [somniaTestnet.id]: http(process.env.NEXT_PUBLIC_RPC_URL || "https://dream-rpc.somnia.network") },
 		});
 
 		const appKit = createAppKit({
@@ -28,7 +28,7 @@ export function AppKitProvider({ children }: { children: React.ReactNode }) {
 			metadata: {
 				name: "Somnia Quest Portal",
 				description: "Board-game quests for Somnia Testnet",
-				url: "https://quest.somnia.example",
+				url: process.env.NODE_ENV === 'development' ? "http://localhost:3000" : "https://quest.somnia.example",
 				icons: ["/assets/somnia-logo.svg"],
 			},
 			themeMode: "dark",

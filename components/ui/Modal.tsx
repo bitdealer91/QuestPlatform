@@ -38,7 +38,7 @@ export default function Modal({ open, onClose, title, subtitle, children, size =
 					<motion.div className="absolute inset-0 bg-black/55 backdrop-blur-[14px]" onClick={onClose} />
 					<motion.div
 						ref={panelRef}
-						className={clsx('relative rounded-[var(--radius-lg)] bg-[color:var(--card-elev)] border border-[color:var(--outline)] shadow-elevated max-h-[92vh] overflow-auto', sizes[size])}
+						className={clsx('relative modal-card rounded-[var(--radius-lg)] bg-[color:var(--card-elev)] border border-[color:var(--outline)] shadow-elevated', sizes[size])}
 						initial={{ scale: 0.96, opacity: 0 }}
 						animate={{ scale: 1, opacity: 1, transition: { type: 'spring', stiffness: 220, damping: 22 } }}
 						exit={{ scale: 0.98, opacity: 0, transition: { duration: 0.2 } }}
