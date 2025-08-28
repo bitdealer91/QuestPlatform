@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import TaskDetailHeader from './TaskDetailHeader';
 import RewardSummary from './RewardSummary';
-import Checklist from './Checklist';
 import TaskActions from './TaskActions';
 import { verifyExternal } from '@/lib/verify';
 import { toast } from '@/components/ui/Toast';
@@ -24,39 +23,16 @@ export type TaskDetailProps = {
 		brand_color?: string;
 		logo_variant?: 'light'|'dark';
 		category?: string;
-		verify_api?: {
-			url: string;
-			method: 'GET'|'POST';
-			headers?: Record<string,string>;
-			body?: Record<string, any>;
-			success: { path: string; equals: any };
-		};
 	};
 	walletAddress?: string;
-	currentWeek: number;
 	onVerified: (taskId: string) => void;
 };
 
-export default function TaskDetail({ task, walletAddress, currentWeek, onVerified }: TaskDetailProps){
+export default function TaskDetail({ task, walletAddress, onVerified }: TaskDetailProps){
 	const [status, setStatus] = useState<'idle'|'pending'|'verified'|'error'>('idle');
 	const [loading, setLoading] = useState(false);
-	const [lastError, setLastError] = useState<string | null>(null);
 	const canVerify = !!walletAddress && !loading && status !== 'verified';
 	const liveRegionRef = useRef<HTMLDivElement | null>(null);
-
-	// Проверяем, был ли таск уже верифицирован
-	useEffect(() => {
-		if (walletAddress && task?.id) {
-			// Проверяем localStorage на наличие верифицированного таска
-			const verifiedTasks = JSON.parse(localStorage.getItem(`somnia:verified:${walletAddress.toLowerCase()}`) || '[]') as string[];
-			if (verifiedTasks.includes(task.id)) {
-				setStatus('verified');
-			} else {
-				setStatus('idle');
-				setLastError(null);
-			}
-		}
-	}, [task?.id, walletAddress]);
 
 	useEffect(() => {
 		if (!liveRegionRef.current) return;
@@ -66,32 +42,25 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 
 	const handleVerify = useCallback(async () => {
 		if (!canVerify) return;
-		
-		// Сбрасываем статус error при повторной попытке
-		if (status === 'error') {
-			setStatus('idle');
-			setLastError(null);
-		}
-		
+		if (status === 'error') { setStatus('idle'); }
 		setStatus('pending');
-		setLoading(true); 
-		
+		setLoading(true);
 		try {
-			// При повторной попытке после ошибки принудительно обновляем
-			const force = status === 'error';
-			const res = await verifyExternal(walletAddress!, task.id, undefined, force);
+			const res = await verifyExternal(walletAddress!, task.id, undefined, status === 'error');
 			if (res?.completed) {
 				setStatus('verified');
 				onVerified?.(task.id);
 				try { (await import('canvas-confetti')).default({ particleCount: 40, spread: 48, startVelocity: 28, scalar: .6, origin: { y: .88, x: .85 } }); } catch {}
 				toast.success('Verified ✅', `+${task.xp} XP${task.star ? ' · Core Star' : ''}`);
+			} else if (res?.error) {
+				setStatus('error');
+				toast.info('Not verified yet', res.retryAfter ? `Try again in ${res.retryAfter}s.` : 'Complete the action and try again.');
 			} else {
 				setStatus('error');
 				toast.info('Not verified yet', 'Complete the action and try again.');
 			}
-		} catch (e: any) {
+		} catch {
 			setStatus('error');
-			setLastError(e?.message || 'Verification failed');
 			toast.error('Verification failed', 'Please try again.');
 		} finally { setLoading(false); }
 	}, [canVerify, onVerified, task.id, task.star, task.xp, walletAddress, status]);
@@ -103,11 +72,7 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 	], []);
 
 	return (
-		<motion.section
-			initial={{ opacity: 0, y: 6 }}
-			animate={{ opacity: 1, y: 0 }}
-			className="h-full flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card-elev)] shadow-elevated p-5"
-		>
+		<motion.section initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="h-full flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card-elev)] shadow-elevated p-5">
 			<TaskDetailHeader task={{
 				id: task.id,
 				title: task.title,
@@ -124,7 +89,7 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 				category: task.category,
 			}} />
 
-			<RewardSummary xp={task.xp} star={task.star} status={status} />
+			<RewardSummary xp={task.xp} star={task.star} />
 
 			{task.description && (
 				<p className="text-sm text-[color:var(--muted)] leading-relaxed max-w-[65ch]">
@@ -132,50 +97,15 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 				</p>
 			)}
 
-			{/* Теги задачи */}
-			{task.tags && task.tags.length > 0 && (
-				<div className="flex items-center gap-2 flex-wrap">
-					{task.tags.map((tag) => (
-						<span
-							key={tag}
-							className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[color:var(--accent)]/10 text-[color:var(--accent)] border border-[color:var(--accent)]/20"
-						>
-							{tag}
-						</span>
-					))}
-				</div>
-			)}
-
-			{/* Optional checklist placeholder; hook up when steps exist on task */}
-			{/* <Checklist items={["Open Somnia DEX","Make a swap","Wait for confirmation"]} /> */}
-
 			<div className="mt-auto" />
 
-			{/* Status banner */}
 			{status !== 'idle' && (
-				<div
-					className={
-						`rounded-[var(--radius)] border px-3 py-2 text-sm ${status === 'verified' ? 'bg-[color:var(--ok)]/14 border-[color:var(--outline)]' : status === 'pending' ? 'bg-[color:var(--accent)]/14 border-[color:var(--outline)]' : 'bg-[color:var(--danger)]/16 border-[color:var(--outline)]'}`
-					}
-					role="status"
-					aria-live="polite"
-				>
+				<div className={`rounded-[var(--radius)] border px-3 py-2 text-sm ${status === 'verified' ? 'bg-[color:var(--ok)]/14 border-[color:var(--outline)]' : status === 'pending' ? 'bg-[color:var(--accent)]/14 border-[color:var(--outline)]' : 'bg-[color:var(--danger)]/16 border-[color:var(--outline)]'}`} role="status" aria-live="polite">
 					{status === 'pending' && 'Verification in progress…'}
 					{status === 'verified' && 'Verified. Reward granted.'}
 					{status === 'error' && (
 						<div className="flex items-center justify-between">
-							<span>Couldn't verify yet. Complete the action and try again.</span>
-							{walletAddress && (
-								<button
-									onClick={() => {
-										setStatus('idle');
-										setLastError(null);
-									}}
-									className="text-xs bg-[color:var(--accent)] text-white px-3 py-1.5 rounded-md hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] transition-opacity"
-								>
-									🔄 Try Again
-								</button>
-							)}
+							<span>Couldn&apos;t verify yet. Complete the action and try again.</span>
 						</div>
 					)}
 				</div>

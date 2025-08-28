@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import TaskDetailHeader from './TaskDetailHeader';
 import RewardSummary from './RewardSummary';
-import Checklist from './Checklist';
 import TaskActions from './TaskActions';
 import { verifyExternal } from '@/lib/verify';
 import { toast } from '@/components/ui/Toast';
@@ -23,27 +22,18 @@ export type TaskDetailProps = {
 		logo?: string;
 		brand_color?: string;
 		logo_variant?: 'light'|'dark';
-		verify_api?: {
-			url: string;
-			method: 'GET'|'POST';
-			headers?: Record<string,string>;
-			body?: Record<string, any>;
-			success: { path: string; equals: any };
-		};
 	};
 	walletAddress?: string;
-	currentWeek: number;
 	onVerified: (taskId: string) => void;
 };
 
-export default function TaskDetail({ task, walletAddress, currentWeek, onVerified }: TaskDetailProps){
+export default function TaskDetail({ task, walletAddress, onVerified }: TaskDetailProps){
 	const [status, setStatus] = useState<'idle'|'pending'|'verified'|'error'>('idle');
 	const [loading, setLoading] = useState(false);
-	const [lastError, setLastError] = useState<string | null>(null);
 	const canVerify = !!walletAddress && !loading && status !== 'verified';
 	const liveRegionRef = useRef<HTMLDivElement | null>(null);
 
-	useEffect(() => { setStatus('idle'); setLastError(null); }, [task?.id]);
+	useEffect(() => { setStatus('idle'); }, [task?.id]);
 
 	useEffect(() => {
 		if (!liveRegionRef.current) return;
@@ -53,10 +43,8 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 
 	const handleVerify = useCallback(async () => {
 		if (!canVerify) return;
-		// Сбрасываем статус при повторной попытке
 		setStatus('pending');
-		setLoading(true); 
-		setLastError(null);
+		setLoading(true);
 		try {
 			const res = await verifyExternal(walletAddress!, task.id);
 			if (res?.completed) {
@@ -68,9 +56,8 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 				setStatus('error');
 				toast.info('Not verified yet', 'Complete the action and try again.');
 			}
-		} catch (e: any) {
+		} catch {
 			setStatus('error');
-			setLastError(e?.message || 'Verification failed');
 			toast.error('Verification failed', 'Please try again.');
 		} finally { setLoading(false); }
 	}, [canVerify, onVerified, task.id, task.star, task.xp, walletAddress]);
@@ -110,12 +97,8 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 				</p>
 			)}
 
-			{/* Optional checklist placeholder; hook up when steps exist on task */}
-			{/* <Checklist items={["Open Somnia DEX","Make a swap","Wait for confirmation"]} /> */}
-
 			<div className="mt-auto" />
 
-			{/* Status banner */}
 			{status !== 'idle' && (
 				<div
 					className={
@@ -128,15 +111,7 @@ export default function TaskDetail({ task, walletAddress, currentWeek, onVerifie
 					{status === 'verified' && 'Verified. Reward granted.'}
 					{status === 'error' && (
 						<div className="flex items-center justify-between">
-							<span>Couldn't verify yet. Complete the action and try again.</span>
-							{walletAddress && (
-								<button
-									onClick={() => setStatus('idle')}
-									className="text-xs underline hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] rounded px-2 py-1"
-								>
-									Try Again
-								</button>
-							)}
+							<span>Couldn&apos;t verify yet. Complete the action and try again.</span>
 						</div>
 					)}
 				</div>

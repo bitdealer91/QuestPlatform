@@ -18,7 +18,7 @@
       "verify_params": { 
         "check": "transfer_event",
         "contract": "0x7a3c9ad059dde70780d7a1e9dbfbf3f34ab39850",
-        "rpcUrl": "https://dream-rpc.somnia.network"
+        "rpcUrl": "https://api.infra.mainnet.somnia.network/"
       },
       "brand": "dreava.art",
       "logo": "/brands/dreavalogo.png",

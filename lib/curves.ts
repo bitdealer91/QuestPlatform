@@ -11,10 +11,11 @@ function rng(seed:number){ return function(){ let t = seed += 0x6D2B79F5; t = Ma
 export function bezierThrough(pts: Pt[], alpha=0.5, chaos=0.35){
 	if (pts.length < 2) return '';
 	const P = pts.map(toPx);
-	let d = `M ${P[0].x},${P[0].y}`;
+	const pStart = P[0]!;
+	let d = `M ${pStart.x},${pStart.y}`;
 	const rand = rng(12345);
 	for (let i=0;i<P.length-1;i++){
-		const p0 = P[Math.max(0,i-1)], p1 = P[i], p2 = P[i+1], p3 = P[Math.min(P.length-1,i+2)];
+		const p0 = P[Math.max(0,i-1)]!, p1 = P[i]!, p2 = P[i+1]!, p3 = P[Math.min(P.length-1,i+2)]!;
 		const t0 = 0;
 		const t1 = t0 + Math.pow(dist(p0,p1), alpha);
 		const t2 = t1 + Math.pow(dist(p1,p2), alpha);

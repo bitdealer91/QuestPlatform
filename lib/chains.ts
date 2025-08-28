@@ -1,15 +1,15 @@
 import { defineChain } from "viem";
 
-export const somniaTestnet = defineChain({
-	id: 50312,
-	name: "Somnia Testnet",
-	nativeCurrency: { name: "Somnia Test Token", symbol: "STT", decimals: 18 },
+export const somniaMainnet = defineChain({
+	id: 5031,
+	name: "Somnia Mainnet",
+	nativeCurrency: { name: "Somnia", symbol: "SOMI", decimals: 18 },
 	rpcUrls: {
-		default: { http: [process.env.NEXT_PUBLIC_RPC_URL || "https://dream-rpc.somnia.network/"] },
-		public: { http: [process.env.NEXT_PUBLIC_RPC_URL || "https://dream-rpc.somnia.network/"] },
+		default: { http: [process.env.NEXT_PUBLIC_RPC_URL || "https://api.infra.mainnet.somnia.network/"] },
+		public: { http: [process.env.NEXT_PUBLIC_RPC_URL || "https://api.infra.mainnet.somnia.network/"] },
 	},
 	blockExplorers: {
-		default: { name: "Shannon", url: "https://shannon-explorer.somnia.network/" },
+		default: { name: "Somnia Explorer", url: "https://explorer.somnia.network/" },
 	},
-	testnet: true,
+	testnet: false,
 });

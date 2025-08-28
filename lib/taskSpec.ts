@@ -1,15 +1,4 @@
-import { z } from "zod";
-
-export const VerifyApiZ = z.object({
-  url: z.string().url(),
-  method: z.enum(["GET","POST"]).default("GET"),
-  headers: z.record(z.string()).optional(),
-  body: z.record(z.any()).optional(),
-  success: z.object({
-    path: z.string().min(1),
-    equals: z.any()
-  }).optional()
-});
+import { z } from 'zod';
 
 export const TaskZ = z.object({
   week: z.number().int().min(1).max(8),
@@ -22,13 +11,13 @@ export const TaskZ = z.object({
   xp: z.number().int().min(0).default(10),
   star: z.boolean().default(false),
   tags: z.array(z.string()).optional(),
-  verify_method: z.string(),
-  verify_params: z.record(z.any()).default({}),
-  verify_api: VerifyApiZ.optional(),
+  category: z.string().optional(),
+  verify_method: z.union([z.literal('onchain'), z.literal('api')]).optional(),
+  verify_params: z.record(z.unknown()).optional(),
   brand: z.string().optional(),
-  logo: z.string().url().or(z.string().startsWith("/")).optional(),
-  brand_color: z.string().regex(/^#([0-9a-f]{6}|[0-9a-f]{3})$/i).optional(),
-  logo_variant: z.enum(["light","dark"]).optional()
+  logo: z.string().optional(),
+  brand_color: z.string().optional(),
+  logo_variant: z.union([z.literal('light'), z.literal('dark')]).optional()
 });
 
 export const TaskSpecZ = z.object({
@@ -38,6 +27,7 @@ export const TaskSpecZ = z.object({
 });
 
 export type Task = z.infer<typeof TaskZ>;
+export type TaskSpec = z.infer<typeof TaskSpecZ>;
 
 
 

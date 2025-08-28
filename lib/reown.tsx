@@ -2,53 +2,58 @@
 import { createContext, useContext, useMemo } from "react";
 import { createAppKit } from "@reown/appkit";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { http, WagmiProvider } from "wagmi";
+import { http, WagmiProvider, type Config } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { somniaTestnet } from "./chains";
+import { somniaMainnet } from "./chains";
 
 const projectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID as string | undefined;
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://api.infra.mainnet.somnia.network/";
 
-type Ctx = { appKit: ReturnType<typeof createAppKit>; wagmiConfig: any; queryClient: QueryClient } | null;
-const ReownContext = createContext<Ctx>(null);
+type AppCtx = { appKit: ReturnType<typeof createAppKit>; wagmiConfig: Config; queryClient: QueryClient } | null;
 
-export function AppKitProvider({ children }: { children: React.ReactNode }) {
-	const value = useMemo(() => {
-		if (!projectId) return null;
-		const adapter = new WagmiAdapter({
-			projectId,
-			networks: [somniaTestnet],
-			transports: { [somniaTestnet.id]: http(process.env.NEXT_PUBLIC_RPC_URL || "https://dream-rpc.somnia.network") },
-		});
+const ReownContext = createContext<AppCtx>(null);
 
-		const appKit = createAppKit({
-			adapters: [adapter],
-			projectId,
-			networks: [somniaTestnet],
-			features: { analytics: false },
-			metadata: {
-				name: "Somnia Quest Portal",
-				description: "Board-game quests for Somnia Testnet",
-				url: process.env.NODE_ENV === 'development' ? "http://localhost:3000" : "https://quest.somnia.example",
-				icons: ["/assets/somnia-logo.svg"],
-			},
-			themeMode: "dark",
-		});
+export function AppKitProvider({ children }: { children: React.ReactNode }){
+  const value = useMemo<AppCtx>(() => {
+    if (!projectId) return null;
 
-		const queryClient = new QueryClient();
-		return { appKit, wagmiConfig: (adapter as any).wagmiConfig, queryClient } as Ctx;
-	}, []);
+    const adapter = new WagmiAdapter({
+      projectId,
+      networks: [somniaMainnet],
+      transports: { [somniaMainnet.id]: http(rpcUrl) },
+    });
 
-	if (!value) return children as any;
-	const { wagmiConfig, queryClient } = value;
-	return (
-		<ReownContext.Provider value={value}>
-			<WagmiProvider config={wagmiConfig}>
-				<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-			</WagmiProvider>
-		</ReownContext.Provider>
-	);
+    const appKit = createAppKit({
+      adapters: [adapter],
+      projectId,
+      networks: [somniaMainnet],
+      features: { analytics: false },
+      metadata: {
+        name: "Somnia Quests",
+        description: "Flagship quests for Somnia Mainnet",
+        url: typeof window !== "undefined" ? window.location.origin : "https://quests.somnia.network",
+        icons: ["/assets/somnia-logo.svg"],
+      },
+      themeMode: "dark",
+    });
+
+    const queryClient = new QueryClient();
+    const wagmiConfig = (adapter as unknown as { wagmiConfig: Config }).wagmiConfig;
+    return { appKit, wagmiConfig, queryClient };
+  }, []);
+
+  if (!value) return children as React.ReactNode;
+  const { wagmiConfig, queryClient } = value;
+
+  return (
+    <ReownContext.Provider value={value}>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </WagmiProvider>
+    </ReownContext.Provider>
+  );
 }
 
-export function useAppKit() {
-	return useContext(ReownContext);
+export function useReown(){
+  return useContext(ReownContext);
 }

@@ -1,39 +1,43 @@
-export const metadata = {
-	title: "Somnia Quests",
-	description: "Flagship quests for Somnia Testnet",
-	icons: { icon: "/assets/somnia-logo.svg" },
-};
-
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "@/styles/globals.css";
-import { AppKitProvider } from "@/lib/reown";
 import Header from "@/components/Header";
 import ToastHost from "@/components/ui/ToastHost";
 import type { ReactNode } from "react";
 import VhFixer from "@/components/system/VhFixer";
-import { ToastViewport } from '@/components/ui/Toast';
 import { preloadCache } from '@/lib/store';
+import dynamic from 'next/dynamic';
+import NetworkGuard from '@/components/system/NetworkGuard';
+
+const AppKitProvider = dynamic(() => import('@/lib/reown').then(m => m.AppKitProvider), { ssr: false });
 
 // Предзагружаем кеш тасков
-preloadCache().catch(console.error);
+preloadCache();
 
-export default function RootLayout({ children }: { children: ReactNode }) {
-	return (
-		<html lang="en" suppressHydrationWarning>
-			<head>
-				<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-				<link rel="preload" as="video" href="/video/Loading.mp4" type="video/mp4" />
-				<link rel="prefetch" as="video" href="/video/Loading.mp4" />
-				<link rel="preload" as="image" href="/assets/background.png" />
-			</head>
-			<body suppressHydrationWarning>
-				<VhFixer />
-				<AppKitProvider>
-					<Header />
-					{children}
-				</AppKitProvider>
-				<ToastHost />
-				<div id="ui-fixed-root" className="ui-fixed-layer" />
-			</body>
-		</html>
-	);
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Somnia Quests",
+  description: "Flagship quests for Somnia Mainnet",
+  icons: { icon: "/assets/somnia-logo.svg" },
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>
+        <VhFixer />
+        <AppKitProvider>
+          <NetworkGuard />
+          <Header />
+          {children}
+          <ToastHost />
+        </AppKitProvider>
+      </body>
+    </html>
+  );
 }

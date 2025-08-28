@@ -3,77 +3,33 @@ import { useState, useCallback, useEffect } from 'react';
 import { PlanetsRail } from '@/components/Galaxy/PlanetsRail';
 import TaskDrawer from '@/components/Galaxy/TaskDrawer';
 import { useAccount } from 'wagmi';
-import { getUserStats } from '@/lib/progress';
 
 export default function GalaxyMap(){
 	const [openWeek, setOpenWeek] = useState<number | null>(null);
 	const { address } = useAccount();
-	const [userProgress, setUserProgress] = useState<ReturnType<typeof getUserStats> | null>(null);
+	const [verifiedIds, setVerifiedIds] = useState<Set<string> | null>(null);
 	
-	// Загружаем прогресс пользователя
+	// Загружаем верификацию с сервера (Redis)
 	useEffect(() => {
-		if (address) {
-			const stats = getUserStats(address);
-			setUserProgress(stats);
-		}
-	}, [address]);
-	
-		// Слушаем события обновления прогресса
-	useEffect(() => {
-		const handleProgressUpdate = (event: CustomEvent) => {
-			console.log('🔄 Galaxy progress update event received:', event.detail);
-			if (event.detail.address === address && address) {
-				// Обновляем прогресс
-				const stats = getUserStats(address);
-				setUserProgress(stats);
-			}
-		};
-		
-		window.addEventListener('galaxy:progress-updated', handleProgressUpdate as EventListener);
-		
-		return () => {
-			window.removeEventListener('galaxy:progress-updated', handleProgressUpdate as EventListener);
-		};
+		if (!address) { setVerifiedIds(null); return; }
+		const ctrl = new AbortController();
+		fetch(`/api/profile?address=${address}`, { signal: ctrl.signal })
+			.then(r => r.json())
+			.then(j => setVerifiedIds(new Set<string>(Array.isArray(j?.verified) ? j.verified : [])))
+			.catch(() => setVerifiedIds(null));
+		return () => ctrl.abort();
 	}, [address]);
 	
 	// Функция для подсчета звезд недели
 	const getStarsForWeek = useCallback((weekId: number) => {
-		console.log('🌟 getStarsForWeek called for week:', weekId);
-		console.log('🌟 userProgress:', userProgress);
-		
-		if (!userProgress) {
-			console.log('🌟 No user progress, returning 0 stars');
-			return 0;
-		}
-		
-		// Получаем таски для конкретной недели
-		let weekTasks: Array<{ id: string; reward: { xp: number; star: boolean } }> = [];
-		
-		if (weekId === 1) {
-			// Week 1: MetaEggs таск
-			weekTasks = [
-				{ id: 'mint', reward: { xp: 50, star: true } }
-			];
-		} else {
-			// Другие недели пока не имеют тасков
-			weekTasks = [];
-		}
-		
-		console.log('🌟 Week', weekId, 'tasks:', weekTasks);
-		console.log('🌟 Verified tasks:', userProgress.verifiedTasks);
-		
-		// Считаем завершенные таски со звездами только для этой недели
-		const completedStarTasks = weekTasks.filter(task => 
-			userProgress.verifiedTasks && userProgress.verifiedTasks.has(task.id) && task.reward.star
-		);
-		
-		console.log('🌟 Week', weekId, 'completed star tasks:', completedStarTasks);
-		
-		// Возвращаем количество звезд (0-3) только для этой недели
-		const stars = Math.min(completedStarTasks.length, 3) as 0|1|2|3;
-		console.log('🌟 Week', weekId, 'returning stars:', stars);
-		return stars;
-	}, [userProgress]);
+		if (!verifiedIds) return 0;
+		// Простая логика: какие taskId относятся к неделе
+		let weekTasks: string[] = [];
+		if (weekId === 1) weekTasks = ['mint'];
+		// TODO: заполнить для следующих недель при добавлении тасков
+		const stars = weekTasks.filter(id => verifiedIds.has(id)).length;
+		return Math.min(stars, 3) as 0|1|2|3;
+	}, [verifiedIds]);
 	
 	const openTasks = useCallback((id: number) => setOpenWeek(id), []);
 	

@@ -35,7 +35,8 @@ const XP_LEVELS = [
 // Вычисляем уровень на основе XP
 export function calculateLevel(xp: number): number {
   for (let i = XP_LEVELS.length - 1; i >= 0; i--) {
-    if (xp >= XP_LEVELS[i]) {
+    const thr = XP_LEVELS[i] ?? 0;
+    if (xp >= thr) {
       return i + 1;
     }
   }
@@ -62,8 +63,7 @@ export function calculateLevelProgress(xp: number): { current: number; next: num
 // Вычисляем общий прогресс пользователя
 export function calculateUserProgress(
   verifiedTasks: Set<string>,
-  allTasks: Task[],
-  address: string
+  allTasks: Task[]
 ): UserProgress {
   const verifiedTaskIds = Array.from(verifiedTasks);
   const completedTasks = allTasks.filter(task => verifiedTaskIds.includes(task.id));
@@ -80,20 +80,20 @@ export function calculateUserProgress(
   // Прогресс по неделям
   const weeklyProgress: Record<number, { completed: number; total: number; xp: number }> = {};
   
-  	allTasks.forEach(task => {
-		// По умолчанию все таски относятся к неделе 1
-		const week = 1;
-		if (!weeklyProgress[week]) {
-			weeklyProgress[week] = { completed: 0, total: 0, xp: 0 };
-		}
-		
-		weeklyProgress[week].total++;
-		
-		if (verifiedTaskIds.includes(task.id)) {
-			weeklyProgress[week].completed++;
-			weeklyProgress[week].xp += task.reward.xp;
-		}
-	});
+  allTasks.forEach(task => {
+    // По умолчанию все таски относятся к неделе 1
+    const week = 1;
+    if (!weeklyProgress[week]) {
+      weeklyProgress[week] = { completed: 0, total: 0, xp: 0 };
+    }
+    
+    weeklyProgress[week].total++;
+    
+    if (verifiedTaskIds.includes(task.id)) {
+      weeklyProgress[week].completed++;
+      weeklyProgress[week].xp += task.reward.xp;
+    }
+  });
   
   return {
     totalXP,
@@ -158,8 +158,7 @@ export function addVerifiedTask(
   // Пересчитываем прогресс
   const newProgress = calculateUserProgress(
     currentProgress.verifiedTasks,
-    [task], // Передаем только текущий таск для пересчета
-    address
+    [task] // Передаем только текущий таск для пересчета
   );
   
   // Обновляем общий XP

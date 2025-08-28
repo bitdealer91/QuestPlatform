@@ -8,7 +8,7 @@ import Badge from '@/components/ui/Badge';
 import { toast } from '@/components/ui/Toast';
 import TaskDetail from '@/components/Galaxy/TaskDetail';
 import { useAccount } from 'wagmi';
-import { addVerifiedTask, getUserStats } from '@/lib/progress';
+import { addVerifiedTask } from '@/lib/progress';
 
 export default function TaskDrawer({ weekId, onClose }: { weekId: number | null; onClose: () => void }){
 	const open = weekId != null;
@@ -141,7 +141,6 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 									category: active.category,
 								}}
 								walletAddress={address || undefined}
-								currentWeek={weekId || 0}
 								onVerified={handleVerified}
 							/>
 						)}

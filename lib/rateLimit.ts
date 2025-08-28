@@ -1,71 +1,76 @@
-// Global rate limiter: Redis (Upstash) fixed window, fallback to in-memory token bucket.
+// Rate limiting with Redis + in-memory fallback
 
-type Bucket = { tokens: number; resetAt: number };
-const memIp = new Map<string, Bucket>();
-const memKey = new Map<string, Bucket>();
+type RateLimitRecord = { tokens: number; resetAt: number };
 
-function now(){ return Date.now(); }
+const MAX_ENTRIES = Number(process.env.SOMNIA_RATE_LIMIT_MAX_ENTRIES || 10000);
+const memMap: Map<string, RateLimitRecord> = new Map();
 
-function checkLocal(map: Map<string, Bucket>, key: string, limit: number){
-  const t = now();
-  let b = map.get(key);
-  if (!b || b.resetAt <= t){ b = { tokens: limit, resetAt: t + 60_000 }; map.set(key, b); }
-  if (b.tokens <= 0) return { limited: true, retryAfter: Math.ceil((b.resetAt - t)/1000) };
-  b.tokens -= 1; return { limited: false, retryAfter: Math.ceil((b.resetAt - t)/1000) };
+function getCurrentTime(): number { return Date.now(); }
+
+function gcIfNeeded(){
+  if (memMap.size <= MAX_ENTRIES) return;
+  const toEvict = memMap.size - MAX_ENTRIES;
+  let n = 0;
+  for (const k of memMap.keys()){
+    memMap.delete(k);
+    n += 1; if (n >= toEvict) break;
+  }
 }
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-async function redisInc(key: string){
-  const url = REDIS_URL;
-  const token = REDIS_TOKEN;
-  if (!url || !token) return null;
-  try {
-    const r = await fetch(`${url}/pipeline`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify([["INCR", key]])
-    });
-    const j = await r.json();
-    const res = Array.isArray(j?.result) ? j.result[0]?.result : undefined;
-    return typeof res === 'number' ? res : Number(res);
-  } catch { return null; }
+function getLocal(key: string): RateLimitRecord | null {
+  const rec = memMap.get(key);
+  if (!rec) return null;
+  if (rec.resetAt <= getCurrentTime()) { memMap.delete(key); return null; }
+  return rec;
 }
 
-async function redisExpire(key: string, ttlSec: number){
-  const url = REDIS_URL;
-  const token = REDIS_TOKEN;
-  if (!url || !token) return;
-  try {
-    await fetch(`${url}/pipeline`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify([["EXPIRE", key, String(ttlSec)]])
-    });
-  } catch {}
+function setLocal(key: string, record: RateLimitRecord): void {
+  memMap.set(key, record);
+  gcIfNeeded();
 }
 
-export async function limitIp(ip: string, limitPerMin: number){
+export async function limitIp(ip: string, limitPerMin: number): Promise<{ limited: boolean; retryAfter: number }> {
   const key = `rl:ip:${ip}`;
-  const c = await redisInc(key);
-  if (c == null){
-    return checkLocal(memIp, ip, limitPerMin);
+  const currentTime = getCurrentTime();
+  
+  // Проверяем локальный кеш
+  let record = getLocal(key);
+  
+  if (!record || record.resetAt <= currentTime) {
+    record = { tokens: limitPerMin, resetAt: currentTime + 60_000 };
+    setLocal(key, record);
   }
-  if (c === 1){ await redisExpire(key, 60); }
-  const limited = c > limitPerMin;
-  return { limited, retryAfter: 60 };
+  
+  if (record.tokens <= 0) {
+    return { limited: true, retryAfter: Math.ceil((record.resetAt - currentTime) / 1000) };
+  }
+  
+  record.tokens -= 1;
+  setLocal(key, record);
+  
+  return { limited: false, retryAfter: 0 };
 }
 
-export async function limitPair(addrTaskKey: string, limitPerMin: number){
-  const key = `rl:key:${addrTaskKey}`;
-  const c = await redisInc(key);
-  if (c == null){
-    return checkLocal(memKey, addrTaskKey, limitPerMin);
+export async function limitPair(addrTaskKey: string, limitPerMin: number): Promise<{ limited: boolean; retryAfter: number }> {
+  const key = `rl:pair:${addrTaskKey}`;
+  const currentTime = getCurrentTime();
+  
+  // Проверяем локальный кеш
+  let record = getLocal(key);
+  
+  if (!record || record.resetAt <= currentTime) {
+    record = { tokens: limitPerMin, resetAt: currentTime + 60_000 };
+    setLocal(key, record);
   }
-  if (c === 1){ await redisExpire(key, 60); }
-  const limited = c > limitPerMin;
-  return { limited, retryAfter: 60 };
+  
+  if (record.tokens <= 0) {
+    return { limited: true, retryAfter: Math.ceil((record.resetAt - currentTime) / 1000) };
+  }
+  
+  record.tokens -= 1;
+  setLocal(key, record);
+  
+  return { limited: false, retryAfter: 0 };
 }
 
 

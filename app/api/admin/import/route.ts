@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { saveTasks } from "@/lib/store";
 
 export async function POST(req: Request){
-  const body = await req.json().catch(() => null);
-  if (!body) return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   try {
+    const body = await req.json();
     const saved = await saveTasks(body);
     return NextResponse.json({ ok: true, total: saved.tasks.length });
-  } catch (e:any){
-    return NextResponse.json({ error: "Validation failed", detail: e.message }, { status: 400 });
+  } catch (e: unknown){
+    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    return NextResponse.json({ error: "Validation failed", detail: errorMessage }, { status: 400 });
   }
 }
 

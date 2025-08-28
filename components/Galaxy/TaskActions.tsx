@@ -8,9 +8,14 @@ export type TaskActionsProps = {
 	loading: boolean;
 	onVerify: () => void;
 	taskId?: string;
+	cooldownSec?: number | null;
 };
 
-export default function TaskActions({ goHref, canVerify, loading, onVerify, taskId }: TaskActionsProps){
+export default function TaskActions({ goHref, canVerify, loading, onVerify, taskId, cooldownSec }: TaskActionsProps){
+	const label = typeof cooldownSec === 'number' && cooldownSec > 0
+		? `Verify in ${cooldownSec}s`
+		: 'Verify';
+
 	return (
 		<div className="flex flex-wrap items-center gap-2">
 			{goHref ? (
@@ -21,7 +26,7 @@ export default function TaskActions({ goHref, canVerify, loading, onVerify, task
 				</a>
 			) : null}
 			{canVerify ? (
-				<Button variant="glass" onClick={onVerify} loading={loading} aria-label="Verify">Verify</Button>
+				<Button variant="glass" onClick={onVerify} loading={loading} aria-label="Verify" disabled={typeof cooldownSec === 'number' && cooldownSec > 0}>{label}</Button>
 			) : (
 				<Tooltip content={<span aria-label="Connect wallet to verify">Connect wallet to verify</span>}>
 					<span>

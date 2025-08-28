@@ -17,6 +17,9 @@ export type Task = {
 	tags?: string[];
 	// Категория
 	category?: string;
+	// Верификация
+	verify_method?: "onchain" | "api";
+	verify_params?: Record<string, unknown>;
 };
 
 export type WeekSummary = {
@@ -44,6 +47,9 @@ export const TaskSchema = z.object({
 	tags: z.array(z.string()).optional(),
 	// Категория
 	category: z.string().optional(),
+	// Верификация
+	verify_method: z.union([z.literal('onchain'), z.literal('api')]).optional(),
+	verify_params: z.record(z.unknown()).optional(),
 });
 
 export const TasksSchema = z.array(TaskSchema);

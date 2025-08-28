@@ -1,11 +1,14 @@
-const inflight = new Map<string, Promise<any>>();
+const inflight = new Map<string, Promise<unknown>>();
 
-export function coalesce<T>(key: string, fn: () => Promise<T>) {
+export function coalesce<T>(key: string, fn: () => Promise<T>): Promise<T> {
   const existing = inflight.get(key);
   if (existing) return existing as Promise<T>;
-  const p = Promise.resolve().then(fn).finally(() => inflight.delete(key));
-  inflight.set(key, p);
-  return p;
+  
+  const promise = fn();
+  inflight.set(key, promise);
+  
+  promise.finally(() => inflight.delete(key));
+  return promise;
 }
 
 
