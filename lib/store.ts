@@ -22,6 +22,10 @@ async function readFileStore(){
 
 async function shouldRefreshCache(): Promise<boolean> {
   if (!CACHE) return true;
+  // Fast path: trust in-memory cache for a short window to avoid frequent fs.stat on hot paths
+  if (Date.now() - CACHE_TIMESTAMP < 30000) { // 30s
+    return false;
+  }
   
   try {
     const stats = await fs.stat(FILE);

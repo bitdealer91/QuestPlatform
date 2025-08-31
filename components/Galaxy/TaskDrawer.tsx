@@ -37,7 +37,7 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 		if (!open) return;
 		setLoading(true);
 		setError(null);
-		setTasks(null);
+		// Не обнуляем сразу, чтобы не мигал список; перерисуем по готовности
 		getJson(`/api/week/${weekId}/tasks`, TasksSchema)
 			.then((data) => {
 				const stored = address ? JSON.parse(localStorage.getItem(`somnia:verified:${address.toLowerCase()}`) || '[]') as string[] : [];

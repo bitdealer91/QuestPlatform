@@ -12,8 +12,6 @@ export default function VideoLoader() {
 	const [videoErrored, setVideoErrored] = useState(false);
 	const videoRef = useRef<HTMLVideoElement | null>(null);
 
-	const poster = "/assets/background.png";
-
 	useEffect(() => { setMounted(true); }, []);
 
 	useEffect(() => {
@@ -92,9 +90,8 @@ export default function VideoLoader() {
 				muted
 				playsInline
 				loop
-				poster={poster}
 			>
-				<source src="/video/Loading.mp4" type="video/mp4" />
+				<source src="/video/loading.MP4" type="video/mp4" />
 			</video>
 			{videoErrored && (
 				<div className="absolute inset-0">
@@ -119,3 +116,7 @@ export default function VideoLoader() {
 
 	return createPortal(overlay, document.body);
 }
+
+
+
+

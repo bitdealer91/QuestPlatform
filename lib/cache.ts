@@ -1,5 +1,7 @@
 // Redis (Upstash) + in-memory LRU fallback with TTL
 
+import { pipeline } from './redis';
+
 type CacheRecord = { value: unknown; expiresAt: number };
 
 const MAX_ENTRIES = Number(process.env.SOMNIA_CACHE_MAX_ENTRIES || 20000);
@@ -33,33 +35,14 @@ function setLocal(key: string, val: unknown, ttlSec: number){
   gcIfNeeded();
 }
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-
 // Оптимизированная функция Redis get с таймаутом
 async function redisGet(key: string): Promise<unknown | null> {
-  if (!REDIS_URL || !REDIS_TOKEN) return null;
-  
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 секунды таймаут
-    
-    const r = await fetch(`${REDIS_URL}/pipeline`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify([["GET", key]]),
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!r.ok) return null;
-    
-    const j = await r.json();
-    const arr = j?.result || j;
-    const res = Array.isArray(arr) ? arr[0]?.result : undefined;
-    if (!res) return null;
-    return JSON.parse(res);
+    const j = await pipeline([["GET", key]]);
+    const arr = j?.result?.[0]?.result as unknown[] | undefined;
+    const raw = arr?.[0];
+    if (raw == null) return null;
+    return JSON.parse(String(raw));
   } catch { 
     return null; 
   }
@@ -67,20 +50,8 @@ async function redisGet(key: string): Promise<unknown | null> {
 
 // Оптимизированная функция Redis set с таймаутом
 async function redisSet(key: string, value: unknown, ttlSec: number): Promise<void> {
-  if (!REDIS_URL || !REDIS_TOKEN) return;
-  
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 секунды таймаут
-    
-    await fetch(`${REDIS_URL}/pipeline`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify([["SET", key, JSON.stringify(value), "EX", String(ttlSec)]]),
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
+    await pipeline([["SET", key, JSON.stringify(value), "EX", String(ttlSec)]]);
   } catch {
     // Игнорируем ошибки Redis для production
   }

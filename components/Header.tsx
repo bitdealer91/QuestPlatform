@@ -6,12 +6,14 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import { useAccount, useBalance } from "wagmi";
+import { useDomain } from "@/hooks/useDomain";
 
 const SOMNIA_MAINNET_ID = 5031;
 
 export default function Header(){
 	const ctx = useReown();
 	const { address, isConnected, isConnecting } = useAccount();
+	const domain = useDomain({ registry: (process.env.NEXT_PUBLIC_SOMNIA_NAME_REGISTRY as `0x${string}` | undefined) });
 	const [profileOpen, setProfileOpen] = useState(false);
 	const [mounted, setMounted] = useState(false);
 	useEffect(() => setMounted(true), []);
@@ -56,7 +58,7 @@ export default function Header(){
 						) : isConnected && address ? (
 							<Button variant="glass" onClick={handleWallet} className="pl-3 pr-2 gap-2">
 								<span className="inline-block h-2 w-2 rounded-full bg-[color:var(--ok)]" />
-								<span className="tabular-nums">{short(address)}</span>
+								<span className="tabular-nums">{domain || short(address)}</span>
 								<ChevronDown className="h-4 w-4 opacity-80" />
 							</Button>
 						) : (

@@ -4,6 +4,9 @@ import { coalesce } from "@/lib/inflight";
 import { getCache, setCache } from "@/lib/cache";
 import { findTask } from "@/lib/store";
 import { writeAttempt, writeFailure, writeSuccess } from "@/lib/ledger";
+import { pipeline } from "@/lib/redis";
+import { dotGet } from "@/lib/jsonPath";
+import { createPublicClient, http, parseAbi } from "viem";
 
 export const runtime = "nodejs";
 
@@ -27,21 +30,22 @@ async function postJson(url: string, body: unknown, timeoutMs = 8000){
   } finally { clearTimeout(t); }
 }
 
-async function persistSuccess(address: string, taskId: string, xp: number){
-  const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-  const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!REDIS_URL || !REDIS_TOKEN) return;
+async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = 8000){
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    await fetch(`${REDIS_URL}/pipeline`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify([
-        ["SADD", `user:verified:${address}`, taskId],
-        ["INCRBY", `user:xp:${address}`, String(xp)],
-        ["SET", `user:last:${address}:${taskId}`, String(Date.now()), "EX", "2592000"],
-      ])
-    });
-  } catch {/* ignore */}
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally { clearTimeout(t); }
+}
+
+// (W3US path uses postJson with timeout)
+
+async function persistSuccess(address: string, taskId: string, xp: number){
+  await pipeline([
+    ["SADD", `user:verified:${address}`, taskId],
+    ["INCRBY", `user:xp:${address}`, String(xp)],
+    ["SET", `user:last:${address}:${taskId}`, String(Date.now()), "EX", "2592000"],
+  ]);
 }
 
 function cooldownKey(addr: string, taskId?: string){
@@ -75,9 +79,157 @@ export async function POST(req: Request){
     }
 
     const doVerify = async () => {
+      if (addr && taskId) { writeAttempt(addr, taskId).catch(() => {}); }
+
+      // Preload task and verify params if available
+      let task: Record<string, unknown> | null = null;
+      let vp: Record<string, unknown> = {};
+      try {
+        task = taskId ? await findTask(taskId) as unknown as Record<string, unknown> : null;
+        vp = (task as { verify_params?: Record<string, unknown> } | null)?.verify_params || {} as Record<string, unknown>;
+      } catch {}
+
+      // If task defines external verify API, use it first
+      try {
+        const cfg = (vp as Record<string, unknown>)['verify_api'] as Record<string, unknown> | undefined;
+        if (cfg && typeof cfg === 'object'){
+          const rawUrl = String(cfg['url'] || '').trim();
+          const method = String(cfg['method'] || 'GET').toUpperCase();
+          const success = (cfg['success'] || {}) as { path?: string; equals?: unknown };
+          const url = rawUrl.replace(':userAddress', addr || '');
+          const init: RequestInit = { headers: { 'Content-Type': 'application/json' } };
+          if (method === 'POST') init.method = 'POST'; else init.method = 'GET';
+          const bodyCfg = cfg['body'];
+          if (init.method === 'POST' && bodyCfg && typeof bodyCfg === 'object'){
+            init.body = JSON.stringify(bodyCfg);
+          }
+          const res = await fetchWithTimeout(url, init, 8000);
+          if (!res.ok){
+            if (addr && taskId){ await setCache(cooldownKey(addr, taskId), true, 60); writeFailure(addr, taskId, String(res.status)).catch(() => {}); }
+            const text = await res.text().catch(() => '');
+            return NextResponse.json({ error: 'upstream_error', status: res.status, detail: text || res.statusText }, { status: res.status });
+          }
+          const dataUnknown: unknown = await res.json().catch(() => ({}));
+          const obj = (dataUnknown ?? {}) as Record<string, unknown>;
+          let completed = false;
+          if (success && typeof success === 'object'){
+            // Support compound checks: success.all = [ { path, equals? }, ... ]
+            const all = (success as Record<string, unknown>)['all'];
+            if (Array.isArray(all)){
+              completed = all.every((cond) => {
+                if (!cond || typeof cond !== 'object') return false;
+                const p = String((cond as Record<string, unknown>)['path'] || '').trim();
+                if (!p) return false;
+                const v = dotGet(obj, p);
+                if ((cond as Record<string, unknown>)['equals'] !== undefined) {
+                  return v === (cond as Record<string, unknown>)['equals'];
+                }
+                return Boolean(v);
+              });
+            } else if ((success as Record<string, unknown>)['path']){
+              const val = dotGet(obj, String((success as Record<string, unknown>)['path']));
+              if ((success as Record<string, unknown>)['equals'] !== undefined){
+                completed = val === (success as Record<string, unknown>)['equals'];
+              } else {
+                completed = Boolean(val);
+              }
+            } else {
+              completed = Boolean(obj['completed'] === true || obj['ok'] === true || obj['verified'] === true);
+            }
+          } else {
+            completed = Boolean(obj['completed'] === true || obj['ok'] === true || obj['verified'] === true);
+          }
+
+          if (!completed && addr && taskId){
+            await setCache(cooldownKey(addr, taskId), true, 60);
+            writeFailure(addr, taskId, 'not_completed').catch(() => {});
+          }
+
+          if (completed && addr && taskId){
+            try {
+              const xpValue = (task as { xp?: unknown } | null)?.xp;
+              const xp = typeof xpValue === 'number' ? xpValue : 0;
+              writeSuccess(addr, taskId).catch(() => {});
+              persistSuccess(addr, taskId, xp).catch(() => {});
+            } catch {}
+          }
+          return NextResponse.json({ ...obj, completed });
+        }
+      } catch { /* fall through */ }
+
+      // If task asks for on-chain read call verification (domains or similar)
+      try {
+        const check = String((vp as Record<string, unknown>)['check'] || '').trim();
+        if (check === 'call'){
+          const rpcUrl = String((vp as Record<string, unknown>)['rpcUrl'] || process.env.NEXT_PUBLIC_RPC_URL || "").trim();
+          const contract = String((vp as Record<string, unknown>)['contract'] || '').trim();
+          const fnRaw = String((vp as Record<string, unknown>)['function'] || '').trim();
+          const fnSigRaw = String((vp as Record<string, unknown>)['functionSignature'] || '').trim();
+          const args = Array.isArray((vp as Record<string, unknown>)['args']) ? (vp as Record<string, unknown>)['args'] as unknown[] : [];
+          const success = (vp as Record<string, unknown>)['success'] as Record<string, unknown> | undefined;
+
+          if (!rpcUrl || !contract || (!fnRaw && !fnSigRaw)){
+            return NextResponse.json({ error: 'bad_verify_params' }, { status: 400 });
+          }
+
+          const functionSignature = fnSigRaw || (fnRaw.includes('returns') ? fnRaw : '');
+          if (!functionSignature){
+            // Default to a common Domains shape if only name provided
+            // Example: getDomainsOf(address) -> string[]
+            // Projects can pass full signature via functionSignature for custom cases
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const fallbackSig = `function ${fnRaw}(address) view returns (string[])`;
+          }
+
+          const usedSignature = functionSignature || `function ${fnRaw}(address) view returns (string[])`;
+          const abi = parseAbi([usedSignature]);
+
+          const client = createPublicClient({ transport: http(rpcUrl) });
+          // viem readContract infers functionName from signature
+          const functionName = (usedSignature.match(/function\s+(\w+)/)?.[1] || fnRaw) as string;
+
+          let completed = false;
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const result: any = await client.readContract({ address: contract as `0x${string}`, abi, functionName, args });
+            if (success && typeof success === 'object'){
+              const lenGt = Number((success as Record<string, unknown>)['length_gt'] ?? NaN);
+              if (!Number.isNaN(lenGt) && Array.isArray(result)){
+                completed = result.length > lenGt;
+              } else if ((success as Record<string, unknown>)['equals'] !== undefined){
+                completed = result === (success as Record<string, unknown>)['equals'];
+              } else {
+                completed = Boolean(result);
+              }
+            } else {
+              completed = Boolean(result);
+            }
+          } catch (err) {
+            if (addr && taskId){ await setCache(cooldownKey(addr, taskId), true, 60); writeFailure(addr, taskId, 'call_failed').catch(() => {}); }
+            return NextResponse.json({ error: 'call_failed' }, { status: 502 });
+          }
+
+          if (!completed && addr && taskId){
+            await setCache(cooldownKey(addr, taskId), true, 60);
+            writeFailure(addr, taskId, 'not_completed').catch(() => {});
+          }
+
+          if (completed && addr && taskId){
+            try {
+              const xpValue = (task as { xp?: unknown } | null)?.xp;
+              const xp = typeof xpValue === 'number' ? xpValue : 0;
+              writeSuccess(addr, taskId).catch(() => {});
+              persistSuccess(addr, taskId, xp).catch(() => {});
+            } catch {}
+          }
+
+          return NextResponse.json({ completed });
+        }
+      } catch { /* fall through */ }
+
+      // Fallback to W3US verify
       const base = getBaseUrl();
       const url = `${base}/verify`;
-      if (addr && taskId) { writeAttempt(addr, taskId).catch(() => {}); }
       const res = await postJson(url, body);
 
       if (!res.ok){
@@ -105,7 +257,7 @@ export async function POST(req: Request){
         } catch {}
       }
 
-      return NextResponse.json(obj);
+      return NextResponse.json({ ...obj, completed });
     };
 
     if (addr && taskId){

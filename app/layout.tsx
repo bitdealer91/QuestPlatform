@@ -10,6 +10,7 @@ import dynamic from 'next/dynamic';
 import NetworkGuard from '@/components/system/NetworkGuard';
 
 const AppKitProvider = dynamic(() => import('@/lib/reown').then(m => m.AppKitProvider), { ssr: false });
+const VideoLoader = dynamic(() => import('@/components/VideoLoader'), { ssr: false });
 
 // Предзагружаем кеш тасков
 preloadCache();
@@ -32,6 +33,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <VhFixer />
         <AppKitProvider>
+          <VideoLoader />
           <NetworkGuard />
           <Header />
           {children}

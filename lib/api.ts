@@ -2,14 +2,16 @@ import { z } from "zod";
 
 async function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)); }
 
-export async function getJson<T>(url: string, schema: z.ZodSchema<T>, opts?: { signal?: AbortSignal; retries?: number }) {
-	const { signal, retries = 2 } = opts || {};
+export async function getJson<T>(url: string, schema: z.ZodSchema<T>, opts?: { signal?: AbortSignal; retries?: number; timeoutMs?: number }) {
+	const { signal, retries = 1, timeoutMs = 2500 } = opts || {};
 	let attempt = 0;
 	let lastErr: unknown;
 	while (attempt <= retries) {
 		try {
 			const ctrl = new AbortController();
+			const t = setTimeout(() => ctrl.abort(), timeoutMs);
 			const res = await fetch(url, { signal: signal || ctrl.signal });
+			clearTimeout(t);
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const json = await res.json();
 			return schema.parse(json);

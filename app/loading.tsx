@@ -8,9 +8,8 @@ export default function Loading() {
         playsInline
         loop
         preload="auto"
-        poster="/assets/background.png"
       >
-        <source src="/video/Loading.mp4" type="video/mp4" />
+        <source src="/video/loading.MP4" type="video/mp4" />
       </video>
       <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 w-[min(640px,90vw)]" style={{ bottom: `calc(20px + env(safe-area-inset-bottom, 0px))` }}>
         <div className="h-3 rounded-md overflow-hidden bg-white/10 backdrop-blur">
