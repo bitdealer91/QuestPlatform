@@ -89,7 +89,7 @@ export default function TaskDetail({ task, walletAddress, onVerified }: TaskDeta
 				category: task.category,
 			}} />
 
-			<RewardSummary xp={task.xp} star={task.star} />
+			<RewardSummary xp={task.xp} star={task.star} status={status} />
 
 			{task.description && (
 				<p className="text-sm text-[color:var(--muted)] leading-relaxed max-w-[65ch]">
