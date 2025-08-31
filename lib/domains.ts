@@ -17,10 +17,10 @@ export async function resolvePrimaryDomain(address: `0x${string}`, options?: {
   const abi = parseAbi([functionSignature]);
   const client = createPublicClient({ transport: http(rpcUrl) });
   try {
-    const domains = await client.readContract({ address: registry, abi, functionName, args: [address] });
-    if (Array.isArray(domains) && domains.length > 0) {
+    const result: unknown = await client.readContract({ address: registry, abi, functionName, args: [address] });
+    if (Array.isArray(result) && result.length > 0) {
       // Return the first one as primary for now
-      return String(domains[0]);
+      return String(result[0]);
     }
     return null;
   } catch {
