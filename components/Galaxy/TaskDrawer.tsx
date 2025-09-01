@@ -50,6 +50,25 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 			.finally(() => setLoading(false));
 	}, [open, weekId, address]);
 
+	// Синхронизация с сервером (Redis): подтягиваем verified-список и обновляем локальный кэш
+	useEffect(() => {
+		if (!open || !address) return;
+		const addr = address.toLowerCase();
+		(async () => {
+			try {
+				const res = await fetch(`/api/profile?address=${addr}`);
+				if (!res.ok) return;
+				const json = await res.json().catch(() => null) as { verified?: unknown } | null;
+				const serverVerified = Array.isArray(json?.verified) ? (json!.verified as unknown[]).map(String) : [];
+				if (serverVerified.length > 0){
+					setVerifiedIds(new Set(serverVerified));
+					localStorage.setItem(`somnia:verified:${addr}`, JSON.stringify(serverVerified));
+					setTasks(prev => prev?.map(t => serverVerified.includes(t.id) ? { ...t, status: 'done' as const } : t) || prev);
+				}
+			} catch {}
+		})();
+	}, [open, address]);
+
 	const handleVerified = (taskId: string) => {
 		console.log('🎯 handleVerified called for task:', taskId);
 		console.log('🎯 Current address:', address);
