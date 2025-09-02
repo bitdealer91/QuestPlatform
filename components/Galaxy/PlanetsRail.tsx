@@ -48,15 +48,31 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 		const leftX = 24, rightX = 76; const yStart = 20, yStep = 11;
 		const map: Record<number, { x:number; y:number }> = {};
 		// Start on the right for the first planet, then alternate
-		PLANETS.forEach((p, idx) => { const x = idx % 2 === 0 ? rightX : leftX; const y = yStart + idx * yStep; map[p.id] = { x, y }; });
+		PLANETS.forEach((p, idx) => {
+			const x = idx % 2 === 0 ? rightX : leftX;
+			let y = yStart + idx * yStep;
+			if (p.id === 2) y += 4; // lower the 2nd planet to avoid mascot overlap
+			map[p.id] = { x, y };
+		});
 		return map;
 	}, [isMobile]);
+
+	// Build path points. On mobile, compute from layout positions so the curve crosses centers exactly.
+	const pathPoints = useMemo(() => {
+		const pts: { x:number; y:number }[] = [];
+		pts.push({ x: normStart.x, y: normStart.y });
+		PLANETS.forEach((p) => {
+			const pos = (isMobile && mobilePositions) ? mobilePositions[p.id]! : { x: p.x, y: p.y };
+			pts.push({ x: normalize(pos.x, PAD_X), y: normalize(pos.y, PAD_Y) });
+		});
+		return pts;
+	}, [normStart.x, normStart.y, isMobile, mobilePositions, PAD_X, PAD_Y]);
 
 	return (
 		<div ref={containerRef} className="relative w-full h-full overflow-hidden">
 			<Image src="/assets/background.png" alt="Galaxy background" fill priority className="object-cover" />
 
-			<CosmicPath points={points} chaos={isDesktop ? 0.2 : 0.28} />
+			<CosmicPath points={isMobile ? pathPoints : points} chaos={isDesktop ? 0.2 : 0.2} />
 
 			{/* Mascot anchor (visual only) */}
 			<div className="absolute pointer-events-none" style={{ left: `${normStart.x}%`, top: `${normStart.y}%`, transform: 'translate(-50%,-50%)' }}>
