@@ -17,9 +17,9 @@ export function useAnchors(container: HTMLElement | null) {
 				const cx = ((r.left + r.width / 2) - c.left) / Math.max(1, c.width) * 100;
 				let cy = ((r.top + r.height / 2) - c.top) / Math.max(1, c.height) * 100;
 				const order = Number((el as HTMLElement).dataset.pathOrder || 0);
-				if (order === 5) cy -= 2;
-				if (order === 7) cy -= 2;
-				if (order === 8) cy -= 2;
+				if (order === 5) cy -= 4;
+				if (order === 7) cy -= 4;
+				if (order === 8) cy -= 4;
 				return { x: cx, y: cy } as Pt;
 			});
 			setPts(list);
