@@ -2,10 +2,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { bezierThrough, VIEWBOX, Pt } from '@/lib/curves';
 
-export function CosmicPath({ points }:{
+export function CosmicPath({ points, chaos = 0.35 }:{
 	points: Pt[];
+	chaos?: number;
 }){
-	const d = useMemo(() => bezierThrough(points, 0.5, 0.35), [points]);
+	const d = useMemo(() => bezierThrough(points, 0.5, chaos), [points, chaos]);
 	const pathRef = useRef<SVGPathElement|null>(null);
 	const [len, setLen] = useState(0);
 	useEffect(()=>{ if (pathRef.current) setLen(pathRef.current.getTotalLength()); }, [d]);

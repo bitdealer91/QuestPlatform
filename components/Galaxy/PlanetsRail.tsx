@@ -23,8 +23,10 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 		return () => ro.disconnect();
 	}, []);
 	const ratio = dims.w / Math.max(1, dims.h);
-	const PAD_X = ratio > 1.6 ? 8 : 6; // slight responsive padding
-	const PAD_Y = ratio < 1.4 ? 8 : 6;
+	// Lock desktop padding to stabilize positions; keep a bit larger padding on narrow screens
+	const isDesktop = typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true;
+	const PAD_X = isDesktop ? 6 : (ratio > 1.6 ? 8 : 6);
+	const PAD_Y = isDesktop ? 6 : (ratio < 1.4 ? 8 : 6);
 	const normalize = (v: number, pad: number) => pad + (v * (100 - pad * 2)) / 100;
 	// Raise mascot higher so its center sits above the original
 	const normStart = useMemo(() => ({ x: normalize(START.x, PAD_X), y: normalize(START.y, PAD_Y) - 3 }), [PAD_X, PAD_Y]);
@@ -40,7 +42,7 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 		<div ref={containerRef} className="relative w-full h-full overflow-hidden">
 			<Image src="/assets/background.png" alt="Galaxy background" fill priority className="object-cover" />
 
-			<CosmicPath points={points} />
+			<CosmicPath points={points} chaos={isDesktop ? 0.2 : 0.35} />
 
 			{/* Mascot anchor (visual only) */}
 			<div className="absolute pointer-events-none" style={{ left: `${normStart.x}%`, top: `${normStart.y}%`, transform: 'translate(-50%,-50%)' }}>
