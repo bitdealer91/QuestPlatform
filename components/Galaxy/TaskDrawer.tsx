@@ -87,9 +87,8 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 			console.log('🎯 Updating global progress...');
 			const newProgress = addVerifiedTask(address, taskId, active);
 			console.log('🎯 New progress:', newProgress);
-			
 			// Принудительно обновляем GalaxyMap
-			forceGalaxyUpdate();
+			window.dispatchEvent(new CustomEvent('galaxy:progress-updated', { detail: { address, verifiedIds: Array.from(newProgress.verifiedTasks || new Set<string>()) } }));
 		} else {
 			console.log('🎯 Cannot update progress: address or active task missing');
 		}

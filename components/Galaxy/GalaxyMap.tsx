@@ -39,6 +39,18 @@ export default function GalaxyMap(){
 		return () => { cancelled = true; };
 	}, []);
 
+	// Реагируем на локальные обновления из TaskDrawer (событие galaxy:progress-updated)
+	useEffect(() => {
+		const onProgress = (e: Event) => {
+			const ev = e as CustomEvent<{ address?: string; verifiedIds?: string[] }>;
+			if (Array.isArray(ev.detail?.verifiedIds)){
+				setVerifiedIds(new Set(ev.detail.verifiedIds.map(String)));
+			}
+		};
+		window.addEventListener('galaxy:progress-updated', onProgress as EventListener);
+		return () => window.removeEventListener('galaxy:progress-updated', onProgress as EventListener);
+	}, []);
+
 	// Функция для подсчета звезд недели
 	const getStarsForWeek = useCallback((weekId: number) => {
 		if (!verifiedIds) return 0;
