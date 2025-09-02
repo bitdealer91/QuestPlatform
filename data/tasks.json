@@ -87,7 +87,7 @@
       "type": "action",
       "href": "https://migrate.quills.fun/",
       "xp": 40,
-      "star": true,
+      "star": false,
       "category": "NFT",
       "verify_method": "api",
       "verify_params": {
