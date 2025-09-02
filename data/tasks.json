@@ -141,7 +141,7 @@
       "verify_params": {
         "chainId": 5031,
         "verify_api": {
-          "url": "https://mainnet.somnia.w3us.site/api/v2/addresses/:userAddress/token-transfers?type=ERC-721%2CERC-1155&filter=to&token=0x178Ba151462299984120b2dA7AAd3fFA05a8F7e5",
+          "url": "https://mainnet.somnia.w3us.site/api/v2/addresses/:userAddress/token-transfers?type=ERC-721%2CERC-1155&filter=to&token=0x2De11BB966Bb23c8489740B5Db31fdfc129CE8Ef",
           "method": "GET",
           "success": { "path": "items", "length_gt": 0 }
         }
