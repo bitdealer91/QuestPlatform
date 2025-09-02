@@ -6,11 +6,11 @@
       "week": 1,
       "day": 1,
       "id": "mint",
-      "title": "Mint Sowmia Moodies NFT",
-      "description": "Mint a Sowmia Moodies NFT on Somnia Mainnet.",
+      "title": "Mint "Hi, I'm $SOMI" NFT on Dreava.art",
+      "description": "Mint "Hi, I'm $SOMI" NFT on Somnia Mainnet using Dreava.art platform",
       "type": "action",
-      "href": "https://dreava.art/launchpad/collection/0xd026be611d10DAc26E020c6c961eC69169741323",
-      "xp": 50,
+      "href": "https://dreava.art/launchpad/collection/0x32BD783d7f7be0828Fd9F7cD1a5915cE501aD9D1",
+      "xp": 20,
       "star": false,
       "tags": ["on-chain", "nft", "mint", "dreava", "metaeggs"],
       "category": "NFT Launchpad",
@@ -18,7 +18,7 @@
       "verify_params": {
         "chainId": 5031,
         "verify_api": {
-          "url": "https://mainnet.somnia.w3us.site/api/v2/addresses/:userAddress/token-transfers?type=ERC-721%2CERC-1155&filter=to&token=0xd026be611d10DAc26E020c6c961eC69169741323",
+          "url": "https://mainnet.somnia.w3us.site/api/v2/addresses/:userAddress/token-transfers?type=ERC-721%2CERC-1155&filter=to&token=0x32BD783d7f7be0828Fd9F7cD1a5915cE501aD9D1",
           "method": "GET",
           "success": { "path": "items", "length_gt": 0 }
         }
@@ -86,7 +86,7 @@
       "description": "Migrate your Quills NFTs to Somnia Mainnet using the official bridge.",
       "type": "action",
       "href": "https://migrate.quills.fun/",
-      "xp": 50,
+      "xp": 40,
       "star": true,
       "category": "NFT",
       "verify_method": "api",
@@ -134,7 +134,7 @@
       "description": "Mint a Variance PFP NFT on Somnia Mainnet.",
       "type": "action",
       "href": "https://www.playvariance.com/en/mint",
-      "xp": 20,
+      "xp": 60,
       "star": true,
       "category": "NFT",
       "verify_method": "api",
