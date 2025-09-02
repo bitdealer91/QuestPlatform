@@ -47,7 +47,8 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 		if (!isMobile) return null as Record<number, { x:number; y:number }> | null;
 		const leftX = 24, rightX = 76; const yStart = 20, yStep = 11;
 		const map: Record<number, { x:number; y:number }> = {};
-		PLANETS.forEach((p, idx) => { const x = idx % 2 === 0 ? leftX : rightX; const y = yStart + idx * yStep; map[p.id] = { x, y }; });
+		// Start on the right for the first planet, then alternate
+		PLANETS.forEach((p, idx) => { const x = idx % 2 === 0 ? rightX : leftX; const y = yStart + idx * yStep; map[p.id] = { x, y }; });
 		return map;
 	}, [isMobile]);
 
@@ -55,7 +56,7 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 		<div ref={containerRef} className="relative w-full h-full overflow-hidden">
 			<Image src="/assets/background.png" alt="Galaxy background" fill priority className="object-cover" />
 
-			<CosmicPath points={points} chaos={isDesktop ? 0.2 : 0.35} />
+			<CosmicPath points={points} chaos={isDesktop ? 0.2 : 0.28} />
 
 			{/* Mascot anchor (visual only) */}
 			<div className="absolute pointer-events-none" style={{ left: `${normStart.x}%`, top: `${normStart.y}%`, transform: 'translate(-50%,-50%)' }}>

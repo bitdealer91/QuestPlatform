@@ -17,9 +17,13 @@ export function useAnchors(container: HTMLElement | null) {
 				const cx = ((r.left + r.width / 2) - c.left) / Math.max(1, c.width) * 100;
 				let cy = ((r.top + r.height / 2) - c.top) / Math.max(1, c.height) * 100;
 				const order = Number((el as HTMLElement).dataset.pathOrder || 0);
-				if (order === 5) cy -= 4;
-				if (order === 7) cy -= 4;
-				if (order === 8) cy -= 4;
+				const isDesktop = typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true;
+				// Desktop-only lift near problematic nodes to better cross centers; skip on mobile
+				if (isDesktop) {
+					if (order === 5) cy -= 4;
+					if (order === 7) cy -= 4;
+					if (order === 8) cy -= 4;
+				}
 				return { x: cx, y: cy } as Pt;
 			});
 			setPts(list);
