@@ -25,11 +25,15 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 	const ratio = dims.w / Math.max(1, dims.h);
 	// Lock desktop padding to stabilize positions; keep a bit larger padding on narrow screens
 	const isDesktop = typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true;
+	const isMobile = typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : false;
 	const PAD_X = isDesktop ? 6 : (ratio > 1.6 ? 8 : 6);
 	const PAD_Y = isDesktop ? 6 : (ratio < 1.4 ? 8 : 6);
 	const normalize = (v: number, pad: number) => pad + (v * (100 - pad * 2)) / 100;
 	// Raise mascot higher so its center sits above the original
-	const normStart = useMemo(() => ({ x: normalize(START.x, PAD_X), y: normalize(START.y, PAD_Y) - 3 }), [PAD_X, PAD_Y]);
+	const normStart = useMemo(() => {
+		if (isMobile) return { x: normalize(10, PAD_X), y: normalize(10, PAD_Y) };
+		return { x: normalize(START.x, PAD_X), y: normalize(START.y, PAD_Y) - 3 };
+	}, [PAD_X, PAD_Y, isMobile]);
 	const points = useAnchors(containerRef.current);
 	const [profileOpen, setProfileOpen] = useState(false);
 	const [mascotHover, setMascotHover] = useState(false);
@@ -37,6 +41,15 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 
 	const UNLOCK_ENV = Number(process.env.NEXT_PUBLIC_UNLOCKED_COUNT || '1');
 	const unlockedCount = Number.isFinite(UNLOCK_ENV) ? Math.max(1, Math.min(PLANETS.length, Math.floor(UNLOCK_ENV))) : 1;
+
+	// Precomputed mobile positions (checkerboard)
+	const mobilePositions = useMemo(() => {
+		if (!isMobile) return null as Record<number, { x:number; y:number }> | null;
+		const leftX = 24, rightX = 76; const yStart = 20, yStep = 11;
+		const map: Record<number, { x:number; y:number }> = {};
+		PLANETS.forEach((p, idx) => { const x = idx % 2 === 0 ? leftX : rightX; const y = yStart + idx * yStep; map[p.id] = { x, y }; });
+		return map;
+	}, [isMobile]);
 
 	return (
 		<div ref={containerRef} className="relative w-full h-full overflow-hidden">
@@ -77,7 +90,7 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 			{PLANETS.map(p => {
 				const locked = p.id > unlockedCount; // unlock first N by env
 				return (
-					<div key={p.id} className="absolute" style={{ left: `${normalize(p.x, PAD_X)}%`, top: `${normalize(p.y, PAD_Y)}%`, transform: 'translate(-50%,-50%)' }}>
+					<div key={p.id} className="absolute" style={{ left: `${normalize(mobilePositions ? mobilePositions[p.id]?.x ?? p.x : p.x, PAD_X)}%`, top: `${normalize(mobilePositions ? mobilePositions[p.id]?.y ?? p.y : p.y, PAD_Y)}%`, transform: 'translate(-50%,-50%)' }}>
 						<div data-week-anchor={p.id} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-px" />
 						<PlanetNode
 							id={p.id}
