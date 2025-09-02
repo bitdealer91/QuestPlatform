@@ -57,11 +57,23 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 		return map;
 	}, [isMobile]);
 
+	// Build path points for mobile from our computed positions so the curve crosses centers exactly
+	const pathPoints = useMemo(() => {
+		if (!isMobile) return points as { x:number;y:number }[];
+		const pts: { x:number; y:number }[] = [];
+		pts.push({ x: normStart.x, y: normStart.y });
+		PLANETS.forEach((p) => {
+			const pos = mobilePositions ? mobilePositions[p.id]! : { x: p.x, y: p.y };
+			pts.push({ x: normalize(pos.x, PAD_X), y: normalize(pos.y, PAD_Y) });
+		});
+		return pts;
+	}, [isMobile, points, normStart.x, normStart.y, mobilePositions, PAD_X, PAD_Y]);
+
 	return (
 		<div ref={containerRef} className="relative w-full h-full overflow-hidden">
 			<Image src="/assets/background.png" alt="Galaxy background" fill priority className="object-cover" />
 
-			<CosmicPath points={points} chaos={isDesktop ? 0.2 : 0.15} />
+			<CosmicPath points={isMobile ? pathPoints : points} chaos={isDesktop ? 0.2 : 0.12} />
 
 			{/* Mascot anchor (visual only) */}
 			<div className="absolute pointer-events-none" style={{ left: `${normStart.x}%`, top: `${normStart.y}%`, transform: 'translate(-50%,-50%)' }}>
@@ -97,7 +109,7 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 				const locked = p.id > unlockedCount; // unlock first N by env
 				return (
 					<div key={p.id} className="absolute" style={{ left: `${normalize(mobilePositions ? mobilePositions[p.id]?.x ?? p.x : p.x, PAD_X)}%`, top: `${normalize(mobilePositions ? mobilePositions[p.id]?.y ?? p.y : p.y, PAD_Y)}%`, transform: 'translate(-50%,-50%)' }}>
-						<div data-week-anchor={p.id} data-planet-anchor data-path-order={p.id} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-px" />
+						<div data-week-anchor={p.id} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-px" />
 						<PlanetNode
 							id={p.id}
 							imgSrc={p.img}
