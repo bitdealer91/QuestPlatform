@@ -13,9 +13,10 @@ export type PlanetNodeProps = {
 	onView?: (id: number) => void;
 	onClaim?: (id: number) => void;
 	sizePx?: number;
+	claimEnabled?: boolean;
 };
 
-function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClaim, locked }: PlanetNodeProps) {
+function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClaim, locked, claimEnabled = false }: PlanetNodeProps) {
 	const [hover, setHover] = useState(false);
 	const canInteract = !locked;
 
@@ -64,7 +65,7 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
 					<div className={clsx('pointer-events-none w-[220px]', 'transition-all duration-200', hover ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2')}>
 						<div className="pointer-events-auto grid grid-cols-2 gap-2">
 							<button onClick={() => onView?.(id)} className="px-3 py-2 rounded-xl bg-[var(--primary)] text-black hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" aria-label={`View tasks for ${title}`}>View Tasks</button>
-							<button onClick={() => onClaim?.(id)} className="px-3 py-2 rounded-xl bg-[var(--card)] text-[var(--text)] border border-[var(--outline)] hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" aria-label={`Claim reward for ${title}`}>Claim</button>
+							<button onClick={() => claimEnabled && onClaim?.(id)} disabled={!claimEnabled} className={clsx('px-3 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[var(--ring)]', claimEnabled ? 'bg-[var(--card)] text-[var(--text)] border-[var(--outline)] hover:brightness-110' : 'bg-[color:var(--card)]/60 text-[color:var(--muted)] border-[color:var(--outline)]/60 cursor-not-allowed')} aria-label={`Claim reward for ${title}`}>{claimEnabled ? 'Claim' : 'Claim (locked)'}</button>
 						</div>
 					</div>
 				)}

@@ -9,9 +9,10 @@ export type TaskActionsProps = {
 	onVerify: () => void;
 	taskId?: string;
 	cooldownSec?: number | null;
+	isVerified?: boolean;
 };
 
-export default function TaskActions({ goHref, canVerify, loading, onVerify, taskId, cooldownSec }: TaskActionsProps){
+export default function TaskActions({ goHref, canVerify, loading, onVerify, taskId, cooldownSec, isVerified }: TaskActionsProps){
 	const label = typeof cooldownSec === 'number' && cooldownSec > 0
 		? `Verify in ${cooldownSec}s`
 		: 'Verify';
@@ -28,11 +29,17 @@ export default function TaskActions({ goHref, canVerify, loading, onVerify, task
 			{canVerify ? (
 				<Button variant="glass" onClick={onVerify} loading={loading} aria-label="Verify" disabled={typeof cooldownSec === 'number' && cooldownSec > 0}>{label}</Button>
 			) : (
-				<Tooltip content={<span aria-label="Connect wallet to verify">Connect wallet to verify</span>}>
+				isVerified ? (
 					<span>
-						<Button variant="glass" disabled aria-label="Verify disabled">Verify</Button>
+						<Button variant="glass" disabled aria-label="Task already verified">Verified</Button>
 					</span>
-				</Tooltip>
+				) : (
+					<Tooltip content={<span aria-label="Connect wallet to verify">Connect wallet to verify</span>}>
+						<span>
+							<Button variant="glass" disabled aria-label="Verify disabled">Verify</Button>
+						</span>
+					</Tooltip>
+				)
 			)}
 		</div>
 	);

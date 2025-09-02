@@ -11,6 +11,9 @@ export default function VideoLoader() {
 	const settledRef = useRef(false);
 	const [videoErrored, setVideoErrored] = useState(false);
 	const videoRef = useRef<HTMLVideoElement | null>(null);
+	const fullyReadyRef = useRef(false);
+	const startTsRef = useRef<number>(Date.now());
+	const minShowMsRef = useRef<number>(1200);
 
 	useEffect(() => { setMounted(true); }, []);
 
@@ -27,7 +30,9 @@ export default function VideoLoader() {
 			const preloads = Array.from(document.querySelectorAll('link[rel="preload"],link[rel="modulepreload"],link[rel="prefetch"]').values()).length;
 			parts.push(Math.min(25, preloads * 3));
 			const sum = parts.reduce((a, b) => a + b, 0);
-			targetRef.current = Math.min(95, Math.max(sum, targetRef.current));
+			// До полной готовности не даём заполнить до 100%
+			const cap = fullyReadyRef.current ? 100 : 99;
+			targetRef.current = Math.min(cap, Math.max(sum, targetRef.current));
 		};
 
 		try {
@@ -36,7 +41,10 @@ export default function VideoLoader() {
 		} catch {}
 		(document as unknown as { fonts?: { ready?: Promise<void> } }).fonts?.ready?.then(() => compute());
 
-		const finalize = () => { targetRef.current = 100; };
+		const finalize = () => {
+			// Помечаем, что страница догрузилась, но даём лайауту/реакту стабилизироваться
+			setTimeout(() => { fullyReadyRef.current = true; }, 400);
+		};
 		if (document.readyState === "complete") finalize();
 		const onRS = () => { if (document.readyState === "complete") finalize(); };
 		document.addEventListener("readystatechange", onRS);
@@ -46,7 +54,8 @@ export default function VideoLoader() {
 				const delta = Math.max(0, targetRef.current - p);
 				const step = Math.max(0.5, delta * 0.12);
 				const next = Math.min(100, p + step);
-				if (next >= 100 && !settledRef.current) {
+				const enoughTime = Date.now() - startTsRef.current >= minShowMsRef.current;
+				if (next >= 100 && fullyReadyRef.current && enoughTime && !settledRef.current) {
 					settledRef.current = true;
 					setTimeout(() => setDone(true), 600);
 				}

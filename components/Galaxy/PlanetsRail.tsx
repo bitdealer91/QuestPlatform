@@ -76,6 +76,7 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 				const locked = p.id > unlockedCount; // unlock first N by env
 				return (
 					<div key={p.id} className="absolute" style={{ left: `${normalize(p.x, PAD_X)}%`, top: `${normalize(p.y, PAD_Y)}%`, transform: 'translate(-50%,-50%)' }}>
+						<div data-week-anchor={p.id} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-px" />
 						<PlanetNode
 							id={p.id}
 							imgSrc={p.img}

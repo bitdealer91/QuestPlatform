@@ -150,6 +150,7 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 									href: active.href,
 									xp: active.reward.xp,
 									star: active.reward.star,
+									week: weekId || undefined,
 									// Добавляем данные о брендинге
 									brand: active.brand,
 									logo: active.logo,
@@ -161,6 +162,7 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 								}}
 								walletAddress={address || undefined}
 								onVerified={handleVerified}
+								alreadyVerified={active.status === 'done'}
 							/>
 						)}
 					</section>

@@ -17,6 +17,7 @@ export type TaskDetailProps = {
 		href?: string;
 		xp: number;
 		star?: boolean;
+		week?: number;
 		tags?: string[];
 		brand?: string;
 		logo?: string;
@@ -26,14 +27,22 @@ export type TaskDetailProps = {
 	};
 	walletAddress?: string;
 	onVerified: (taskId: string) => void;
+	alreadyVerified?: boolean;
 };
 
-export default function TaskDetail({ task, walletAddress, onVerified }: TaskDetailProps){
-	const [status, setStatus] = useState<'idle'|'pending'|'verified'|'error'>('idle');
+export default function TaskDetail({ task, walletAddress, onVerified, alreadyVerified }: TaskDetailProps){
+	const [status, setStatus] = useState<'idle'|'pending'|'verified'|'error'>(alreadyVerified ? 'verified' : 'idle');
 	const [loading, setLoading] = useState(false);
 	const [cooldownSec, setCooldownSec] = useState<number | null>(null);
-	const canVerify = !!walletAddress && !loading && status !== 'verified';
+	const canVerify = !!walletAddress && !loading && status !== 'verified' && !alreadyVerified;
 	const liveRegionRef = useRef<HTMLDivElement | null>(null);
+
+	// Ensure per-task isolation: reset state when switching to another task
+	useEffect(() => {
+		setStatus(alreadyVerified ? 'verified' : 'idle');
+		setCooldownSec(null);
+		setLoading(false);
+	}, [task.id, alreadyVerified]);
 
 	useEffect(() => {
 		if (!liveRegionRef.current) return;
@@ -52,6 +61,33 @@ export default function TaskDetail({ task, walletAddress, onVerified }: TaskDeta
 			if (res?.completed) {
 				setStatus('verified');
 				onVerified?.(task.id);
+				// Если у таска есть звезда, запускаем эффект полёта звезды к планете недели
+				if (task.star) {
+					try {
+						const btn = document.querySelector('[aria-label="Verify"]') as HTMLElement | null;
+						const anchor = document.querySelector(`[data-week-anchor="${task.week ?? 1}"]`) as HTMLElement | null; // target planet by week
+						if (btn && anchor) {
+							const b = btn.getBoundingClientRect();
+							const a = anchor.getBoundingClientRect();
+							const dot = document.createElement('div');
+							dot.style.position = 'fixed';
+							dot.style.left = `${b.left + b.width / 2}px`;
+							dot.style.top = `${b.top + b.height / 2}px`;
+							dot.style.width = '10px';
+							dot.style.height = '10px';
+							dot.style.borderRadius = '9999px';
+							dot.style.background = 'gold';
+							dot.style.boxShadow = '0 0 12px 4px rgba(255,215,0,.7)';
+							dot.style.zIndex = '2147483646';
+							document.body.appendChild(dot);
+							const anim = dot.animate([
+								{ transform: 'translate(0,0)', offset: 0 },
+								{ transform: `translate(${a.left + a.width/2 - (b.left + b.width/2)}px, ${a.top + a.height/2 - (b.top + b.height/2)}px)` , offset: 1 }
+							], { duration: 900, easing: 'cubic-bezier(.22,.61,.36,1)' });
+							anim.onfinish = () => dot.remove();
+						}
+					} catch {}
+				}
 				try { (await import('canvas-confetti')).default({ particleCount: 40, spread: 48, startVelocity: 28, scalar: .6, origin: { y: .88, x: .85 } }); } catch {}
 				toast.success('Verified ✅', `+${task.xp} XP${task.star ? ' · Core Star' : ''}`);
 			} else if (res?.error) {
@@ -128,7 +164,7 @@ export default function TaskDetail({ task, walletAddress, onVerified }: TaskDeta
 			<div ref={liveRegionRef} className="sr-only" aria-live="polite" />
 
 			<div className="flex items-center justify-between gap-3 sticky bottom-[max(env(safe-area-inset-bottom),12px)] lg:static bg-transparent">
-				<TaskActions goHref={task.href} canVerify={!!walletAddress && status !== 'verified'} loading={loading} onVerify={handleVerify} taskId={task.id} cooldownSec={cooldownSec ?? undefined as unknown as number | null} />
+				<TaskActions goHref={task.href} canVerify={!!walletAddress && status !== 'verified'} loading={loading} onVerify={handleVerify} taskId={task.id} cooldownSec={cooldownSec ?? undefined as unknown as number | null} isVerified={status === 'verified' || alreadyVerified} />
 				<Tooltip content={<div className="max-w-[220px]">
 					<div className="font-medium mb-1">Having trouble verifying?</div>
 					<ul className="list-disc pl-4 space-y-0.5 text-xs text-[color:var(--muted)]">

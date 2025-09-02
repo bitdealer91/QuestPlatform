@@ -40,12 +40,16 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs =
 
 // (W3US path uses postJson with timeout)
 
-async function persistSuccess(address: string, taskId: string, xp: number){
-  await pipeline([
+async function persistSuccess(address: string, taskId: string, xp: number, starWeek?: number){
+  const cmds: (string | number)[][] = [
     ["SADD", `user:verified:${address}`, taskId],
     ["INCRBY", `user:xp:${address}`, String(xp)],
     ["SET", `user:last:${address}:${taskId}`, String(Date.now()), "EX", "2592000"],
-  ]);
+  ];
+  if (typeof starWeek === 'number' && starWeek > 0 && starWeek <= 8){
+    cmds.push(["SADD", `user:stars:${address}:${starWeek}`, taskId]);
+  }
+  await pipeline(cmds);
 }
 
 function cooldownKey(addr: string, taskId?: string){
@@ -156,8 +160,11 @@ export async function POST(req: Request){
             try {
               const xpValue = (task as { xp?: unknown } | null)?.xp;
               const xp = typeof xpValue === 'number' ? xpValue : 0;
+              const weekVal = (task as { week?: unknown } | null)?.week;
+              const starFlag = (task as { star?: unknown } | null)?.star;
+              const starWeek = starFlag === true && typeof weekVal === 'number' ? weekVal : undefined;
               writeSuccess(addr, taskId).catch(() => {});
-              persistSuccess(addr, taskId, xp).catch(() => {});
+              persistSuccess(addr, taskId, xp, starWeek).catch(() => {});
             } catch {}
           }
           return NextResponse.json({ ...obj, completed });
@@ -226,8 +233,11 @@ export async function POST(req: Request){
             try {
               const xpValue = (task as { xp?: unknown } | null)?.xp;
               const xp = typeof xpValue === 'number' ? xpValue : 0;
+              const weekVal = (task as { week?: unknown } | null)?.week;
+              const starFlag = (task as { star?: unknown } | null)?.star;
+              const starWeek = starFlag === true && typeof weekVal === 'number' ? weekVal : undefined;
               writeSuccess(addr, taskId).catch(() => {});
-              persistSuccess(addr, taskId, xp).catch(() => {});
+              persistSuccess(addr, taskId, xp, starWeek).catch(() => {});
             } catch {}
           }
 
@@ -261,8 +271,11 @@ export async function POST(req: Request){
           const task = await findTask(taskId);
           const xpValue = (task as { xp?: unknown } | null)?.xp;
           const xp = typeof xpValue === 'number' ? xpValue : 0;
+          const weekVal = (task as { week?: unknown } | null)?.week;
+          const starFlag = (task as { star?: unknown } | null)?.star;
+          const starWeek = starFlag === true && typeof weekVal === 'number' ? weekVal : undefined;
           writeSuccess(addr, taskId).catch(() => {});
-          persistSuccess(addr, taskId, xp).catch(() => {});
+          persistSuccess(addr, taskId, xp, starWeek).catch(() => {});
         } catch {}
       }
 
