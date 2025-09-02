@@ -73,7 +73,9 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 		<div ref={containerRef} className="relative w-full h-full overflow-hidden">
 			<Image src="/assets/background.png" alt="Galaxy background" fill priority className="object-cover" />
 
-			<CosmicPath points={isMobile ? pathPoints : points} chaos={isDesktop ? 0.2 : 0.12} />
+			{!isMobile && (
+				<CosmicPath points={points} chaos={0.2} />
+			)}
 
 			{/* Mascot anchor (visual only) */}
 			<div className="absolute pointer-events-none" style={{ left: `${normStart.x}%`, top: `${normStart.y}%`, transform: 'translate(-50%,-50%)' }}>
