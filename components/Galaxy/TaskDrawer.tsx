@@ -56,16 +56,19 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 		const addr = address.toLowerCase();
 		(async () => {
 			try {
-				const res = await fetch(`/api/profile?address=${addr}`);
-				if (!res.ok) return;
+				const res = await fetch(`/api/profile?address=${addr}`, { cache: 'no-store' });
+				if (!res.ok) {
+					// даже если сервер не ответил, не трогаем локальный кэш
+					return;
+				}
 				const json = await res.json().catch(() => null) as { verified?: unknown } | null;
 				const serverVerified = Array.isArray(json?.verified) ? (json!.verified as unknown[]).map(String) : [];
-				if (serverVerified.length > 0){
-					setVerifiedIds(new Set(serverVerified));
-					localStorage.setItem(`somnia:verified:${addr}`, JSON.stringify(serverVerified));
-					setTasks(prev => prev?.map(t => serverVerified.includes(t.id) ? { ...t, status: 'done' as const } : t) || prev);
-				}
-			} catch {}
+				setVerifiedIds(new Set(serverVerified));
+				localStorage.setItem(`somnia:verified:${addr}`, JSON.stringify(serverVerified));
+				setTasks(prev => prev?.map(t => serverVerified.includes(t.id) ? { ...t, status: 'done' as const } : t) || prev);
+			} catch {
+				/* noop */
+			}
 		})();
 	}, [open, address]);
 

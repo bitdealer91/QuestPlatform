@@ -41,15 +41,32 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs =
 // (W3US path uses postJson with timeout)
 
 async function persistSuccess(address: string, taskId: string, xp: number, starWeek?: number){
-  const cmds: (string | number)[][] = [
-    ["SADD", `user:verified:${address}`, taskId],
-    ["INCRBY", `user:xp:${address}`, String(xp)],
-    ["SET", `user:last:${address}:${taskId}`, String(Date.now()), "EX", "2592000"],
-  ];
+  // Check if task already verified to avoid double XP
+  let already = false;
+  try {
+    const check = await pipeline([["SISMEMBER", `user:verified:${address}`, taskId]]);
+    if (check && Array.isArray(check.result)){
+      const maybe = (check.result[0] as { result?: unknown } | undefined)?.result as unknown;
+      if (Array.isArray(maybe)) {
+        already = Boolean(Number(maybe[0] ?? 0));
+      } else {
+        already = Boolean(Number(maybe as number | string | undefined || 0));
+      }
+    }
+  } catch {}
+
+  const cmds: (string | number)[][] = [];
+  // Always ensure membership and last-seen timestamp
+  cmds.push(["SADD", `user:verified:${address}`, taskId]);
+  cmds.push(["SET", `user:last:${address}:${taskId}`, String(Date.now()), "EX", "2592000"]);
+  // Only grant XP once
+  if (!already && xp > 0) {
+    cmds.push(["INCRBY", `user:xp:${address}`, String(xp)]);
+  }
   if (typeof starWeek === 'number' && starWeek > 0 && starWeek <= 8){
     cmds.push(["SADD", `user:stars:${address}:${starWeek}`, taskId]);
   }
-  await pipeline(cmds);
+  if (cmds.length > 0) await pipeline(cmds);
 }
 
 function cooldownKey(addr: string, taskId?: string){
