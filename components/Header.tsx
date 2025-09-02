@@ -38,7 +38,7 @@ export default function Header(){
 				<div className="h-[72px] w-full rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)]/70 backdrop-blur-xl shadow-elevated flex items-center justify-between">
 					<div className="flex items-center gap-3 pl-3">
 						<Image src="/assets/somnia-logo.svg" alt="Somnia" width={24} height={24} />
-						<span className="font-semibold tracking-tight">Somnia Quests</span>
+						<span className="font-semibold tracking-tight">The Somnia Odyssey</span>
 					</div>
 					<nav className="hidden md:flex items-center gap-8" aria-label="Main navigation" />
 					<div className="flex items-center gap-3 pr-3">

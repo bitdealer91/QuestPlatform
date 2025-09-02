@@ -18,7 +18,7 @@ preloadCache();
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Somnia Quests",
+  title: "The Somnia Odyssey",
   description: "Flagship quests for Somnia Mainnet",
   icons: { icon: "/assets/somnia-logo.svg" },
 };
