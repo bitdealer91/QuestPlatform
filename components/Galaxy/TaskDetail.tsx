@@ -31,6 +31,7 @@ export type TaskDetailProps = {
 export default function TaskDetail({ task, walletAddress, onVerified }: TaskDetailProps){
 	const [status, setStatus] = useState<'idle'|'pending'|'verified'|'error'>('idle');
 	const [loading, setLoading] = useState(false);
+	const [cooldownSec, setCooldownSec] = useState<number | null>(null);
 	const canVerify = !!walletAddress && !loading && status !== 'verified';
 	const liveRegionRef = useRef<HTMLDivElement | null>(null);
 
@@ -43,6 +44,7 @@ export default function TaskDetail({ task, walletAddress, onVerified }: TaskDeta
 	const handleVerify = useCallback(async () => {
 		if (!canVerify) return;
 		if (status === 'error') { setStatus('idle'); }
+		setCooldownSec(null);
 		setStatus('pending');
 		setLoading(true);
 		try {
@@ -54,6 +56,18 @@ export default function TaskDetail({ task, walletAddress, onVerified }: TaskDeta
 				toast.success('Verified ✅', `+${task.xp} XP${task.star ? ' · Core Star' : ''}`);
 			} else if (res?.error) {
 				setStatus('error');
+				if (typeof res.retryAfter === 'number' && res.retryAfter > 0){
+					setCooldownSec(res.retryAfter);
+					// простой таймер обратного отсчёта
+					const startedAt = Date.now();
+					const duration = res.retryAfter * 1000;
+					const tick = () => {
+						const remain = Math.max(0, Math.ceil((duration - (Date.now() - startedAt)) / 1000));
+						setCooldownSec(remain > 0 ? remain : null);
+						if (remain > 0) requestAnimationFrame(tick);
+					};
+					requestAnimationFrame(tick);
+				}
 				toast.info('Not verified yet', res.retryAfter ? `Try again in ${res.retryAfter}s.` : 'Complete the action and try again.');
 			} else {
 				setStatus('error');
@@ -114,7 +128,7 @@ export default function TaskDetail({ task, walletAddress, onVerified }: TaskDeta
 			<div ref={liveRegionRef} className="sr-only" aria-live="polite" />
 
 			<div className="flex items-center justify-between gap-3 sticky bottom-[max(env(safe-area-inset-bottom),12px)] lg:static bg-transparent">
-				<TaskActions goHref={task.href} canVerify={!!walletAddress && status !== 'verified'} loading={loading} onVerify={handleVerify} taskId={task.id} />
+				<TaskActions goHref={task.href} canVerify={!!walletAddress && status !== 'verified'} loading={loading} onVerify={handleVerify} taskId={task.id} cooldownSec={cooldownSec ?? undefined as unknown as number | null} />
 				<Tooltip content={<div className="max-w-[220px]">
 					<div className="font-medium mb-1">Having trouble verifying?</div>
 					<ul className="list-disc pl-4 space-y-0.5 text-xs text-[color:var(--muted)]">

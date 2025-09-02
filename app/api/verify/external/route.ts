@@ -128,8 +128,13 @@ export async function POST(req: Request){
               });
             } else if ((success as Record<string, unknown>)['path']){
               const val = dotGet(obj, String((success as Record<string, unknown>)['path']));
-              if ((success as Record<string, unknown>)['equals'] !== undefined){
-                completed = val === (success as Record<string, unknown>)['equals'];
+              const equals = (success as Record<string, unknown>)['equals'];
+              const lengthGtRaw = (success as Record<string, unknown>)['length_gt'];
+              const lengthGt = typeof lengthGtRaw === 'number' ? lengthGtRaw : Number(lengthGtRaw);
+              if (!Number.isNaN(lengthGt) && Array.isArray(val)){
+                completed = val.length > lengthGt;
+              } else if (equals !== undefined){
+                completed = val === equals;
               } else {
                 completed = Boolean(val);
               }
@@ -143,6 +148,8 @@ export async function POST(req: Request){
           if (!completed && addr && taskId){
             await setCache(cooldownKey(addr, taskId), true, 60);
             writeFailure(addr, taskId, 'not_completed').catch(() => {});
+            // Immediately inform client about cooldown so UI can show timer on first miss
+            return NextResponse.json({ error: 'cooldown', retryAfter: 60 }, { status: 429 });
           }
 
           if (completed && addr && taskId){
@@ -212,6 +219,7 @@ export async function POST(req: Request){
           if (!completed && addr && taskId){
             await setCache(cooldownKey(addr, taskId), true, 60);
             writeFailure(addr, taskId, 'not_completed').catch(() => {});
+            return NextResponse.json({ error: 'cooldown', retryAfter: 60 }, { status: 429 });
           }
 
           if (completed && addr && taskId){
@@ -245,6 +253,7 @@ export async function POST(req: Request){
       if (!completed && addr && taskId){
         await setCache(cooldownKey(addr, taskId), true, 60);
         writeFailure(addr, taskId, 'not_completed').catch(() => {});
+        return NextResponse.json({ error: 'cooldown', retryAfter: 60 }, { status: 429 });
       }
 
       if (completed && addr && taskId){

@@ -141,3 +141,11 @@ export async function preloadCache() {
     console.error('❌ Failed to preload tasks cache:', error);
   }
 }
+
+// Возвращает дату старта программы (если задана)
+export async function getProgramStart(): Promise<Date | null> {
+  const { programStart } = await loadTasks();
+  if (!programStart) return null;
+  const d = new Date(programStart);
+  return isNaN(d.getTime()) ? null : d;
+}

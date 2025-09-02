@@ -1,24 +1,27 @@
 {
-  "programStart": "2024-01-01T00:00:00Z",
+  "programStart": "2025-09-02T00:00:00Z",
   "weeks": 8,
   "tasks": [
     {
       "week": 1,
       "day": 1,
       "id": "mint",
-      "title": "Mint MetaEggs: Dmitry NFT",
-      "description": "Mint an NFT from the MetaEggs: Dmitry collection on Dreava Launchpad. Dmitry is the Gaming Community Manager of Somnia Network and an absolute legend!",
+      "title": "Mint Sowmia Moodies NFT",
+      "description": "Mint a Sowmia Moodies NFT on Somnia Mainnet.",
       "type": "action",
-      "href": "https://dreava.art/launchpad/collection/0x7a3c9ad059dde70780d7a1e9dbfbf3f34ab39850",
+      "href": "https://dreava.art/launchpad/collection/0xd026be611d10DAc26E020c6c961eC69169741323",
       "xp": 50,
-      "star": true,
+      "star": false,
       "tags": ["on-chain", "nft", "mint", "dreava", "metaeggs"],
       "category": "NFT Launchpad",
-      "verify_method": "onchain",
-      "verify_params": { 
-        "check": "transfer_event",
-        "contract": "0x7a3c9ad059dde70780d7a1e9dbfbf3f34ab39850",
-        "rpcUrl": "https://api.infra.mainnet.somnia.network/"
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://mainnet.somnia.w3us.site/api/v2/addresses/:userAddress/token-transfers?type=ERC-721%2CERC-1155&filter=to&token=0xd026be611d10DAc26E020c6c961eC69169741323",
+          "method": "GET",
+          "success": { "path": "items", "length_gt": 0 }
+        }
       },
       "brand": "dreava.art",
       "logo": "/brands/dreavalogo.png",
@@ -86,11 +89,14 @@
       "xp": 50,
       "star": true,
       "category": "NFT",
-      "verify_method": "onchain",
+      "verify_method": "api",
       "verify_params": {
-        "check": "transfer_event",
-        "contract": "0x90780D0641A6328719A636aB289175e2155328A3",
-        "rpcUrl": "https://api.infra.mainnet.somnia.network/"
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://mainnet.somnia.w3us.site/api/v2/addresses/:userAddress/token-transfers?type=ERC-721%2CERC-1155&filter=to&token=0x90780D0641A6328719A636aB289175e2155328A3",
+          "method": "GET",
+          "success": { "path": "items", "length_gt": 0 }
+        }
       },
       "brand": "Quills",
       "logo": "/brands/quills.png",
@@ -103,39 +109,121 @@
       "title": "Mint a Quills Pet",
       "description": "Mint a Quills Pet NFT on Somnia Mainnet.",
       "type": "action",
+      "href": "https://quills.fun/somzies",
       "xp": 50,
       "star": true,
       "category": "NFT",
-      "verify_method": "onchain",
+      "verify_method": "api",
       "verify_params": {
-        "check": "transfer_event",
-        "contract": "0xD9411a9372d02C23140485941F45dd09Da06A03C",
-        "rpcUrl": "https://api.infra.mainnet.somnia.network/"
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://mainnet.somnia.w3us.site/api/v2/addresses/:userAddress/token-transfers?type=ERC-721%2CERC-1155&filter=to&token=0xD9411a9372d02C23140485941F45dd09Da06A03C",
+          "method": "GET",
+          "success": { "path": "items", "length_gt": 0 }
+        }
       },
       "brand": "Quills",
       "logo": "/brands/quills.png",
       "brand_color": "#6366F1"
     },
     {
-      "week": 1,
+      "week": 2,
       "day": 1,
       "id": "variance-pfp-mint",
       "title": "Mint a Variance PFP",
       "description": "Mint a Variance PFP NFT on Somnia Mainnet.",
       "type": "action",
-      "href": "https://www.playvariance.com/en",
+      "href": "https://www.playvariance.com/en/mint",
       "xp": 20,
       "star": true,
       "category": "NFT",
-      "verify_method": "onchain",
+      "verify_method": "api",
       "verify_params": {
-        "check": "transfer_event",
-        "contract": "{{TODO: INSERT_CONTRACT_ADDRESS}}",
-        "rpcUrl": "https://api.infra.mainnet.somnia.network/"
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://mainnet.somnia.w3us.site/api/v2/addresses/:userAddress/token-transfers?type=ERC-721%2CERC-1155&filter=to&token=0x178Ba151462299984120b2dA7AAd3fFA05a8F7e5",
+          "method": "GET",
+          "success": { "path": "items", "length_gt": 0 }
+        }
       },
       "brand": "Variance",
       "logo": "/brands/variance.png",
       "brand_color": "#FF9800"
+    },
+    {
+      "week": 1,
+      "day": 3,
+      "id": "somniaexchange-swaps",
+      "title": "Perform 10 swaps on Somnia Exchange",
+      "description": "Perform at least 10 swaps on Somnia Mainnet using Somnia Exchange",
+      "type": "action",
+      "href": "[input link]",
+      "xp": 20,
+      "star": false,
+      "tags": ["on-chain","swap","trade"],
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "[input api]",
+          "method": "GET",
+          "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Somnia Exchange",
+      "logo": "/brands/somniaexchange.png",
+      "brand_color": "#6366F1",
+      "logo_variant": "dark"
+    },
+    {
+      "week": 1,
+      "day": 3,
+      "id": "somniaexchange-volume",
+      "title": "Make a total of $100 swap volume",
+      "description": "Make a total of $100 swap volume on Somnia Exchange",
+      "type": "action",
+      "href": "[input link]",
+      "xp": 20,
+      "star": false,
+      "tags": ["on-chain","swap","trade"],
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "[input api]",
+          "method": "GET",
+          "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Somnia Exchange",
+      "logo": "/brands/somniaexchange.png",
+      "brand_color": "#6366F1",
+      "logo_variant": "dark"
+    },
+    {
+      "week": 1,
+      "day": 3,
+      "id": "somniaexchange-liquidity",
+      "title": "Provide a total of $20 liquidity to SOMI-USDC token pair",
+      "description": "Provide a total of at least $20 liquidity to SOMI-USDC token pair on Somnia Exchange",
+      "type": "action",
+      "href": "[input link]",
+      "xp": 20,
+      "star": false,
+      "tags": ["on-chain","liquidity"],
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "[input api]",
+          "method": "GET",
+          "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Somnia Exchange",
+      "logo": "/brands/somniaexchange.png",
+      "brand_color": "#6366F1",
+      "logo_variant": "dark"
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getWeekTasks } from "@/lib/store";
+import { getProgramStart, getWeekTasks } from "@/lib/store";
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   const idNum = parseInt(params.id);
@@ -9,7 +9,23 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
 
   try {
     const items = await getWeekTasks(idNum);
-    const transformed = items.map((t) => ({
+    let useItems = items;
+    // Гейтинг по дате старта: показываем только задачи с day <= (сегодня - programStart)
+    try {
+      const start = await getProgramStart();
+      if (start) {
+        const now = new Date();
+        // Считаем дни с опорой на локальную дату (UTC-нейтрально): округляем до полночей
+        const dayMs = 24 * 60 * 60 * 1000;
+        const startDay = Math.floor(start.getTime() / dayMs);
+        const nowDay = Math.floor(now.getTime() / dayMs);
+        const elapsed = Math.max(0, nowDay - startDay) + 1; // Day 1 в день старта
+        // Фильтруем по полю day
+        const gated = items.filter((t) => (typeof (t as any).day === 'number' ? (t as any).day <= elapsed : true));
+        useItems = gated;
+      }
+    } catch {}
+    const transformed = useItems.map((t) => ({
       id: t.id,
       type: t.type,
       title: t.title,
