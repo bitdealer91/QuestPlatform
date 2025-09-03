@@ -10,16 +10,17 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   try {
     const items = await getWeekTasks(idNum);
     let useItems = items;
-    // Гейтинг по дате старта: показываем только задачи с day <= (сегодня - programStart)
+    // Гейтинг по дате старта: показываем только задачи с day <= elapsed
+    // Разблокировка новых дней происходит ежедневно в 12:00 UTC
     try {
       const start = await getProgramStart();
       if (start) {
         const now = new Date();
         // Считаем дни с опорой на локальную дату (UTC-нейтрально): округляем до полночей
         const dayMs = 24 * 60 * 60 * 1000;
-        const startDay = Math.floor(start.getTime() / dayMs);
-        const nowDay = Math.floor(now.getTime() / dayMs);
-        const elapsed = Math.max(0, nowDay - startDay) + 1; // Day 1 в день старта
+        const noonOffsetMs = 12 * 60 * 60 * 1000; // 12:00 UTC граница
+        // Сдвигаем границу на полдень UTC: в 12:00 UTC открывается следующий "day"
+        const elapsed = Math.max(0, Math.floor((now.getTime() - start.getTime() + noonOffsetMs) / dayMs)) + 1; // Day 1 в день старта
         // Фильтруем по полю day
         const gated = items.filter((t) => (typeof (t as any).day === 'number' ? (t as any).day <= elapsed : true));
         useItems = gated;
