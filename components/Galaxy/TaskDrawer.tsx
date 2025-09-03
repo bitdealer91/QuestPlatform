@@ -129,7 +129,9 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 									>
 										<div className="flex items-center justify-between">
 											<div className="font-medium truncate">{t.title}</div>
-											<span className={`text-xs rounded px-2 py-0.5 border ${t.status==='done' ? 'border-[color:var(--ok)] text-[color:var(--ok)]' : t.status==='pending' ? 'border-[color:var(--warn)] text-[color:var(--warn)]' : 'border-[color:var(--outline)] text-[color:var(--muted)]'}`}>{t.status === 'done' ? 'Verified' : t.status === 'pending' ? 'Pending' : 'To do'}</span>
+											{t.status==='done' && (
+												<span className={`text-xs rounded px-2 py-0.5 border border-[color:var(--ok)] text-[color:var(--ok)]`}>Verified</span>
+											)}
 										</div>
 										<div className="mt-2 flex items-center gap-2 text-xs">
 											<Badge variant="outline">+{t.reward.xp} XP</Badge>
