@@ -34,6 +34,7 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
       href: t.href,
       reward: { xp: t.xp, star: t.star },
       status: "todo" as const,
+      mandatory: (t as any).mandatory === true || (t as any)["mandatory task"] === true,
       brand: t.brand,
       logo: t.logo,
       brand_color: t.brand_color,

@@ -128,7 +128,7 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 										className={`w-full text-left rounded-[var(--radius)] border border-[color:var(--outline)] bg-[color:var(--card)]/70 backdrop-blur hover:bg-white/5 transition-colors mb-2 px-3 py-3 ${isActive ? 'ring-1 ring-[color:var(--ring)]' : ''}`}
 									>
 										<div className="flex items-center justify-between">
-											<div className="font-medium truncate">{t.title}</div>
+											<div className={`font-medium truncate ${t.mandatory ? 'text-green-400' : ''}`}>{t.title}</div>
 											{t.status==='done' && (
 												<span className={`text-xs rounded px-2 py-0.5 border border-[color:var(--ok)] text-[color:var(--ok)]`}>Verified</span>
 											)}

@@ -10,6 +10,8 @@ export const TaskZ = z.object({
   href: z.string().url().optional(),
   xp: z.number().int().min(0).default(10),
   star: z.boolean().default(false),
+  // support mandatory flag (and tolerate legacy key "mandatory task")
+  mandatory: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
   category: z.string().optional(),
   verify_method: z.union([z.literal('onchain'), z.literal('api')]).optional(),

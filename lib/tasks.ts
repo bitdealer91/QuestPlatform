@@ -8,6 +8,8 @@ export type Task = {
 	href?: string;
 	reward: { xp: number; star?: boolean };
 	status: "todo" | "pending" | "done";
+	// Mandatory flag for UI highlighting
+	mandatory?: boolean;
 	// Брендинг
 	brand?: string;
 	logo?: string;
@@ -38,6 +40,7 @@ export const TaskSchema = z.object({
 	href: z.string().url().optional(),
 	reward: z.object({ xp: z.number().int().min(0), star: z.boolean().optional() }),
 	status: z.union([z.literal('todo'), z.literal('pending'), z.literal('done')]),
+	mandatory: z.boolean().optional(),
 	// Брендинг
 	brand: z.string().optional(),
 	logo: z.string().optional(),
