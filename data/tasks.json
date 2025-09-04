@@ -64,6 +64,7 @@
       "href": "https://somnia.meme/",
       "xp": 20,
       "star": false,
+      "mandatory": true,
       "tags": ["on-chain","meme-coin","trade"],
       "verify_method": "api",
       "verify_params": {
