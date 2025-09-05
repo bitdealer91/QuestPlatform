@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import { useAccount, useBalance } from "wagmi";
 import { useDomain } from "@/hooks/useDomain";
+import Modal from "@/components/ui/Modal";
 
 const SOMNIA_MAINNET_ID = 5031;
 
@@ -16,6 +17,7 @@ export default function Header(){
 	const domain = useDomain({ registry: (process.env.NEXT_PUBLIC_SOMNIA_NAME_REGISTRY as `0x${string}` | undefined) });
 	const [profileOpen, setProfileOpen] = useState(false);
 	const [mounted, setMounted] = useState(false);
+	const [aboutOpen, setAboutOpen] = useState(false);
 	useEffect(() => setMounted(true), []);
 
 	const handleWallet = () => {
@@ -39,6 +41,15 @@ export default function Header(){
 					<div className="flex items-center gap-3 pl-3">
 						<Image src="/assets/somnia-logo.svg" alt="Somnia" width={24} height={24} />
 						<span className="font-semibold tracking-tight">The Somnia Odyssey</span>
+						<button
+							type="button"
+							aria-label="About The Somnia Odyssey"
+							onClick={() => setAboutOpen(true)}
+							className="ml-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[color:var(--outline)] bg-[color:var(--card)] text-xs transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] hover:scale-105 active:scale-95"
+						>
+							About
+							<span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--accent)] animate-pulse" />
+						</button>
 					</div>
 					<nav className="hidden md:flex items-center gap-8" aria-label="Main navigation" />
 					<div className="flex items-center gap-3 pr-3">
@@ -74,6 +85,22 @@ export default function Header(){
 				</div>
 			</div>
 			<ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} address={address || undefined} />
+
+			<Modal open={aboutOpen} onClose={() => setAboutOpen(false)} title="About The Somnia Odyssey" size="md" footer={(
+				<button
+					data-autofocus
+					className="inline-flex items-center justify-center px-4 py-2 rounded-[var(--radius)] border border-[color:var(--outline)] bg-[color:var(--card)] hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+					onClick={() => setAboutOpen(false)}
+				>
+					Ok
+				</button>
+			)}>
+				<div className="flex flex-col items-center gap-4">
+					<div className="relative w-full overflow-hidden rounded-[var(--radius)] border border-[color:var(--outline)]">
+						<Image src="/assets/Scroll (1).png" alt="About scroll" width={1024} height={768} className="w-full h-auto" />
+					</div>
+				</div>
+			</Modal>
 		</header>
 	);
 }
