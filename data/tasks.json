@@ -154,7 +154,7 @@
     },
     {
       "week": 1,
-      "day": 5,
+      "day": 6,
       "id": "somniaexchange-swaps",
       "title": "Perform 10 swaps on Somnia Exchange",
       "description": "Perform at least 10 swaps on Somnia Mainnet using Somnia Exchange",
@@ -179,7 +179,7 @@
     },
     {
       "week": 1,
-      "day": 5,
+      "day": 6,
       "id": "somniaexchange-volume",
       "title": "Make a total of $100 swap volume",
       "description": "Make a total of $100 swap volume on Somnia Exchange",
@@ -204,7 +204,7 @@
     },
     {
       "week": 1,
-      "day": 5,
+      "day": 6,
       "id": "somniaexchange-liquidity",
       "title": "Provide a total of $20 liquidity to SOMI-USDC token pair",
       "description": "Provide a total of at least $20 liquidity to SOMI-USDC token pair on Somnia Exchange",
