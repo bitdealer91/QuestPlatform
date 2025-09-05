@@ -117,7 +117,9 @@ export async function POST(req: Request){
           const rawUrl = String(cfg['url'] || '').trim();
           const method = String(cfg['method'] || 'GET').toUpperCase();
           const success = (cfg['success'] || {}) as { path?: string; equals?: unknown };
-          const url = rawUrl.replace(':userAddress', addr || '');
+          // Use the ORIGINAL address casing for external APIs (some providers are case-sensitive)
+          const extAddr = addrRaw || addr;
+          const url = rawUrl.replace(':userAddress', extAddr || '');
           const init: RequestInit = { headers: { 'Content-Type': 'application/json' } };
           if (method === 'POST') init.method = 'POST'; else init.method = 'GET';
           const bodyCfg = cfg['body'];
