@@ -93,7 +93,7 @@ export default function Header(){
 					<div className="relative z-10 h-full w-full flex items-center justify-center p-4">
 						<div className="w-full max-w-[min(980px,94vw)] mx-auto flex flex-col items-center gap-4 p-4">
 							<div className="w-full h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)] flex items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)]/10">
-								<img src="/assets/scroll.png" alt="About scroll" className="max-h-full max-w-full w-auto h-auto object-contain" />
+								<img src="/assets/scroll.png" alt="About scroll" className="w-auto h-auto object-contain max-w-[92%] max-h-[82%] md:max-w-[85%] md:max-h-[70%]" />
 							</div>
 							<button
 								data-autofocus
