@@ -92,14 +92,15 @@ export default function Header(){
 					<div className="relative z-10 h-full w-full flex items-center justify-center p-4">
 						<div className="w-[min(980px,94vw)] max-h-[90vh] mx-auto flex flex-col items-center gap-4">
 							<div className="w-full max-h-[80vh] overflow-auto rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)]/10">
-								<Image src="/assets/Scroll (1).png" alt="About scroll" width={1200} height={1600} className="block w-full h-auto" />
+								<img src="/assets/Scroll (1).png" alt="About scroll" className="block w-full h-auto" />
 							</div>
 							<button
 								data-autofocus
 								onClick={() => setAboutOpen(false)}
-								className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-[color:var(--accent)] text-white font-medium shadow hover:brightness-110 active:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] transition"
+								className="group relative overflow-hidden inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-[color:var(--accent)] text-white font-medium shadow transition transform hover:scale-[1.03] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
 							>
-								Ok
+								<span className="pointer-events-none absolute -inset-10 rounded-full bg-[conic-gradient(from_0deg,rgba(255,215,0,0.3),rgba(99,102,241,0.3),rgba(255,215,0,0.3))] blur-2xl opacity-0 group-hover:opacity-70 animate-[spin_6s_linear_infinite]" />
+								<span className="relative z-10">Ok</span>
 							</button>
 						</div>
 					</div>
