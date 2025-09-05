@@ -65,3 +65,21 @@ body{
 .animate-loading{
 	animation: loadingWidth 1.4s ease-in-out infinite;
 }
+
+/* Spark hover animation for About button */
+@keyframes sparkFlight{
+	0%{ transform: translate(0,0) scale(.7); opacity:0 }
+	15%{ opacity:1 }
+	100%{ transform: translate(var(--dx, 0px), var(--dy, -18px)) scale(0); opacity:0 }
+}
+
+.spark{
+	position:absolute; width:8px; height:8px; border-radius:9999px;
+	background: radial-gradient(circle, #ffe8a3 0%, #f1c76c 60%, rgba(255,215,0,0) 72%);
+	filter: drop-shadow(0 0 8px rgba(255,215,0,0.85));
+	will-change: transform, opacity;
+	opacity:0; pointer-events:none;
+	z-index: 20;
+}
+
+.group:hover .spark{ animation: sparkFlight 800ms ease-out forwards; }

@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import { useAccount, useBalance } from "wagmi";
 import { useDomain } from "@/hooks/useDomain";
+import AboutOverlay from "@/components/AboutOverlay";
+// Full-screen About overlay (no modal chrome)
 
 const SOMNIA_MAINNET_ID = 5031;
 
@@ -39,6 +41,7 @@ export default function Header(){
 					<div className="flex items-center gap-3 pl-3">
 						<Image src="/assets/somnia-logo.svg" alt="Somnia" width={24} height={24} />
 						<span className="font-semibold tracking-tight">The Somnia Odyssey</span>
+						<AboutOverlay />
 					</div>
 					<nav className="hidden md:flex items-center gap-8" aria-label="Main navigation" />
 					<div className="flex items-center gap-3 pr-3">
@@ -74,6 +77,8 @@ export default function Header(){
 				</div>
 			</div>
 			<ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} address={address || undefined} />
+
+			{/* About overlay moved into AboutOverlay component */}
 		</header>
 	);
 }
