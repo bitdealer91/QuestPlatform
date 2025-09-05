@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import { useAccount, useBalance } from "wagmi";
 import { useDomain } from "@/hooks/useDomain";
-import Modal from "@/components/ui/Modal";
+// Full-screen About overlay (no modal chrome)
 
 const SOMNIA_MAINNET_ID = 5031;
 
@@ -86,21 +86,25 @@ export default function Header(){
 			</div>
 			<ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} address={address || undefined} />
 
-			<Modal open={aboutOpen} onClose={() => setAboutOpen(false)} title="About The Somnia Odyssey" size="md" footer={(
-				<button
-					data-autofocus
-					className="inline-flex items-center justify-center px-4 py-2 rounded-[var(--radius)] border border-[color:var(--outline)] bg-[color:var(--card)] hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-					onClick={() => setAboutOpen(false)}
-				>
-					Ok
-				</button>
-			)}>
-				<div className="flex flex-col items-center gap-4">
-					<div className="relative w-full overflow-hidden rounded-[var(--radius)] border border-[color:var(--outline)]">
-						<Image src="/assets/Scroll (1).png" alt="About scroll" width={1024} height={768} className="w-full h-auto" />
+			{aboutOpen && (
+				<div className="fixed inset-0 z-50">
+					<div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+					<div className="relative z-10 h-full w-full flex items-center justify-center p-4">
+						<div className="w-[min(980px,94vw)] max-h-[90vh] mx-auto flex flex-col items-center gap-4">
+							<div className="w-full max-h-[80vh] overflow-auto rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)]/10">
+								<Image src="/assets/Scroll (1).png" alt="About scroll" width={1200} height={1600} className="block w-full h-auto" />
+							</div>
+							<button
+								data-autofocus
+								onClick={() => setAboutOpen(false)}
+								className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-[color:var(--accent)] text-white font-medium shadow hover:brightness-110 active:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] transition"
+							>
+								Ok
+							</button>
+						</div>
 					</div>
 				</div>
-			</Modal>
+			)}
 		</header>
 	);
 }
