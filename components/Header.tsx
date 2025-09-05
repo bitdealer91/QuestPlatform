@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import { useAccount, useBalance } from "wagmi";
 import { useDomain } from "@/hooks/useDomain";
+import AboutOverlay from "@/components/AboutOverlay";
 // Full-screen About overlay (no modal chrome)
 
 const SOMNIA_MAINNET_ID = 5031;
@@ -17,7 +18,6 @@ export default function Header(){
 	const domain = useDomain({ registry: (process.env.NEXT_PUBLIC_SOMNIA_NAME_REGISTRY as `0x${string}` | undefined) });
 	const [profileOpen, setProfileOpen] = useState(false);
 	const [mounted, setMounted] = useState(false);
-	const [aboutOpen, setAboutOpen] = useState(false);
 	useEffect(() => setMounted(true), []);
 
 	const handleWallet = () => {
@@ -41,16 +41,7 @@ export default function Header(){
 					<div className="flex items-center gap-3 pl-3">
 						<Image src="/assets/somnia-logo.svg" alt="Somnia" width={24} height={24} />
 						<span className="font-semibold tracking-tight">The Somnia Odyssey</span>
-						<button
-							type="button"
-							aria-label="About The Somnia Odyssey"
-							onClick={() => setAboutOpen(true)}
-							className="ml-2 group relative overflow-hidden inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[color:var(--outline)] bg-[color:var(--card)] text-xs transition transform hover:scale-[1.04] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-						>
-							<span className="pointer-events-none absolute -inset-8 rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,215,0,0.18),transparent_40%),radial-gradient(circle_at_70%_70%,rgba(99,102,241,0.18),transparent_40%)] blur-lg opacity-0 group-hover:opacity-100 transition" />
-							<span className="relative z-10">About</span>
-							<span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--accent)] animate-pulse relative z-10" />
-						</button>
+						<AboutOverlay />
 					</div>
 					<nav className="hidden md:flex items-center gap-8" aria-label="Main navigation" />
 					<div className="flex items-center gap-3 pr-3">
@@ -87,26 +78,7 @@ export default function Header(){
 			</div>
 			<ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} address={address || undefined} />
 
-			{aboutOpen && (
-				<div className="fixed inset-0 z-50">
-					<div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-					<div className="relative z-10 h-full w-full flex items-center justify-center p-4">
-						<div className="w-full max-w-[min(980px,94vw)] mx-auto flex flex-col items-center gap-4 p-4">
-							<div className="w-full h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)] flex items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)]/10">
-								<img src="/assets/scroll.png" alt="About scroll" className="w-auto h-auto object-contain max-w-[92%] max-h-[82%] md:max-w-[85%] md:max-h-[70%]" />
-							</div>
-							<button
-								data-autofocus
-								onClick={() => setAboutOpen(false)}
-								className="group relative overflow-hidden inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-[color:var(--accent)] text-white font-medium shadow transition transform hover:scale-[1.03] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-							>
-								<span className="pointer-events-none absolute -inset-10 rounded-full bg-[conic-gradient(from_0deg,rgba(255,215,0,0.3),rgba(99,102,241,0.32),rgba(255,215,0,0.3))] blur-2xl opacity-0 group-hover:opacity-70 animate-[spin_6s_linear_infinite]" />
-								<span className="relative z-10">Ok</span>
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
+			{/* About overlay moved into AboutOverlay component */}
 		</header>
 	);
 }
