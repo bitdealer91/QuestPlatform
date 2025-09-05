@@ -159,7 +159,7 @@
       "title": "Perform 10 swaps on Somnia Exchange",
       "description": "Perform at least 10 swaps on Somnia Mainnet using Somnia Exchange",
       "type": "action",
-      "href": "[input link]",
+      "href": "https://somnia.exchange/",
       "xp": 20,
       "star": false,
       "tags": ["on-chain","swap","trade"],
@@ -167,7 +167,7 @@
       "verify_params": {
         "chainId": 5031,
         "verify_api": {
-          "url": "[input api]",
+          "url": "https://api.somnia.exchange/api/event/verify-player-swap/:walletAddress",
           "method": "GET",
           "success": { "path": "completed", "equals": true }
         }
@@ -184,7 +184,7 @@
       "title": "Make a total of $100 swap volume",
       "description": "Make a total of $100 swap volume on Somnia Exchange",
       "type": "action",
-      "href": "[input link]",
+      "href": "https://somnia.exchange/",
       "xp": 20,
       "star": false,
       "tags": ["on-chain","swap","trade"],
@@ -192,7 +192,7 @@
       "verify_params": {
         "chainId": 5031,
         "verify_api": {
-          "url": "[input api]",
+          "url": "https://api.somnia.exchange/api/event/verify-player-volume/:walletAddress",
           "method": "GET",
           "success": { "path": "completed", "equals": true }
         }
@@ -209,7 +209,7 @@
       "title": "Provide a total of $20 liquidity to SOMI-USDC token pair",
       "description": "Provide a total of at least $20 liquidity to SOMI-USDC token pair on Somnia Exchange",
       "type": "action",
-      "href": "[input link]",
+      "href": "https://somnia.exchange/",
       "xp": 20,
       "star": false,
       "tags": ["on-chain","liquidity"],
@@ -217,7 +217,7 @@
       "verify_params": {
         "chainId": 5031,
         "verify_api": {
-          "url": "[input api]",
+          "url": "https://api.somnia.exchange/api/event/verify-player-liquidity/:walletAddress",
           "method": "GET",
           "success": { "path": "completed", "equals": true }
         }
