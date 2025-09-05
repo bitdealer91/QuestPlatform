@@ -91,9 +91,9 @@ export default function Header(){
 				<div className="fixed inset-0 z-50">
 					<div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 					<div className="relative z-10 h-full w-full flex items-center justify-center p-4">
-						<div className="w-[min(980px,94vw)] max-h-[90vh] mx-auto flex flex-col items-center gap-4">
-							<div className="w-full max-h-[80vh] overflow-auto rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)]/10">
-								<img src="/assets/scroll.png" alt="About scroll" className="block w-full h-auto" />
+						<div className="w-full max-w-[min(980px,94vw)] mx-auto flex flex-col items-center gap-4 p-4">
+							<div className="w-full h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)] flex items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)]/10">
+								<img src="/assets/scroll.png" alt="About scroll" className="max-h-full max-w-full w-auto h-auto object-contain" />
 							</div>
 							<button
 								data-autofocus
