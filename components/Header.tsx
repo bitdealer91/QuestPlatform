@@ -45,10 +45,11 @@ export default function Header(){
 							type="button"
 							aria-label="About The Somnia Odyssey"
 							onClick={() => setAboutOpen(true)}
-							className="ml-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[color:var(--outline)] bg-[color:var(--card)] text-xs transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] hover:scale-105 active:scale-95"
+							className="ml-2 group relative overflow-hidden inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[color:var(--outline)] bg-[color:var(--card)] text-xs transition transform hover:scale-[1.04] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
 						>
-							About
-							<span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--accent)] animate-pulse" />
+							<span className="pointer-events-none absolute -inset-8 rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,215,0,0.18),transparent_40%),radial-gradient(circle_at_70%_70%,rgba(99,102,241,0.18),transparent_40%)] blur-lg opacity-0 group-hover:opacity-100 transition" />
+							<span className="relative z-10">About</span>
+							<span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--accent)] animate-pulse relative z-10" />
 						</button>
 					</div>
 					<nav className="hidden md:flex items-center gap-8" aria-label="Main navigation" />
@@ -92,14 +93,14 @@ export default function Header(){
 					<div className="relative z-10 h-full w-full flex items-center justify-center p-4">
 						<div className="w-[min(980px,94vw)] max-h-[90vh] mx-auto flex flex-col items-center gap-4">
 							<div className="w-full max-h-[80vh] overflow-auto rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)]/10">
-								<img src="/assets/Scroll (1).png" alt="About scroll" className="block w-full h-auto" />
+								<img src="/assets/scroll.png" alt="About scroll" className="block w-full h-auto" />
 							</div>
 							<button
 								data-autofocus
 								onClick={() => setAboutOpen(false)}
 								className="group relative overflow-hidden inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-[color:var(--accent)] text-white font-medium shadow transition transform hover:scale-[1.03] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
 							>
-								<span className="pointer-events-none absolute -inset-10 rounded-full bg-[conic-gradient(from_0deg,rgba(255,215,0,0.3),rgba(99,102,241,0.3),rgba(255,215,0,0.3))] blur-2xl opacity-0 group-hover:opacity-70 animate-[spin_6s_linear_infinite]" />
+								<span className="pointer-events-none absolute -inset-10 rounded-full bg-[conic-gradient(from_0deg,rgba(255,215,0,0.3),rgba(99,102,241,0.32),rgba(255,215,0,0.3))] blur-2xl opacity-0 group-hover:opacity-70 animate-[spin_6s_linear_infinite]" />
 								<span className="relative z-10">Ok</span>
 							</button>
 						</div>
