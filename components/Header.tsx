@@ -41,9 +41,10 @@ export default function Header(){
 					<div className="flex items-center gap-3 pl-3">
 						<Image src="/assets/somnia-logo.svg" alt="Somnia" width={24} height={24} />
 						<span className="font-semibold tracking-tight">The Somnia Odyssey</span>
+					</div>
+					<div className="flex flex-1 items-center justify-center" aria-label="Main navigation">
 						<AboutOverlay />
 					</div>
-					<nav className="hidden md:flex items-center gap-8" aria-label="Main navigation" />
 					<div className="flex items-center gap-3 pr-3">
 						<span className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[color:var(--outline)] bg-[color:var(--card)] text-xs">Somnia Mainnet</span>
 						{formattedBal && (
