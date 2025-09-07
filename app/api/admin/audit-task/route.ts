@@ -132,12 +132,13 @@ export async function POST(req: Request){
       }));
       results.forEach((ok, idx) => {
         const addr = slice[idx];
+        const addrStr = typeof addr === 'string' ? addr : String(addr || '');
         if (ok){
           passedNew++;
-          if (sampleOk.length < 50) sampleOk.push(addr);
+          if (sampleOk.length < 50) sampleOk.push(addrStr);
         } else {
           failedNew++;
-          if (sampleFail.length < 50) sampleFail.push(addr);
+          if (sampleFail.length < 50) sampleFail.push(addrStr);
         }
       });
     }
