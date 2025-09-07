@@ -73,6 +73,23 @@ function cooldownKey(addr: string, taskId?: string){
   return taskId ? `cooldown:${addr}:${taskId}` : `cooldown:${addr}`;
 }
 
+// Resolve dynamic placeholders in args (e.g., ":userAddress", ":tokenId", ":vp.someKey")
+function resolveArgs(argsRaw: unknown[], addrRaw: string, addrLower: string, vp: Record<string, unknown>): unknown[]{
+  return argsRaw.map((arg) => {
+    if (typeof arg === 'string'){
+      const val = arg.trim();
+      if (val === ':userAddress' || val === ':walletAddress' || val === ':address') return addrRaw || addrLower;
+      if (val === ':addressLower') return addrLower;
+      if (val === ':tokenId') return (vp['tokenId'] as unknown) ?? arg;
+      if (val.startsWith(':vp.')){
+        const key = val.slice(4);
+        return (vp as Record<string, unknown>)[key] as unknown ?? arg;
+      }
+    }
+    return arg;
+  });
+}
+
 export async function POST(req: Request){
   try {
     const raw = await req.json().catch(() => ({}));
@@ -110,7 +127,77 @@ export async function POST(req: Request){
         vp = (task as { verify_params?: Record<string, unknown> } | null)?.verify_params || {} as Record<string, unknown>;
       } catch {}
 
-      // If task defines external verify API, use it first
+      // Decide verification path: explicit onchain or API/indexer
+      const verifyMethod = String(((task as { verify_method?: unknown } | null)?.verify_method || '') as string).trim();
+      const wantsOnchain = verifyMethod === 'onchain' || String((vp as Record<string, unknown>)['check'] || '').trim() === 'call';
+
+      // If task asks for on-chain read call verification
+      if (wantsOnchain){
+        try {
+          const rpcUrl = String((vp as Record<string, unknown>)['rpcUrl'] || process.env.NEXT_PUBLIC_RPC_URL || "").trim() ||
+                         'https://api.infra.mainnet.somnia.network/';
+          const contract = String((vp as Record<string, unknown>)['contract'] || '').trim();
+          const fnRaw = String((vp as Record<string, unknown>)['function'] || '').trim();
+          const fnSigRaw = String((vp as Record<string, unknown>)['functionSignature'] || '').trim();
+          const argsInput = Array.isArray((vp as Record<string, unknown>)['args']) ? (vp as Record<string, unknown>)['args'] as unknown[] : [];
+          const success = (vp as Record<string, unknown>)['success'] as Record<string, unknown> | undefined;
+
+          if (!contract || (!fnRaw && !fnSigRaw)){
+            return NextResponse.json({ error: 'bad_verify_params' }, { status: 400 });
+          }
+
+          const functionSignature = fnSigRaw || (fnRaw.includes('returns') ? fnRaw : '');
+          const usedSignature = functionSignature || `function ${fnRaw}(address) view returns (bool)`;
+          const abi = parseAbi([usedSignature]);
+
+          const client = createPublicClient({ transport: http(rpcUrl) });
+          const functionName = (usedSignature.match(/function\s+(\w+)/)?.[1] || fnRaw) as string;
+          const args = resolveArgs(argsInput, addrRaw, addr, vp);
+
+          let completed = false;
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const result: any = await client.readContract({ address: contract as `0x${string}`, abi, functionName, args });
+            if (success && typeof success === 'object'){
+              const lenGt = Number((success as Record<string, unknown>)['length_gt'] ?? NaN);
+              if (!Number.isNaN(lenGt) && Array.isArray(result)){
+                completed = result.length > lenGt;
+              } else if ((success as Record<string, unknown>)['equals'] !== undefined){
+                completed = result === (success as Record<string, unknown>)['equals'];
+              } else {
+                completed = Boolean(result);
+              }
+            } else {
+              completed = Boolean(result);
+            }
+          } catch (err) {
+            if (addr && taskId){ await setCache(cooldownKey(addr, taskId), true, 60); writeFailure(addr, taskId, 'call_failed').catch(() => {}); }
+            return NextResponse.json({ error: 'call_failed' }, { status: 502 });
+          }
+
+          if (!completed && addr && taskId){
+            await setCache(cooldownKey(addr, taskId), true, 60);
+            writeFailure(addr, taskId, 'not_completed').catch(() => {});
+            return NextResponse.json({ error: 'cooldown', retryAfter: 60 }, { status: 429 });
+          }
+
+          if (completed && addr && taskId){
+            try {
+              const xpValue = (task as { xp?: unknown } | null)?.xp;
+              const xp = typeof xpValue === 'number' ? xpValue : 0;
+              const weekVal = (task as { week?: unknown } | null)?.week;
+              const starFlag = (task as { star?: unknown } | null)?.star;
+              const starWeek = starFlag === true && typeof weekVal === 'number' ? weekVal : undefined;
+              writeSuccess(addr, taskId).catch(() => {});
+              persistSuccess(addr, taskId, xp, starWeek).catch(() => {});
+            } catch {}
+          }
+
+          return NextResponse.json({ completed });
+        } catch { /* fall through to API if misconfigured */ }
+      }
+
+      // If task defines external verify API, use it
       try {
         const cfg = (vp as Record<string, unknown>)['verify_api'] as Record<string, unknown> | undefined;
         if (cfg && typeof cfg === 'object'){
@@ -201,8 +288,19 @@ export async function POST(req: Request){
           const contract = String((vp as Record<string, unknown>)['contract'] || '').trim();
           const fnRaw = String((vp as Record<string, unknown>)['function'] || '').trim();
           const fnSigRaw = String((vp as Record<string, unknown>)['functionSignature'] || '').trim();
-          const args = Array.isArray((vp as Record<string, unknown>)['args']) ? (vp as Record<string, unknown>)['args'] as unknown[] : [];
+          const rawArgs = Array.isArray((vp as Record<string, unknown>)['args']) ? (vp as Record<string, unknown>)['args'] as unknown[] : [];
           const success = (vp as Record<string, unknown>)['success'] as Record<string, unknown> | undefined;
+          const extAddr = addrRaw || addr;
+          const args = rawArgs.map((a) => {
+            if (typeof a === 'string'){
+              return a
+                .replace(':userAddress', extAddr || '')
+                .replace(':walletAddress', extAddr || '')
+                .replace(':address', extAddr || '')
+                .replace('{{address}}', extAddr || '');
+            }
+            return a;
+          });
 
           if (!rpcUrl || !contract || (!fnRaw && !fnSigRaw)){
             return NextResponse.json({ error: 'bad_verify_params' }, { status: 400 });
