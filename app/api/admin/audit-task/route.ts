@@ -92,7 +92,8 @@ export async function POST(req: Request){
     for (let i = 0; i < keys.length; i++){
       const v = sisArr[i];
       const num = typeof v === 'number' ? v : Number(v || 0) || 0;
-      if (num === 1) candidateKeys.push(keys[i]);
+      const key = keys[i];
+      if (num === 1 && key) candidateKeys.push(key);
     }
 
     const totalVerifiedOld = candidateKeys.length;
