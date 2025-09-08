@@ -238,18 +238,20 @@
       "xp": 60,
       "star": false,
       "tags": ["on-chain","domains"],
-      "verify_method": "external",
-      "verify_params": { "chainId": 5031 },
-      "verify_api": {
-        "url": "https://api.somnia.domains/api/event/verify-player/:walletAddress",
-        "method": "GET",
-        "body": {},
-        "success": { "path": "completed", "equals": true }
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://api.somnia.domains/api/event/verify-player/:walletAddress",
+          "method": "GET",
+          "body": {},
+          "success": { "path": "completed", "equals": true }
+        }
       },
       "brand": "Somnia Domains",
       "logo": "/brands/Somniadomains.png",
       "brand_color": "#6366F1",
-      "logo_variant": "transparent"
+      "logo_variant": "dark"
     }
   ]
 }
