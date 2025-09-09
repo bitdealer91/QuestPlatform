@@ -258,7 +258,7 @@
       "day": 9,
       "id": "pixcape-mint",
       "title": "Claim the treasure chest NFT",
-      "description": "Mint your treasure chest NFT on Pixcape Hive Invasion",
+      "description": "After connecting your wallet to the website, click on the \"claim\" button near the chest image.",
       "type": "action",
       "href": "https://www.pixcape.games/playtest",
       "xp": 60,
