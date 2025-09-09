@@ -37,14 +37,15 @@ export async function GET(req: Request){
     }
     const endAt = start ? toUnixSeconds(new Date(start.getTime() + totalWeeks * weeksMs)) : toUnixSeconds(new Date(now.getTime() + totalWeeks * weeksMs));
 
-    // Precompute week XP totals from task spec
-    const weekTotalXp: number[] = Array.from({ length: totalWeeks }, () => 0);
+    // Collect mandatory task ids per week
+    const mandatoryByWeek: string[][] = Array.from({ length: totalWeeks }, () => []);
     for (const t of allTasks){
       const w = (t as { week?: number }).week;
-      const xp = (t as { xp?: number }).xp ?? 0;
+      const id = (t as { id?: string }).id || "";
+      const isMandatory = ((t as unknown as Record<string, unknown>)?.["mandatory"] === true) || ((t as unknown as Record<string, unknown>)?.["mandatory task"] === true);
+      if (!id) continue;
       if (typeof w === 'number' && w >= 1 && w <= totalWeeks){
-        const idx = w - 1;
-        weekTotalXp[idx] = (weekTotalXp[idx] ?? 0) + xp;
+        if (isMandatory) mandatoryByWeek[w - 1].push(id);
       }
     }
 
@@ -62,26 +63,12 @@ export async function GET(req: Request){
 
     const verifiedSet = new Set(verified);
 
-    // Sum verified XP per week
-    const weekVerifiedXp: number[] = Array.from({ length: totalWeeks }, () => 0);
-    for (const t of allTasks){
-      const id = (t as { id?: string }).id || "";
-      if (!id || !verifiedSet.has(id)) continue;
-      const w = (t as { week?: number }).week;
-      const xp = (t as { xp?: number }).xp ?? 0;
-      if (typeof w === 'number' && w >= 1 && w <= totalWeeks){
-        const idx = w - 1;
-        weekVerifiedXp[idx] = (weekVerifiedXp[idx] ?? 0) + xp;
-      }
-    }
-
-    // Each week caps at 10%
+    // Each week gives 10% only if ALL mandatory tasks of that week are verified
     const capPerWeek = 10;
-    const weeks = weekTotalXp.map((total, idx) => {
-      const totalXp = total ?? 0;
-      const got = weekVerifiedXp[idx] ?? 0;
-      const pct = totalXp > 0 ? Math.min(capPerWeek, Math.floor((got / totalXp) * capPerWeek)) : 0;
-      return { unlockedPercentage: pct };
+    const weeks = mandatoryByWeek.map((ids) => {
+      if (!ids || ids.length === 0) return { unlockedPercentage: 0 };
+      const allDone = ids.every((id) => verifiedSet.has(id));
+      return { unlockedPercentage: allDone ? capPerWeek : 0 };
     });
     const totalUnlockedPercentage = weeks.reduce((s, w) => s + (w.unlockedPercentage || 0), 0);
 
