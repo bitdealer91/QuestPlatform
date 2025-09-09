@@ -292,12 +292,14 @@
       "mandatory": true,
       "tags": ["in-game"],
       "verify_method": "api",
-      "verify_params": { "chainId": 5031 },
-      "verify_api": {
-        "url": "https://ufw1v1t1id.execute-api.eu-north-1.amazonaws.com/dev/player?wallet_id=:walletAddress&achievement=mission1",
-        "method": "GET",
-        "body": {},
-        "success": { "path": "completed", "equals": true }
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://ufw1v1t1id.execute-api.eu-north-1.amazonaws.com/dev/player?wallet_id=:walletAddress&achievement=mission1",
+          "method": "GET",
+          "body": {},
+          "success": { "path": "completed", "equals": true }
+        }
       },
       "brand": "Hive Invasion",
       "logo": "/brands/hiveinvasion.png",
