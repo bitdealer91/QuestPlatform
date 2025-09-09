@@ -60,10 +60,14 @@ export async function GET(req: Request){
     let verified: string[] = [];
     try {
       const raw = (verifiedRes as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
-      if (Array.isArray(raw)) verified = Array.isArray(raw[0]?.result) ? (raw[0]!.result as unknown[]).map(String) : [];
-      else if (raw && Array.isArray(raw.result)) {
+      if (Array.isArray(raw)) {
+        const bucket = raw[0]?.result as unknown;
+        if (Array.isArray(bucket)) verified = (bucket as unknown[]).map(String);
+        else if (typeof bucket === 'string') verified = bucket.split(',').map((s) => s.trim()).filter(Boolean);
+      } else if (raw && Array.isArray(raw.result)) {
         const bucket = raw.result[0]?.result as unknown;
-        verified = Array.isArray(bucket) ? (bucket as unknown[]).map(String) : [];
+        if (Array.isArray(bucket)) verified = (bucket as unknown[]).map(String);
+        else if (typeof bucket === 'string') verified = bucket.split(',').map((s) => s.trim()).filter(Boolean);
       }
     } catch { verified = []; }
 
