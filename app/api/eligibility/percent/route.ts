@@ -71,7 +71,20 @@ export async function GET(req: Request){
       }
     } catch { verified = []; }
 
-    const verifiedSet = new Set(verified);
+    // Normalize verified list: handle cases where backend returns a single comma-joined string or mixed
+    const verifiedFlat: string[] = [];
+    for (const v of verified) {
+      const s = String(v || "").trim();
+      if (!s) continue;
+      if (s.includes(',')) {
+        for (const part of s.split(',')) {
+          const p = part.trim(); if (p) verifiedFlat.push(p);
+        }
+      } else {
+        verifiedFlat.push(s);
+      }
+    }
+    const verifiedSet = new Set(verifiedFlat);
 
     // Each week gives 10% only if ALL mandatory tasks of that week are verified
     const capPerWeek = 10;
