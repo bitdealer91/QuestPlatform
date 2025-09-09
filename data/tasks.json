@@ -252,6 +252,32 @@
       "logo": "/brands/Somniadomains.png",
       "brand_color": "#6366F1",
       "logo_variant": "dark"
+    },
+    {
+      "week": 2,
+      "day": 9,
+      "id": "pixcape-mint",
+      "title": "Claim the treasure chest NFT",
+      "description": "Mint your treasure chest NFT on Pixcape Hive Invasion",
+      "type": "action",
+      "href": "https://www.pixcape.games/playtest",
+      "xp": 60,
+      "star": true,
+      "tags": ["on-chain","mint"],
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://quest-api-dzjxh.ondigitalocean.app/check-mint?wallet=:walletAddress",
+          "method": "GET",
+          "body": {},
+          "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Pixcape Hive Invasion",
+      "logo": "/brands/hiveinvasion.png",
+      "brand_color": "#6366F1",
+      "logo_variant": "transparent"
     }
   ]
 }
