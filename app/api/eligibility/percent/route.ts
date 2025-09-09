@@ -45,7 +45,12 @@ export async function GET(req: Request){
       const isMandatory = ((t as unknown as Record<string, unknown>)?.["mandatory"] === true) || ((t as unknown as Record<string, unknown>)?.["mandatory task"] === true);
       if (!id) continue;
       if (typeof w === 'number' && w >= 1 && w <= totalWeeks){
-        if (isMandatory) mandatoryByWeek[w - 1].push(id);
+        const idx = w - 1;
+        if (isMandatory) {
+          const bucket = mandatoryByWeek[idx] || [];
+          bucket.push(id);
+          mandatoryByWeek[idx] = bucket;
+        }
       }
     }
 
