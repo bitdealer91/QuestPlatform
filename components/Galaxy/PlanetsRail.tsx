@@ -109,7 +109,7 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 
 			{PLANETS.map(p => {
 				const locked = p.id > unlockedCount; // unlock first N by env
-				const claimEnabled = p.id === 1 && !locked; // enable claim on the first planet
+				const claimEnabled = false; // temporarily disabled until further notice
 				const claimUrl = 'https://claims.somnia.network/';
 				return (
 					<div key={p.id} className="absolute hover:z-50 focus-within:z-50" style={{ left: `${normalize(mobilePositions ? mobilePositions[p.id]?.x ?? p.x : p.x, PAD_X)}%`, top: `${normalize(mobilePositions ? mobilePositions[p.id]?.y ?? p.y : p.y, PAD_Y)}%`, transform: 'translate(-50%,-50%)' }}>
