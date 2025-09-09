@@ -43,7 +43,8 @@ export async function GET(req: Request){
       const w = (t as { week?: number }).week;
       const xp = (t as { xp?: number }).xp ?? 0;
       if (typeof w === 'number' && w >= 1 && w <= totalWeeks){
-        weekTotalXp[w - 1] += xp;
+        const idx = w - 1;
+        weekTotalXp[idx] = (weekTotalXp[idx] ?? 0) + xp;
       }
     }
 
@@ -69,14 +70,16 @@ export async function GET(req: Request){
       const w = (t as { week?: number }).week;
       const xp = (t as { xp?: number }).xp ?? 0;
       if (typeof w === 'number' && w >= 1 && w <= totalWeeks){
-        weekVerifiedXp[w - 1] += xp;
+        const idx = w - 1;
+        weekVerifiedXp[idx] = (weekVerifiedXp[idx] ?? 0) + xp;
       }
     }
 
     // Each week caps at 10%
     const capPerWeek = 10;
-    const weeks = weekTotalXp.map((totalXp, idx) => {
-      const got = weekVerifiedXp[idx];
+    const weeks = weekTotalXp.map((total, idx) => {
+      const totalXp = total ?? 0;
+      const got = weekVerifiedXp[idx] ?? 0;
       const pct = totalXp > 0 ? Math.min(capPerWeek, Math.floor((got / totalXp) * capPerWeek)) : 0;
       return { unlockedPercentage: pct };
     });
