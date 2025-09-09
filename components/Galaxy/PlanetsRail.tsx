@@ -109,6 +109,8 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 
 			{PLANETS.map(p => {
 				const locked = p.id > unlockedCount; // unlock first N by env
+				const claimEnabled = p.id === 1 && !locked; // enable claim on the first planet
+				const claimUrl = 'https://claims.somnia.network/';
 				return (
 					<div key={p.id} className="absolute hover:z-50 focus-within:z-50" style={{ left: `${normalize(mobilePositions ? mobilePositions[p.id]?.x ?? p.x : p.x, PAD_X)}%`, top: `${normalize(mobilePositions ? mobilePositions[p.id]?.y ?? p.y : p.y, PAD_Y)}%`, transform: 'translate(-50%,-50%)' }}>
 						<div data-week-anchor={p.id} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-px" />
@@ -119,7 +121,8 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 							stars={getStarsForWeek(p.id)}
 							locked={locked}
 							onView={locked ? undefined : (id) => openTasks(id)}
-							onClaim={locked ? undefined : (id) => alert(`Claim for week ${id}`)}
+							onClaim={claimEnabled ? () => { if (typeof window !== 'undefined') window.location.href = claimUrl; } : undefined}
+							claimEnabled={claimEnabled}
 							sizePx={110}
 						/>
 					</div>
