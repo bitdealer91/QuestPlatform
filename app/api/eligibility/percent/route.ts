@@ -86,13 +86,14 @@ export async function GET(req: Request){
     }
     const verifiedSet = new Set(verifiedFlat);
 
-    // Each week gives 10% only if ALL mandatory tasks of that week are verified
+    // Each week gives up to 10% proportionally to completed mandatory tasks
     const capPerWeek = 10;
     const weeks = mandatoryByWeek.map((ids) => {
       const list = Array.isArray(ids) ? ids : [];
       if (list.length === 0) return { unlockedPercentage: 0 };
-      const allDone = list.every((id) => verifiedSet.has(id));
-      return { unlockedPercentage: allDone ? capPerWeek : 0 };
+      const completed = list.reduce((n, id) => n + (verifiedSet.has(id) ? 1 : 0), 0);
+      const pct = Math.max(0, Math.min(capPerWeek, Math.floor((completed * capPerWeek) / list.length)));
+      return { unlockedPercentage: pct };
     });
     const totalUnlockedPercentage = weeks.reduce((s, w) => s + (w.unlockedPercentage || 0), 0);
 
