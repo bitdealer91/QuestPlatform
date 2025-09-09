@@ -15,6 +15,7 @@ export async function GET(req: Request){
     const url = new URL(req.url);
     const addressRaw = String(url.searchParams.get("address") || "").trim();
     const address = addressRaw.toLowerCase();
+    const debug = /^(1|true)$/i.test(String(url.searchParams.get("debug") || ""));
     if (!isLowercaseHexAddress(address)){
       return NextResponse.json({ error: { code: "INVALID_ADDRESS", message: "Invalid Ethereum address format" } }, { status: 400 });
     }
@@ -71,13 +72,21 @@ export async function GET(req: Request){
     // Each week gives 10% only if ALL mandatory tasks of that week are verified
     const capPerWeek = 10;
     const weeks = mandatoryByWeek.map((ids) => {
-      if (!ids || ids.length === 0) return { unlockedPercentage: 0 };
-      const allDone = ids.every((id) => verifiedSet.has(id));
+      const list = Array.isArray(ids) ? ids : [];
+      if (list.length === 0) return { unlockedPercentage: 0 };
+      const allDone = list.every((id) => verifiedSet.has(id));
       return { unlockedPercentage: allDone ? capPerWeek : 0 };
     });
     const totalUnlockedPercentage = weeks.reduce((s, w) => s + (w.unlockedPercentage || 0), 0);
 
-    return NextResponse.json({ totalUnlockedPercentage, currentWeek, endAt, weeks });
+    const payload: Record<string, unknown> = { totalUnlockedPercentage, currentWeek, endAt, weeks };
+    if (debug) {
+      payload.debug = {
+        mandatoryByWeek,
+        verifiedIds: Array.from(verifiedSet),
+      };
+    }
+    return NextResponse.json(payload);
   } catch {
     return NextResponse.json({ error: { code: "INTERNAL_ERROR", message: "An internal server error occurred" } }, { status: 500 });
   }
