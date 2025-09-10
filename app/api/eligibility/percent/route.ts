@@ -100,10 +100,8 @@ export async function GET(req: Request){
       return { unlockedPercentage: pct };
     });
 
-    // If week query param is provided (1..totalWeeks), zero out other weeks
-    if (Number.isFinite(onlyWeek) && onlyWeek >= 1 && onlyWeek <= totalWeeks){
-      weeks.forEach((w, idx) => { if (idx !== onlyWeek - 1) w.unlockedPercentage = 0; });
-    }
+    // Hard lock: only Week 1 can unlock; all other weeks must be 0 until further notice
+    weeks.forEach((w, idx) => { if (idx !== 0) w.unlockedPercentage = 0; });
     const totalUnlockedPercentage = weeks.reduce((s, w) => s + (w.unlockedPercentage || 0), 0);
 
     const payload: Record<string, unknown> = { totalUnlockedPercentage, currentWeek, endAt, weeks };
