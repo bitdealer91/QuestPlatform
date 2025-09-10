@@ -39,9 +39,9 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 	const [mascotHover, setMascotHover] = useState(false);
 	const { address } = useAccount();
 
-	// By default, unlock all planets unless explicitly limited via env
-	const UNLOCK_ENV = Number(process.env.NEXT_PUBLIC_UNLOCKED_COUNT || String(PLANETS.length));
-	const unlockedCount = Number.isFinite(UNLOCK_ENV) ? Math.max(1, Math.min(PLANETS.length, Math.floor(UNLOCK_ENV))) : PLANETS.length;
+	// Unlock first N planets via env (default 1)
+	const UNLOCK_ENV = Number(process.env.NEXT_PUBLIC_UNLOCKED_COUNT || '1');
+	const unlockedCount = Number.isFinite(UNLOCK_ENV) ? Math.max(1, Math.min(PLANETS.length, Math.floor(UNLOCK_ENV))) : 1;
 
 	// Precomputed mobile positions (checkerboard)
 	const mobilePositions = useMemo(() => {
