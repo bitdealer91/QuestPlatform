@@ -305,6 +305,30 @@
       "logo": "/brands/hiveinvasion.png",
       "brand_color": "#6366F1",
       "logo_variant": "dark"
+    },
+    {
+      "week": 2,
+      "day": 9,
+      "id": "bigint-pass-mint",
+      "title": "Mint an Open Edition NFT by BigInt",
+      "description": "Mint an Open Edition NFT on Somnia Mainnet using BigInt platform.",
+      "type": "action",
+      "href": "https://app.bigint.co/fully-onchain-world/",
+      "xp": 30,
+      "star": false,
+      "category": "NFT",
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://somnia-quest-api.bigint.co/check-mint?wallet=:walletAddress",
+          "method": "GET",
+          "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "BigInt",
+      "logo": "/brands/bigint.png",
+      "brand_color": "#FF9800"
     }
   ]
 }
