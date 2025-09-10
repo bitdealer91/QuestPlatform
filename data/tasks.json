@@ -308,7 +308,7 @@
     },
     {
       "week": 2,
-      "day": 9,
+      "day": 10,
       "id": "bigint-pass-mint",
       "title": "Mint an Open Edition NFT by BigInt",
       "description": "Mint an Open Edition NFT on Somnia Mainnet using BigInt platform.",
