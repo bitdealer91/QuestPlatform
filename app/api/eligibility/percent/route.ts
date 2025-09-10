@@ -16,6 +16,8 @@ export async function GET(req: Request){
     const addressRaw = String(url.searchParams.get("address") || "").trim();
     const address = addressRaw.toLowerCase();
     const debug = /^(1|true)$/i.test(String(url.searchParams.get("debug") || ""));
+    const onlyWeekParam = url.searchParams.get("week");
+    const onlyWeek = onlyWeekParam ? Number(onlyWeekParam) : NaN; // 1-based
     if (!isLowercaseHexAddress(address)){
       return NextResponse.json({ error: { code: "INVALID_ADDRESS", message: "Invalid Ethereum address format" } }, { status: 400 });
     }
@@ -97,6 +99,11 @@ export async function GET(req: Request){
       const pct = Math.max(0, Math.min(capPerWeek, Math.floor((completed * capPerWeek) / list.length)));
       return { unlockedPercentage: pct };
     });
+
+    // If week query param is provided (1..totalWeeks), zero out other weeks
+    if (Number.isFinite(onlyWeek) && onlyWeek >= 1 && onlyWeek <= totalWeeks){
+      weeks.forEach((w, idx) => { if (idx !== onlyWeek - 1) w.unlockedPercentage = 0; });
+    }
     const totalUnlockedPercentage = weeks.reduce((s, w) => s + (w.unlockedPercentage || 0), 0);
 
     const payload: Record<string, unknown> = { totalUnlockedPercentage, currentWeek, endAt, weeks };
