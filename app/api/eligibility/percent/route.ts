@@ -88,7 +88,9 @@ export async function GET(req: Request){
 
     // Each week gives up to 10% proportionally to completed mandatory tasks
     const capPerWeek = 10;
-    const weeks = mandatoryByWeek.map((ids) => {
+    const weeks = mandatoryByWeek.map((ids, idx) => {
+      // Do not unlock for the current, still-running week or future weeks
+      if (idx >= currentWeek) return { unlockedPercentage: 0 };
       const list = Array.isArray(ids) ? ids : [];
       if (list.length === 0) return { unlockedPercentage: 0 };
       const completed = list.reduce((n, id) => n + (verifiedSet.has(id) ? 1 : 0), 0);
