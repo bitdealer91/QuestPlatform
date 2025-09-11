@@ -260,7 +260,7 @@
       "title": "Claim the treasure chest NFT",
       "description": "After connecting your wallet to the website, click on the \"claim\" button near the chest image.",
       "type": "action",
-      "href": "https://hi.pixcape.games/HiveInvasion_F40/index.html",
+      "href": "https://hi.pixcape.games/HiveInvasion_F49/index.html",
       "xp": 60,
       "star": true,
       "tags": ["on-chain","mint"],
@@ -286,7 +286,7 @@
       "title": "Defeat 100 enemies in Hive Invasion",
       "description": "Defeat at least 100 enemies in Hive Invasion by Pixcape games",
       "type": "action",
-      "href": "https://hi.pixcape.games/HiveInvasion_F40/index.html",
+      "href": "https://hi.pixcape.games/HiveInvasion_F49/index.html",
       "xp": 60,
       "star": false,
       "mandatory": true,
@@ -329,6 +329,56 @@
       "brand": "BigInt",
       "logo": "/brands/bigint.png",
       "brand_color": "#FF9800"
+    },
+    {
+      "week": 2,
+      "day": 11,
+      "id": "quickswap-trade",
+      "title": "Make a total of $200 volume on Quickswap.",
+      "description": "Reach a total of at least $200 volume within Quickswap on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://dapp.quickswap.exchange/swap/v4/ETH/0x28BEc7E30E6faee657a03e19Bf1128AaD7632A00?chainId=5031",
+      "xp": 60,
+      "star": true,
+      "mandatory": false,
+      "tags": ["on-chain","swap","trade"],
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://leaderboard.quickswap.exchange/campaigns/swap/verify-player?wallet=:walletAddress",
+          "method": "GET",
+          "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Quickswap",
+      "logo": "/brands/QuickSwap.png",
+      "brand_color": "#6366F1"
+    },
+    {
+      "week": 2,
+      "day": 11,
+      "id": "quickswap-liquidity",
+      "title": "Provide a total of $5 liquidity on Quickswap.",
+      "description": "Provide at least $5 worth of liquidity within Quickswap on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://dapp.quickswap.exchange/swap/v4/ETH/0x28BEc7E30E6faee657a03e19Bf1128AaD7632A00?chainId=5031",
+      "xp": 60,
+      "star": false,
+      "mandatory": true,
+      "tags": ["on-chain","swap","trade"],
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://leaderboard.quickswap.exchange/campaigns/liquidity/verify-player?wallet=:walletAddress",
+          "method": "GET",
+          "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Quickswap",
+      "logo": "/brands/QuickSwap.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
