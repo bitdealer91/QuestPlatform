@@ -362,7 +362,7 @@
       "title": "Provide a total of $5 liquidity on Quickswap.",
       "description": "Provide at least $5 worth of liquidity within Quickswap on Somnia Mainnet.",
       "type": "action",
-      "href": "https://dapp.quickswap.exchange/swap/v4/ETH/0x28BEc7E30E6faee657a03e19Bf1128AaD7632A00?chainId=5031",
+      "href": "https://dapp.quickswap.exchange/pool/v4?chainId=5031",
       "xp": 60,
       "star": false,
       "mandatory": true,
