@@ -57,6 +57,7 @@ export async function POST(req: Request){
     const batch = Math.max(1, Math.min(5000, Number(body.batch || 1000)));
     const cursorIn = (body.cursor ?? "0").toString();
     const apply = Boolean(body.apply);
+    const revokeEnabled = String(process.env.ADMIN_REVOKE_ENABLED || '').toLowerCase() === 'true';
 
     const required = process.env.ADMIN_TOKEN;
     if (required && token !== required){
@@ -133,7 +134,7 @@ export async function POST(req: Request){
         // need to revoke
         revoked++;
         if (sampleRevoked.length < 50) sampleRevoked.push(addr);
-        if (!apply) continue;
+        if (!apply || !revokeEnabled) continue;
 
         // read current xp for the slice address
         const xpRes = await pipeline([["GET", `user:xp:${addr}`]]);
@@ -158,10 +159,14 @@ export async function POST(req: Request){
       }
     }
 
-    return NextResponse.json({ taskId, checkedOld, revoked, kept, sample: { revoked: sampleRevoked, kept: sampleKept }, cursor });
+    return NextResponse.json({ taskId, checkedOld, revoked, kept, sample: { revoked: sampleRevoked, kept: sampleKept }, cursor, apply, revokeEnabled });
   } catch {
     return NextResponse.json({ error: "failed" }, { status: 500 });
   }
 }
+
+
+
+
 
 
