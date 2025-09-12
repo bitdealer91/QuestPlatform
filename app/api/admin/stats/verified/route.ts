@@ -58,7 +58,7 @@ export async function POST(req: Request){
     }
     const { cursor, keys } = parseScanResult(scan);
     if (!keys.length){
-      return NextResponse.json({ counts: {}, cursor });
+      return NextResponse.json({ counts: {}, cursor, keysCount: 0 });
     }
 
     // 2) SMEMBERS for each key in batch
@@ -87,7 +87,7 @@ export async function POST(req: Request){
       }
     }
 
-    return NextResponse.json({ counts, cursor });
+    return NextResponse.json({ counts, cursor, keysCount: keys.length });
   } catch {
     return NextResponse.json({ error: "failed" }, { status: 500 });
   }
