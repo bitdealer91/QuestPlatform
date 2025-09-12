@@ -379,6 +379,31 @@
       "brand": "Quickswap",
       "logo": "/brands/QuickSwap.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 2,
+      "day": 12,
+      "id": "nfts2me-launch",
+      "title": "Deploy an NFT on Somnia",
+      "description": "Use NFTs2Me platform to deploy an NFT collection on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://nfts2.me/somnia",
+      "xp": 30,
+      "star": false,
+      "mandatory": true,
+      "tags": ["on-chain","nft","deploy"],
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://metadata.nfts2me.com/somnia/verify-player/:walletAddress",
+          "method": "GET",
+          "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "NFTs2Me",
+      "logo": "/brands/nfts2me.svg",
+      "brand_color": "#6366F1"
     }
   ]
 }
