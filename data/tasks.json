@@ -404,6 +404,32 @@
       "brand": "NFTs2Me",
       "logo": "/brands/nfts2me.svg",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 2,
+      "day": 15,
+      "id": "loomia-mint",
+      "title": "Mint the Loomia Pass NFT",
+      "description": "Mint an Open Edition NFT by Loomia on Somnia Mainnet",
+      "type": "action",
+      "href": "https://loomia.trade/launchpad/collections/loomia",
+      "xp": 30,
+      "star": false,
+      "mandatory": true,
+      "category": "NFT",
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://mainnet.somnia.w3us.site/api/v2/addresses/:userAddress/token-transfers?type=ERC-721%2CERC-1155&filter=to&token=0x8f0Ca781c6120e9CbFB03428ea26DA96cB261413",
+          "method": "GET",
+          "success": { "path": "items", "length_gt": 0 }
+        }
+      },
+     "brand": "Loomia",
+      "logo": "/brands/loomia.png",
+      "brand_color": "#6366F1",
+      "logo_variant": "dark"
     }
   ]
 }
