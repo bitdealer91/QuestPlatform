@@ -430,6 +430,31 @@
       "logo": "/brands/loomia.png",
       "brand_color": "#6366F1",
       "logo_variant": "dark"
+    },
+    {
+      "week": 3,
+      "day": 16,
+      "id": "bigint-pixcape-mint",
+      "title": "Mint the Invasion Heroes NFT on BigInt",
+      "description": "Mint the Invasion Heroes by Pixcape Games on Somnia Mainnet using BigInt platform.",
+      "type": "action",
+      "href": "https://app.bigint.co/invasion-heroes/",
+      "xp": 60,
+      "star": true,
+      "category": "NFT",
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://pfp-quest-api-kvx5c.ondigitalocean.app/check-mint?wallet=:walletAddress",
+          "method": "GET",
+          "body": {},
+          "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Pixcape Hive Invasion",
+      "logo": "/brands/hiveinvasion.png",
+      "brand_color": "#FF9800"
     }
   ]
 }
