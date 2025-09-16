@@ -91,17 +91,18 @@ export async function GET(req: Request){
     // Each week gives up to 10% proportionally to completed mandatory tasks
     const capPerWeek = 10;
     const weeks = mandatoryByWeek.map((ids, idx) => {
-      // Do not unlock for the current, still-running week or future weeks
-      if (idx >= currentWeek) return { unlockedPercentage: 0 };
+      // Do not unlock for future weeks; allow current and past weeks
+      if (idx > currentWeek) return { unlockedPercentage: 0 };
       const list = Array.isArray(ids) ? ids : [];
       if (list.length === 0) return { unlockedPercentage: 0 };
       const completed = list.reduce((n, id) => n + (verifiedSet.has(id) ? 1 : 0), 0);
-      const pct = Math.max(0, Math.min(capPerWeek, Math.floor((completed * capPerWeek) / list.length)));
+      const pctRaw = (completed * capPerWeek) / list.length;
+      const pct = Math.max(0, Math.min(capPerWeek, pctRaw));
       return { unlockedPercentage: pct };
     });
 
-    // Hard lock: only Week 1 can unlock; all other weeks must be 0 until further notice
-    weeks.forEach((w, idx) => { if (idx !== 0) w.unlockedPercentage = 0; });
+    // Hard lock: allow Weeks 1 and 2; all subsequent weeks must be 0 until further notice
+    weeks.forEach((w, idx) => { if (idx > 1) w.unlockedPercentage = 0; });
     const totalUnlockedPercentage = weeks.reduce((s, w) => s + (w.unlockedPercentage || 0), 0);
 
     const payload: Record<string, unknown> = { totalUnlockedPercentage, currentWeek, endAt, weeks };

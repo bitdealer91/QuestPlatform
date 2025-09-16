@@ -39,9 +39,10 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 	const [mascotHover, setMascotHover] = useState(false);
 	const { address } = useAccount();
 
-	// Unlock first N planets via env (default 1)
+	// Unlock first N planets via env; enforce at least 2 to open week 2 drop
 	const UNLOCK_ENV = Number(process.env.NEXT_PUBLIC_UNLOCKED_COUNT || '1');
-	const unlockedCount = Number.isFinite(UNLOCK_ENV) ? Math.max(1, Math.min(PLANETS.length, Math.floor(UNLOCK_ENV))) : 1;
+	const unlockedCountFromEnv = Number.isFinite(UNLOCK_ENV) ? Math.max(1, Math.min(PLANETS.length, Math.floor(UNLOCK_ENV))) : 1;
+	const unlockedCount = Math.max(2, unlockedCountFromEnv);
 
 	// Precomputed mobile positions (checkerboard)
 	const mobilePositions = useMemo(() => {
@@ -110,7 +111,7 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 
 			{PLANETS.map(p => {
 				const locked = p.id > unlockedCount; // unlock first N by env
-				const claimEnabled = p.id === 1 && !locked; // enable only for week 1
+				const claimEnabled = (p.id === 1 || p.id === 2) && !locked; // enable for weeks 1 and 2
 				const claimUrl = 'https://claims.somnia.network/';
 				return (
 					<div key={p.id} className="absolute hover:z-50 focus-within:z-50" style={{ left: `${normalize(mobilePositions ? mobilePositions[p.id]?.x ?? p.x : p.x, PAD_X)}%`, top: `${normalize(mobilePositions ? mobilePositions[p.id]?.y ?? p.y : p.y, PAD_Y)}%`, transform: 'translate(-50%,-50%)' }}>
