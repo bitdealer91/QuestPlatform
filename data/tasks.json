@@ -508,6 +508,32 @@
       "logo": "/brands/handsnft.png",
       "brand_color": "#6366F1",
       "logo_variant": "dark"
+    },
+    {
+      "week": 3,
+      "day": 17,
+      "id": "blever-mint",
+        "title": "Mint the Blever Somniac NFT",
+        "description": "Mint the Blever Somniac NFT on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://app.blever.xyz/drops/blever-somniac",
+      "xp": 30,
+      "star": false,   
+      "mandatory": false,
+      "category": "NFT",
+       "verify_method": "api",
+      "verify_params": { 
+      "chainId": 5031,
+      "verify_api": {
+        "url": "https://app.blever.xyz/api/blever-somniac/:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+      }
+      },
+      "brand": "Blever",
+      "logo": "/brands/blever.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
