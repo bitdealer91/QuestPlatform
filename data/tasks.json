@@ -472,7 +472,7 @@
       "verify_params": {
         "chainId": 5031,
         "verify_api": {
-          "url": "https://api.handsnft.fun/mint-quest?wallet=:walletAddress&seasonAddress=0x3432A6481Ee6639F40C8B23871B09afccd209375",
+          "url": "https://api.handsnft.fun/mint-quest?wallet=:walletAddress&seasonAddress=0x89121e9e8C69ea746cA01eA651f4C80072eaB0a3",
           "method": "GET",
           "body": {},
           "success": { "path": "completed", "equals": true }
@@ -498,7 +498,7 @@
       "verify_params": {
         "chainId": 5031,
         "verify_api": {
-          "url": "https://api.handsnft.fun/level-quest?wallet=:walletAddress&seasonAddress=0x3432A6481Ee6639F40C8B23871B09afccd209375",
+          "url": "https://api.handsnft.fun/level-quest?wallet=:walletAddress&seasonAddress=0x89121e9e8C69ea746cA01eA651f4C80072eaB0a3",
           "method": "GET",
           "body": {},
           "success": { "path": "completed", "equals": true }
