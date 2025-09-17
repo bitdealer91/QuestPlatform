@@ -455,6 +455,59 @@
       "brand": "Pixcape Hive Invasion",
       "logo": "/brands/hiveinvasion.png",
       "brand_color": "#FF9800"
+    },
+    {
+      "week": 3,
+      "day": 16,
+      "id": "handsnft-mint",
+      "title": "Mint 2 Hand Card NFTs",
+      "description": "Mint at least 2 Hand Card NFTs on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://handsnft.fun/",
+      "xp": 40,
+      "star": false,   
+      "mandatory": false,
+      "category": "NFT",
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://api.handsnft.fun/mint-quest?wallet=:walletAddress&seasonAddress=0x3432A6481Ee6639F40C8B23871B09afccd209375",
+          "method": "GET",
+          "body": {},
+          "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "HandsNFT",
+      "logo": "/brands/handsnft.png",
+      "brand_color": "#6366F1",
+      "logo_variant": "dark"
+    },
+    {
+      "week": 3,
+      "day": 16,
+      "id": "handsnft-upgrade",
+      "title": "Level up 1 Hand Card to level 2",
+      "description": "Level up at least 1 Hand Card to level 2",
+      "type": "action",
+      "href": "https://handsnft.fun/",
+      "xp": 40,
+      "star": false,
+      "tags": ["on-chain"],
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://api.handsnft.fun/level-quest?wallet=:walletAddress&seasonAddress=0x3432A6481Ee6639F40C8B23871B09afccd209375",
+          "method": "GET",
+          "body": {},
+          "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "HandsNFT",
+      "logo": "/brands/handsnft.png",
+      "brand_color": "#6366F1",
+      "logo_variant": "dark"
     }
   ]
 }
