@@ -519,7 +519,7 @@
       "href": "https://app.blever.xyz/drops/blever-somniac",
       "xp": 30,
       "star": false,   
-      "mandatory": false,
+      "mandatory": true,
       "category": "NFT",
        "verify_method": "api",
       "verify_params": { 
