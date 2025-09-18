@@ -7,7 +7,6 @@ import { writeAttempt, writeFailure, writeSuccess } from "@/lib/ledger";
 import { pipeline } from "@/lib/redis";
 import { dotGet } from "@/lib/jsonPath";
 import { createPublicClient, http, parseAbi } from "viem";
-import { setGlobalDispatcher, Agent as UndiciAgent } from 'undici';
 
 export const runtime = "nodejs";
 
@@ -118,9 +117,6 @@ function resolveArgs(argsRaw: unknown[], addrRaw: string, addrLower: string, vp:
 
 export async function POST(req: Request){
   try {
-    // Prefer IPv4 to avoid potential IPv6 connectivity issues in some upstreams
-    try { setGlobalDispatcher(new UndiciAgent({ connect: { ipFamily: 4 } })); } catch {}
-
     const raw = await req.json().catch(() => ({}));
     const body = (raw ?? {}) as VerifyBody;
     const addrRaw = String(body.address || "");
