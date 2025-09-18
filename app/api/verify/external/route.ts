@@ -238,11 +238,20 @@ export async function POST(req: Request){
             .replace(':walletAddress', extAddr || '')
             .replace(':address', extAddr || '');
           debugUrl = url;
-          const init: RequestInit = { headers: { 'Content-Type': 'application/json' } };
+          const init: RequestInit = { headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'User-Agent': 'Somnia-Odyssey/1.0' } };
           if (method === 'POST') init.method = 'POST'; else init.method = 'GET';
           const bodyCfg = cfg['body'];
           if (init.method === 'POST' && bodyCfg && typeof bodyCfg === 'object'){
             init.body = JSON.stringify(bodyCfg);
+          }
+          const headersCfg = cfg['headers'];
+          if (headersCfg && typeof headersCfg === 'object') {
+            try {
+              const h = headersCfg as Record<string, unknown>;
+              for (const [k, v] of Object.entries(h)){
+                (init.headers as Record<string, string>)[k] = String(v);
+              }
+            } catch {}
           }
           // 12s timeout with 2 retries on transient failures
           const res = await fetchWithRetries(url, init, 2, 12000);
