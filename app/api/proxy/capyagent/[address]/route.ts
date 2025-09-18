@@ -33,7 +33,8 @@ export async function GET(_: Request, context: { params: { address: string } }) 
       clearTimeout(timeout);
     }
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'proxy_error' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+    const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as any).message) : String(e);
+    return new Response(JSON.stringify({ error: 'proxy_error', detail: msg }), { status: 502, headers: { 'Content-Type': 'application/json' } });
   }
 }
 
