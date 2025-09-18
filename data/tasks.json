@@ -534,6 +534,83 @@
       "brand": "Blever",
       "logo": "/brands/blever.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 3,
+      "day": 18,
+      "id": "mint-mullet-cop",
+        "title": "Mint the 'Mullet Cop: Mint Condition' NFT",
+        "description": "Mint the NFT by Mullet Cop on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://opensea.io/collection/mullet-cop/overview",
+      "xp": 60,
+      "star": true,   
+      "mandatory": false,
+      "category": "NFT",
+       "verify_method": "api",
+      "verify_params": { 
+      "chainId": 5031,
+      "verify_api": {
+        "url": "https://upstatus.azurewebsites.net/api/Event/mulletcopnft/:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+      }
+      },
+      "brand": "Mullet_Cop",
+      "logo": "/brands/mullet_cop2.png",
+      "brand_color": "#6366F1"
+    },
+    {
+      "week": 3,
+      "day": 18,
+      "id": "capyagent-500-clovers",
+        "title": "Obtain 500 Clovers in CapySnake",
+        "description": "Reach at least 500 clovers in the CapySnake game.",
+      "type": "action",
+      "href": "https://capyagent.com/game/play/10001",
+      "xp": 50,
+      "star": false,   
+      "mandatory": false,
+      "category": "Game",
+       "verify_method": "api",
+      "verify_params": { 
+      "chainId": 5031,
+      "verify_api": {
+        "url": "https://api.capyagent.com/api/user/task/:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+      }
+      },
+      "brand": "Capyagent",
+      "logo": "/brands/capyagent.svg",
+      "brand_color": "#6366F1"
+    },
+    {
+      "week": 2,
+      "day": 18,
+      "id": "haku-mint",
+      "title": "Mint the Haku Spirit Genesis NFT",
+      "description": "Mint the Haku Spirit Genesis NFT on Somnia Mainnet",
+      "type": "action",
+      "href": "https://dreava.art/launchpad/collection/0x5ab4f948a740c448cbd36e6e3484c7c20267b222",
+      "xp": 30,
+      "star": false,
+      "mandatory": true,
+      "tags": ["on-chain","mint"],
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://mainnet.somnia.w3us.site/api/v2/addresses/:userAddress/token-transfers?type=ERC-721%2CERC-1155&filter=to&token=0x5ab4f948a740c448cbd36e6e3484c7c20267b222",
+          "method": "GET",
+          "success": { "path": "items", "length_gt": 0 }
+        }
+      },
+      "brand": "Haku",
+      "logo": "/brands/haku.png",
+      "brand_color": "#6366F1",
     }
   ]
 }
