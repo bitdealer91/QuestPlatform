@@ -122,6 +122,7 @@ export async function POST(req: Request){
     const addrRaw = String(body.address || "");
     const addr = addrRaw.toLowerCase();
     const taskId = String(body.taskId || "").trim();
+    const wantDebug = String((raw as any)?.debug || '').toLowerCase() === 'true' || (raw as any)?.debug === true;
 
     const ipHeader = (req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "unknown");
     const ip = (ipHeader.split(",")[0]?.trim() ?? "unknown");
@@ -247,7 +248,9 @@ export async function POST(req: Request){
             // Do not fallback if verify_api is defined; apply cooldown to let user retry
             if (addr && taskId){ await setCache(cooldownKey(addr, taskId), true, 60); writeFailure(addr, taskId, String(res.status)).catch(() => {}); }
             const text = await res.text().catch(() => '');
-            return NextResponse.json({ error: 'upstream_error', status: res.status, detail: text || res.statusText }, { status: res.status });
+            const payload = { error: 'upstream_error', status: res.status, detail: text || res.statusText } as any;
+            if (wantDebug) { payload.debug = { url }; }
+            return NextResponse.json(payload, { status: res.status });
           }
           const dataUnknown: unknown = await res.json().catch(() => ({}));
           const obj = (dataUnknown ?? {}) as Record<string, unknown>;
@@ -288,7 +291,9 @@ export async function POST(req: Request){
           if (!completed && addr && taskId){
             await setCache(cooldownKey(addr, taskId), true, 60);
             writeFailure(addr, taskId, 'not_completed').catch(() => {});
-            return NextResponse.json({ error: 'cooldown', retryAfter: 60 }, { status: 429 });
+            const payload = { error: 'cooldown', retryAfter: 60 } as any;
+            if (wantDebug) { payload.debug = { url, obj, success } }
+            return NextResponse.json(payload, { status: 429 });
           }
 
           if (completed && addr && taskId){
@@ -302,12 +307,16 @@ export async function POST(req: Request){
               persistSuccess(addr, taskId, xp, starWeek).catch(() => {});
             } catch {}
           }
-          return NextResponse.json({ ...obj, completed });
+          const payload = { ...obj, completed } as any;
+          if (wantDebug) { payload.debug = { url, obj, success } }
+          return NextResponse.json(payload);
         }
       } catch {
         // verify_api configured but request failed; avoid fallback, apply cooldown
         if (addr && taskId){ await setCache(cooldownKey(addr, taskId), true, 60); writeFailure(addr, taskId, 'fetch_failed').catch(() => {}); }
-        return NextResponse.json({ error: 'cooldown', retryAfter: 60 }, { status: 429 });
+        const payload = { error: 'cooldown', retryAfter: 60 } as any;
+        if (wantDebug) { payload.debug = { note: 'fetch_failed in verify_api branch' } }
+        return NextResponse.json(payload, { status: 429 });
       }
 
       // If task asks for on-chain read call verification (domains or similar)
