@@ -577,7 +577,7 @@
       "verify_params": { 
       "chainId": 5031,
       "verify_api": {
-        "url": "https://api.capyagent.com/api/user/task/:walletAddress",
+        "url": "https://odyssey.somnia.network/api/proxy/capyagent/:walletAddress",
         "method": "GET",
         "body": {},
         "success": { "path": "completed", "equals": true }
