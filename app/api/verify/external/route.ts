@@ -38,6 +38,31 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs =
   } finally { clearTimeout(t); }
 }
 
+// Simple retry wrapper around fetchWithTimeout
+async function fetchWithRetries(url: string, init: RequestInit = {}, retries = 2, timeoutMs = 12000): Promise<Response> {
+  let lastErr: unknown = null;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetchWithTimeout(url, init, timeoutMs);
+      // Retry only on transient 5xx
+      if (!res.ok && res.status >= 500 && attempt < retries) {
+        await new Promise((r) => setTimeout(r, 250 * (2 ** attempt)));
+        continue;
+      }
+      return res;
+    } catch (e) {
+      lastErr = e;
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, 250 * (2 ** attempt)));
+        continue;
+      }
+      break;
+    }
+  }
+  // If all attempts failed via exception, throw the last error
+  throw lastErr instanceof Error ? lastErr : new Error('fetch_failed');
+}
+
 // (W3US path uses postJson with timeout)
 
 async function persistSuccess(address: string, taskId: string, xp: number, starWeek?: number){
@@ -197,7 +222,7 @@ export async function POST(req: Request){
         } catch { /* fall through to API if misconfigured */ }
       }
 
-      // If task defines external verify API, use it
+      // If task defines external verify API, use it (with retries & no fallback)
       try {
         const cfg = (vp as Record<string, unknown>)['verify_api'] as Record<string, unknown> | undefined;
         if (cfg && typeof cfg === 'object'){
@@ -216,8 +241,10 @@ export async function POST(req: Request){
           if (init.method === 'POST' && bodyCfg && typeof bodyCfg === 'object'){
             init.body = JSON.stringify(bodyCfg);
           }
-          const res = await fetchWithTimeout(url, init, 8000);
+          // 12s timeout with 2 retries on transient failures
+          const res = await fetchWithRetries(url, init, 2, 12000);
           if (!res.ok){
+            // Do not fallback if verify_api is defined; apply cooldown to let user retry
             if (addr && taskId){ await setCache(cooldownKey(addr, taskId), true, 60); writeFailure(addr, taskId, String(res.status)).catch(() => {}); }
             const text = await res.text().catch(() => '');
             return NextResponse.json({ error: 'upstream_error', status: res.status, detail: text || res.statusText }, { status: res.status });
@@ -261,7 +288,6 @@ export async function POST(req: Request){
           if (!completed && addr && taskId){
             await setCache(cooldownKey(addr, taskId), true, 60);
             writeFailure(addr, taskId, 'not_completed').catch(() => {});
-            // Immediately inform client about cooldown so UI can show timer on first miss
             return NextResponse.json({ error: 'cooldown', retryAfter: 60 }, { status: 429 });
           }
 
@@ -278,7 +304,11 @@ export async function POST(req: Request){
           }
           return NextResponse.json({ ...obj, completed });
         }
-      } catch { /* fall through */ }
+      } catch {
+        // verify_api configured but request failed; avoid fallback, apply cooldown
+        if (addr && taskId){ await setCache(cooldownKey(addr, taskId), true, 60); writeFailure(addr, taskId, 'fetch_failed').catch(() => {}); }
+        return NextResponse.json({ error: 'cooldown', retryAfter: 60 }, { status: 429 });
+      }
 
       // If task asks for on-chain read call verification (domains or similar)
       try {
