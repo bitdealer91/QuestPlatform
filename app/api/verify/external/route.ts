@@ -242,7 +242,7 @@ export async function POST(req: Request){
             .replace(':walletAddress', extAddr || '')
             .replace(':address', extAddr || '');
           debugUrl = url;
-          const init: RequestInit = { headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'User-Agent': 'Somnia-Odyssey/1.0' } };
+          const init: RequestInit = { headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'User-Agent': 'Somnia-Odyssey/1.0', 'Origin': 'https://odyssey.somnia.network' } };
           if (method === 'POST') init.method = 'POST'; else init.method = 'GET';
           const bodyCfg = cfg['body'];
           if (init.method === 'POST' && bodyCfg && typeof bodyCfg === 'object'){
