@@ -227,6 +227,7 @@ export async function POST(req: Request){
       try {
         const cfg = (vp as Record<string, unknown>)['verify_api'] as Record<string, unknown> | undefined;
         if (cfg && typeof cfg === 'object'){
+          let debugUrl = '';
           const rawUrl = String(cfg['url'] || '').trim();
           const method = String(cfg['method'] || 'GET').toUpperCase();
           const success = (cfg['success'] || {}) as { path?: string; equals?: unknown };
@@ -236,6 +237,7 @@ export async function POST(req: Request){
             .replace(':userAddress', extAddr || '')
             .replace(':walletAddress', extAddr || '')
             .replace(':address', extAddr || '');
+          debugUrl = url;
           const init: RequestInit = { headers: { 'Content-Type': 'application/json' } };
           if (method === 'POST') init.method = 'POST'; else init.method = 'GET';
           const bodyCfg = cfg['body'];
@@ -311,11 +313,11 @@ export async function POST(req: Request){
           if (wantDebug) { payload.debug = { url, obj, success } }
           return NextResponse.json(payload);
         }
-      } catch {
+      } catch (err) {
         // verify_api configured but request failed; avoid fallback, apply cooldown
         if (addr && taskId){ await setCache(cooldownKey(addr, taskId), true, 60); writeFailure(addr, taskId, 'fetch_failed').catch(() => {}); }
         const payload = { error: 'cooldown', retryAfter: 60 } as any;
-        if (wantDebug) { payload.debug = { note: 'fetch_failed in verify_api branch' } }
+        if (wantDebug) { payload.debug = { note: 'fetch_failed in verify_api branch', error: (err as Error)?.message || String(err) } }
         return NextResponse.json(payload, { status: 429 });
       }
 
