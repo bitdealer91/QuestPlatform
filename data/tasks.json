@@ -611,6 +611,60 @@
       "brand": "Haku",
       "logo": "/brands/haku.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 3,
+      "day": 19,
+      "id": "somnex-swap",
+      "title": "Make a total of $100 swap volume on SpotX.",
+      "description": "Reach a total of at least $100 volume within SpotX on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://somnex.xyz/#/swap",
+      "xp": 60,
+      "star": false,
+      "mandatory": true,
+      "tags": ["on-chain","swap","trade"],
+      "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://dapp.somnex.xyz/api/event/swap-somi/:walletAddress",
+         "API_KEY": "pkYnC3q2ajmPNA7kd-Bg1wsXIHz15Zv8zfrCkNkePpI",
+        "headers": { "Authorization": "Bearer pkYnC3q2ajmPNA7kd-Bg1wsXIHz15Zv8zfrCkNkePpI" },
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+      }
+      },
+      "brand": "Somnex",
+      "logo": "/brands/somnex.png",
+      "brand_color": "#6366F1"
+    },
+    {
+      "week": 3,
+      "day": 19,
+      "id": "somnex-perp",
+      "title": "Make a total of $50 volume on Perp.",
+      "description": "Reach a total of at least $50 volume within Perp on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://somnex.xyz/#/tradePremium",
+      "xp": 60,
+      "star": false,
+      "mandatory": true,
+      "tags": ["on-chain","perp","trade"],
+      "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://dapp.somnex.xyz/api/event/perp-trade/:walletAddress",
+         "API_KEY": "pkYnC3q2ajmPNA7kd-Bg1wsXIHz15Zv8zfrCkNkePpI",
+        "headers": { "Authorization": "Bearer pkYnC3q2ajmPNA7kd-Bg1wsXIHz15Zv8zfrCkNkePpI" },
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+      }
+      },
+      "brand": "Somnex",
+      "logo": "/brands/somnex.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
