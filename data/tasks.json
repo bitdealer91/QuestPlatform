@@ -665,6 +665,30 @@
       "brand": "Somnex",
       "logo": "/brands/somnex.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 3,
+      "day": 22,
+      "id": "capy-mint",
+      "title": "Mint the CapyGame NFT",
+      "description": "Mint the Genesis NFT by CapyGame on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://app.blever.xyz/drops/capygame",
+      "xp": 60,
+      "star": true,
+      "category": "NFT",
+      "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://api.capyagent.com/api/user/task/nft/:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Capyagent",
+      "logo": "/brands/capyagent.svg",
+      "brand_color": "#6366F1"
     }
   ]
 }
