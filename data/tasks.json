@@ -680,7 +680,7 @@
       "verify_method": "api",
       "verify_params": { "chainId": 5031,
       "verify_api": {
-        "url": "https://api.capyagent.com/api/user/task/nft/:walletAddress",
+        "url": "http://api.capyagent.com/api/user/task/nft/:walletAddress",
         "method": "GET",
         "body": {},
         "success": { "path": "completed", "equals": true }
