@@ -9,6 +9,7 @@ export default function GalaxyMap(){
 	const { address } = useAccount();
 	const [verifiedIds, setVerifiedIds] = useState<Set<string> | null>(null);
 	const [starTasksByWeek, setStarTasksByWeek] = useState<Record<number, string[]>>({});
+	const starsEnabled = String(process.env.NEXT_PUBLIC_SHOW_STARS || '0').toLowerCase() === '1' || String(process.env.NEXT_PUBLIC_SHOW_STARS || '0').toLowerCase() === 'true';
 	
 	// Загружаем верификацию с сервера (Redis)
 	useEffect(() => {
@@ -26,6 +27,7 @@ export default function GalaxyMap(){
 		let cancelled = false;
 		(async () => {
 			try {
+				if (!starsEnabled) { setStarTasksByWeek({}); return; }
 				const weeks = Array.from({ length: 8 }, (_, i) => i + 1);
 				const resps = await Promise.all(weeks.map(w => fetch(`/api/week/${w}/tasks?stars=1`).then(r => r.json()).catch(() => [])));
 				const map: Record<number, string[]> = {};
@@ -37,7 +39,7 @@ export default function GalaxyMap(){
 			} catch { /* noop */ }
 		})();
 		return () => { cancelled = true; };
-	}, []);
+	}, [starsEnabled]);
 
 	// Реагируем на локальные обновления из TaskDrawer (событие galaxy:progress-updated)
 	useEffect(() => {
@@ -53,11 +55,12 @@ export default function GalaxyMap(){
 
 	// Функция для подсчета звезд недели
 	const getStarsForWeek = useCallback((weekId: number) => {
+		if (!starsEnabled) return 0;
 		if (!verifiedIds) return 0;
 		const starList = starTasksByWeek[weekId] || [];
 		const stars = starList.filter(id => verifiedIds.has(id)).length;
 		return Math.min(stars, 3) as 0|1|2|3;
-	}, [verifiedIds, starTasksByWeek]);
+	}, [verifiedIds, starTasksByWeek, starsEnabled]);
 	
 	const openTasks = useCallback((id: number) => setOpenWeek(id), []);
 	
