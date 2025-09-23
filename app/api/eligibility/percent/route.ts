@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { pipeline } from "@/lib/redis";
 import { loadTasks } from "@/lib/store";
+import { dotGet } from "@/lib/jsonPath";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,7 @@ export async function GET(req: Request){
     const debug = /^(1|true)$/i.test(String(url.searchParams.get("debug") || ""));
     const onlyWeekParam = url.searchParams.get("week");
     const onlyWeek = onlyWeekParam ? Number(onlyWeekParam) : NaN; // 1-based
+    const unlockTest = /^(1|true)$/i.test(String(url.searchParams.get("unlock_test") || ""));
     if (!isLowercaseHexAddress(address)){
       return NextResponse.json({ error: { code: "INVALID_ADDRESS", message: "Invalid Ethereum address format" } }, { status: 400 });
     }
@@ -101,8 +103,74 @@ export async function GET(req: Request){
       return { unlockedPercentage: pct };
     });
 
-    // Hard lock: allow Weeks 1 and 2; all subsequent weeks must be 0 until further notice
-    weeks.forEach((w, idx) => { if (idx > 1) w.unlockedPercentage = 0; });
+    // Optionally compute Week 3 via external APIs (no persistence), for local testing
+    if (unlockTest) {
+      try {
+        // Build a quick lookup of tasks by id
+        const tasksById = Object.create(null) as Record<string, Record<string, unknown>>;
+        for (const t of allTasks){
+          const id = (t as { id?: string }).id || "";
+          if (id) tasksById[id] = t as unknown as Record<string, unknown>;
+        }
+        const week3Idx = 2; // zero-based index
+        const ids = mandatoryByWeek[week3Idx] || [];
+        let extCompleted = 0;
+        for (const id of ids){
+          if (verifiedSet.has(id)) { extCompleted += 1; continue; }
+          const task = tasksById[id];
+          const vp = (task?.["verify_params"] as Record<string, unknown>) || {};
+          const cfg = (vp["verify_api"] as Record<string, unknown>) || {};
+          const rawUrl = String(cfg["url"] || "").trim();
+          const method = String(cfg["method"] || "GET").toUpperCase();
+          const success = (cfg["success"] || {}) as { path?: string; equals?: unknown; length_gt?: number };
+          if (!rawUrl) continue;
+          const urlFinal = rawUrl
+            .replace(":userAddress", addressRaw || address)
+            .replace(":walletAddress", addressRaw || address)
+            .replace(":address", addressRaw || address);
+          const init: RequestInit = { headers: { "Accept": "application/json", "User-Agent": "Somnia-Odyssey/1.0", "Origin": "https://odyssey.somnia.network" } };
+          if (method === "POST") init.method = "POST"; else init.method = "GET";
+          const headersCfg = cfg["headers"] as Record<string, unknown> | undefined;
+          if (headersCfg && typeof headersCfg === "object"){
+            for (const [k, v] of Object.entries(headersCfg)){
+              (init.headers as Record<string, string>)[k] = String(v);
+            }
+          }
+          try {
+            const res = await fetch(urlFinal, init);
+            if (!res.ok) continue;
+            const dataUnknown: unknown = await res.json().catch(() => ({}));
+            const obj = (dataUnknown ?? {}) as Record<string, unknown>;
+            let ok = false;
+            if (success && typeof success === "object"){
+              if (success.path){
+                const val = dotGet(obj, String(success.path));
+                if (success.length_gt != null && Array.isArray(val)){
+                  ok = val.length > Number(success.length_gt);
+                } else if (success.equals !== undefined) {
+                  ok = val === success.equals;
+                } else {
+                  ok = Boolean(val);
+                }
+              } else {
+                ok = Boolean(obj["completed"] === true || obj["ok"] === true || obj["verified"] === true);
+              }
+            } else {
+              ok = Boolean(obj["completed"] === true || obj["ok"] === true || obj["verified"] === true);
+            }
+            if (ok) extCompleted += 1;
+          } catch { /* ignore */ }
+        }
+        const listLen = (mandatoryByWeek[week3Idx] || []).length;
+        if (listLen > 0){
+          const pct = Math.max(0, Math.min(capPerWeek, (extCompleted * capPerWeek) / listLen));
+          weeks[week3Idx] = { unlockedPercentage: pct };
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Hard lock: allow Weeks 1, 2 and 3; all subsequent weeks must be 0 until further notice
+    weeks.forEach((w, idx) => { if (idx > 2) w.unlockedPercentage = 0; });
     const totalUnlockedPercentage = weeks.reduce((s, w) => s + (w.unlockedPercentage || 0), 0);
 
     const payload: Record<string, unknown> = { totalUnlockedPercentage, currentWeek, endAt, weeks };
