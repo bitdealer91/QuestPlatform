@@ -27,7 +27,7 @@ export default function GalaxyMap(){
 		(async () => {
 			try {
 				const weeks = Array.from({ length: 8 }, (_, i) => i + 1);
-				const resps = await Promise.all(weeks.map(w => fetch(`/api/week/${w}/tasks`).then(r => r.json()).catch(() => [])));
+				const resps = await Promise.all(weeks.map(w => fetch(`/api/week/${w}/tasks?stars=1`).then(r => r.json()).catch(() => [])));
 				const map: Record<number, string[]> = {};
 				resps.forEach((list, idx) => {
 					const w = idx + 1;
