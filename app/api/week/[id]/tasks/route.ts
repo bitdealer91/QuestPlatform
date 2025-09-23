@@ -26,6 +26,11 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
         useItems = gated;
       }
     } catch {}
+    // For weeks 1-3, hide all non-mandatory tasks
+    if (idNum >= 1 && idNum <= 3) {
+      useItems = useItems.filter((t) => (t as any).mandatory === true || (t as any)["mandatory task"] === true);
+    }
+
     const transformed = useItems.map((t) => ({
       id: t.id,
       type: t.type,
