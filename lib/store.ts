@@ -117,8 +117,26 @@ export async function getWeeksSummary(){
 
 export async function getWeekTasks(id: number){
   const { tasks } = await loadTasks();
-  // Оптимизированная фильтрация
-  return tasks.filter(t => t.week === id);
+  // Базовая фильтрация по неделе
+  let list = tasks.filter(t => t.week === id);
+  // Скрыть явно помеченные hidden
+  list = list.filter(t => (t as any).hidden !== true);
+  // Dev-only временное скрытие задач по требованиям
+  if (process.env.NODE_ENV !== 'production') {
+    const devHide = new Set(["standard-momo", "standard-trades"]);
+    list = list.filter(t => !devHide.has((t as any).id));
+  }
+  // Принудительное скрытие через env
+  try {
+    const env = process.env.HIDE_TASK_IDS || '';
+    if (env && typeof env === 'string') {
+      const hideSet = new Set(env.split(',').map(s => s.trim()).filter(Boolean));
+      if (hideSet.size > 0) {
+        list = list.filter(t => !hideSet.has((t as any).id));
+      }
+    }
+  } catch {}
+  return list;
 }
 
 export async function findTask(id: string){

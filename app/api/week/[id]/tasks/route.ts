@@ -14,6 +14,11 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     let useItems = items;
     // Hide tasks explicitly marked as hidden
     useItems = useItems.filter((t) => (t as any).hidden !== true);
+    // In development, temporarily hide specific tasks by ID (requested)
+    if (process.env.NODE_ENV !== 'production') {
+      const devHide = new Set(["standard-momo", "standard-trades"]);
+      useItems = useItems.filter((t) => !devHide.has((t as any).id));
+    }
     // Force-hide by IDs via env var (comma-separated)
     try {
       const env = process.env.HIDE_TASK_IDS || '';
