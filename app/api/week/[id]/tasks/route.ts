@@ -12,6 +12,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const starsMode = /^(1|true)$/i.test(String(url.searchParams.get('stars') || ''));
     const items = await getWeekTasks(idNum);
     let useItems = items;
+    // Hide tasks explicitly marked as hidden
+    useItems = useItems.filter((t) => (t as any).hidden !== true);
     // Гейтинг по дате старта: показываем только задачи с day <= elapsed
     // Разблокировка новых дней происходит ежедневно в 12:00 UTC
     try {
