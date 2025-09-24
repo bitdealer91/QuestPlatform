@@ -14,6 +14,16 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     let useItems = items;
     // Hide tasks explicitly marked as hidden
     useItems = useItems.filter((t) => (t as any).hidden !== true);
+    // Force-hide by IDs via env var (comma-separated)
+    try {
+      const env = process.env.HIDE_TASK_IDS || '';
+      if (env && typeof env === 'string') {
+        const hideSet = new Set(env.split(',').map(s => s.trim()).filter(Boolean));
+        if (hideSet.size > 0) {
+          useItems = useItems.filter((t) => !hideSet.has((t as any).id));
+        }
+      }
+    } catch {}
     // Гейтинг по дате старта: показываем только задачи с day <= elapsed
     // Разблокировка новых дней происходит ежедневно в 12:00 UTC
     try {
