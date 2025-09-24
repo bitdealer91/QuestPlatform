@@ -689,6 +689,56 @@
       "brand": "Capyagent",
       "logo": "/brands/capyagent.svg",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 4,
+      "day": 24,
+      "id": "standard-momo",
+      "title": "Buy $5 worth of MoMo",
+      "description": "Buy $5 worth of MoMo on Standard Protocol on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://app.standard.im/somnia-mainnet/trade/MOMO/SOMI",
+      "xp": 60,
+      "star": true,   
+      "mandatory": false,
+      "category": "Trade",
+     "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://api-somi.standardweb3.com/api/quest/somnia-odyssey-task1/:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+      }
+      },
+      "brand": "Standard Protocol",
+      "logo": "/brands/standard.png",
+      "brand_color": "#6366F1"
+    },
+    {
+      "week": 4,
+      "day": 24,
+      "id": "standard-trades",
+      "title": "Perform 10 trades on SOMI-USDC token pair",
+      "description": "Perform 10 trades on Standard Protocol on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://app.standard.im/somnia-mainnet/trade/SOMI/USDC",
+      "xp": 30,
+      "star": false,   
+      "mandatory": true,
+      "category": "Trade",
+     "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://api-somi.standardweb3.com/api/quest/somnia-odyssey-task2/:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+      }
+      },
+      "brand": "Standard Protocol",
+      "logo": "/brands/standard.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
