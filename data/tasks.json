@@ -741,6 +741,31 @@
       "brand": "Standard Protocol",
       "logo": "/brands/standard.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 4,
+      "day": 25,
+      "id": "somniameme-volume",
+      "title": "Reach 20 SOMI volume on Somnia Meme",
+      "description": "Reach at least 20 SOMI volume within Somnia Meme platform",
+      "type": "action",
+      "href": "https://somnia.meme/",
+      "xp": 60,
+      "star": true,
+      "mandatory": false,
+      "tags": ["on-chain","meme","trade"],
+      "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://api.somnia.meme/api/event/volume/:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+      }
+      },
+      "brand": "Somnia Meme",
+      "logo": "/brands/somniameme_dark.webp",
+      "brand_color": "#6366F1"
     }
   ]
 }
