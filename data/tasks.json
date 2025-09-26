@@ -766,6 +766,30 @@
       "brand": "Somnia Meme",
       "logo": "/brands/somniameme_dark.webp",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 4,
+      "day": 26,
+      "id": "capyagent-ball",
+        "title": "Obtain 3 Stars in the Ball3 Arena game",
+        "description": "Earn at least 3 Stars in the Ball3 Arena by CapyGame.",
+      "type": "action",
+      "href": "https://somnia.ball3.xyz/",
+      "xp": 30,
+      "star": false,   
+      "mandatory": true,
+      "category": "Game",
+       "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://somnia-server.ball3.xyz/platform/pog-service/callback/ball/:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }}
+      },
+      "brand": "Capyagent",
+      "logo": "/brands/capyagent.svg",
+      "brand_color": "#6366F1"
     }
   ]
 }
