@@ -790,6 +790,31 @@
       "brand": "Capyagent",
       "logo": "/brands/capyagent.svg",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 4,
+      "day": 26,
+      "id": "madchicks-mint",
+      "title": "Mint an NFT on BigInt",
+      "description": "Please Note: BigInt is a project within the Somnia ecosystem, while the MadChicks NFT collection is an independent initiative and not an official part of the Somnia ecosystem.",
+      "type": "action",
+      "href": "https://app.bigint.co/madchicks/",
+      "xp": 30,
+      "star": false,
+      "mandatory": false,
+      "category": "NFT",
+      "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://madchicks-quest-api-894y3.ondigitalocean.app/check-mint?wallet=:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+      }
+      },
+      "brand": "BigInt",
+      "logo": "/brands/bigint.png",
+      "brand_color": "#FF9800"
     }
   ]
 }
