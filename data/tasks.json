@@ -725,8 +725,7 @@
       "type": "action",
       "href": "https://app.standard.im/somnia-mainnet/trade/SOMI/USDC",
       "xp": 30,
-      "star": false,   
-      "mandatory": true,
+      "star": false,
       "hidden": true,
       "category": "Trade",
      "verify_method": "api",
@@ -815,6 +814,81 @@
       "brand": "BigInt",
       "logo": "/brands/bigint.png",
       "brand_color": "#FF9800"
+    },
+    {
+      "week": 4,
+      "day": 29,
+      "id": "nfts2me-mint",
+      "title": "Mint the The Flying Quillie NFT",
+      "description": "The Flying Quillie after 4 weeks of his journey has found an unexpected hidden gem - a key to the greatest mystery yet. Mint your gem to continue the journey to Planet 5, and discover what comes next.",
+      "type": "action",
+      "href": "https://the-flying-quillie.nfts2.me/",
+      "xp": 30,
+      "star": false,
+      "mandatory": true,
+      "tags": ["on-chain","mint"],
+      "verify_method": "api",
+      "verify_params": {
+        "chainId": 5031,
+        "verify_api": {
+          "url": "https://mainnet.somnia.w3us.site/api/v2/addresses/:userAddress/token-transfers?type=ERC-721%2CERC-1155&filter=to&token=0x45eE15003d99700B824eA47573F37927f6Ccf3bB",
+          "method": "GET",
+          "success": { "path": "items", "length_gt": 0 }
+        }
+      },
+   "brand": "NFTs2Me",
+    "logo": "/brands/nfts2me.svg",
+    "brand_color": "#6366F1"
+    },
+    {
+      "week": 4,
+      "day": 29,
+      "id": "somnex-meme",
+      "title": "Launch a meme coin on Somnex.",
+      "description": "Launch your meme token on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://somnex.xyz/#/memeLaunch",
+      "xp": 60,
+      "star": true,
+      "mandatory": false,
+      "tags": ["on-chain","meme"],
+      "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://dapp.somnex.xyz/api/event/launch-meme/:walletAddress",
+        "API_KEY": "pkYnC3q2ajmPNA7kd-Bg1wsXIHz15Zv8zfrCkNkePpI",
+        "headers": { "Authorization": "Bearer pkYnC3q2ajmPNA7kd-Bg1wsXIHz15Zv8zfrCkNkePpI" },
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+      }
+      },
+      "brand": "Somnex",
+      "logo": "/brands/somnex.png",
+      "brand_color": "#6366F1"
+    },
+    {
+      "week": 4,
+      "day": 29,
+      "id": "somniaexchange-nia",
+      "title": "Buy $10 worth of NIA token",
+      "description": "Buy at least $10 worth of NIA from SOMI-NIA token pair.",
+      "type": "action",
+      "href": "https://somnia.exchange/",
+      "xp": 60,
+      "star": true,
+      "tags": ["on-chain","swap","trade"],
+      "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://game-api.somnia.exchange/api/event/nia-somi-buy-volume/:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }}
+      },
+      "brand": "Somnia Exchange",
+      "logo": "/brands/somniaexchange.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
