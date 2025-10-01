@@ -889,6 +889,56 @@
       "brand": "Somnia Exchange",
       "logo": "/brands/somniaexchange.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 5,
+      "day": 31,
+      "id": "intraverse-mint",
+        "title": "Mint the Moon Pass NFT",
+        "description": "Mint the Moon Pass NFT on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://play.intraverse.io/collections/moon-pass",
+      "xp": 30,
+      "star": false,   
+      "mandatory": false,
+      "category": "NFT",
+       "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://api.intraverse.io/api/event/verify-player?wallet=:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }}
+      },
+      "brand": "Intraverse",
+      "logo": "/brands/intraverse.png",
+      "brand_color": "#6366F1"
+    },
+    {
+      "week": 5,
+      "day": 31,
+      "id": "somnex-trade-meme",
+      "title": "Perform 10 trades on meme on Somnex.",
+      "description": "Perform at least 10 trades on meme tokens in bonding curve.",
+      "type": "action",
+      "href": "https://somnex.xyz/#/memeLaunch",
+      "xp": 30,
+      "star": false,
+      "mandatory": true,
+      "tags": ["on-chain","meme"],
+      "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://dapp.somnex.xyz/api/event/trade-meme-counts/:walletAddress",
+        "API_KEY": "pkYnC3q2ajmPNA7kd-Bg1wsXIHz15Zv8zfrCkNkePpI",
+        "headers": { "Authorization": "Bearer pkYnC3q2ajmPNA7kd-Bg1wsXIHz15Zv8zfrCkNkePpI" },
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }}
+      },
+      "brand": "Somnex",
+      "logo": "/brands/somnex.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
