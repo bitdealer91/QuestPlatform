@@ -966,6 +966,55 @@
       "brand": "Somnex",
       "logo": "/brands/somnex.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 5,
+      "day": 33,
+      "id": "warzone-gameplay",
+      "title": "Defeat 200 enemies in total",
+      "description": "Defeat at least 200 enemies in total in Warzone Warriors.",
+      "type": "action",
+      "href": "https://warzonewarriors.xyz/",
+      "xp": 40,
+      "star": false,
+      "mandatory": true,
+      "tags": ["on-chain","game"],
+      "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://warzonewarriors.xyz/warzone/dailyQuests/type/1?walletAddress=:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }}
+      },
+      "brand": "Warzone_Warriors",
+      "logo": "/brands/warzone.png",
+      "brand_color": "#6366F1"
+    },
+    {
+      "week": 5,
+      "day": 36,
+      "id": "ruby-mint",
+        "title": "Mint the RubyScore Box",
+        "description": "Mint the RubyScore Reputation Box on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://rubyscore.io/somnia-id",
+      "xp": 30,
+      "star": false,   
+      "mandatory": false,
+      "category": "NFT",
+       "verify_method": "api",
+      "verify_params": {
+      "verify_api": {
+      "url": "https://rubyscore.io/public_api/data/wallet/:walletAddress/reputationboxes/verify",
+      "method": "POST",
+      "headers": { "x-api-key": "G66FT7W-XDQ4W0B-QXVRWMN-64ZBJS6", "Content-Type": "application/json" },
+      "body": { "address": ":walletAddress" },
+      "success": { "path": "completed", "equals": true }
+      }},
+      "brand": "Rubyscore",
+      "logo": "/brands/ruby.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
