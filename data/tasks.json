@@ -939,6 +939,33 @@
       "brand": "Somnex",
       "logo": "/brands/somnex.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 5,
+      "day": 32,
+      "id": "somnex-liquidity",
+      "title": "Provide $20 liquidity to WSOMI-USDC pool.",
+      "description": "Provide a total of $20 liquidity to V3 WSOMI-USDC pool on Somnex.",
+      "type": "action",
+      "href": "https://dapp-ammv3.somnex.xyz/#/v3/addliquidity/0x046ede9564a72571df6f5e44d0405360c0f4dcab/0x28bec7e30e6faee657a03e19bf1128aad7632a00",
+      "xp": 60,
+      "star": true,
+      "mandatory": false,
+      "tags": ["on-chain","liquidity"],
+      "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://dapp.somnex.xyz/api/event/lp/:walletAddress",
+        "API_KEY": "pkYnC3q2ajmPNA7kd-Bg1wsXIHz15Zv8zfrCkNkePpI",
+        "headers": { "Authorization": "Bearer pkYnC3q2ajmPNA7kd-Bg1wsXIHz15Zv8zfrCkNkePpI" },
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Somnex",
+      "logo": "/brands/somnex.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
