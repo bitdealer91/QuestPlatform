@@ -45,9 +45,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         useItems = gated;
       }
     } catch {}
-    // For weeks 1-3, hide all non-mandatory tasks by default.
+    // For weeks 1-4, hide all non-mandatory tasks by default.
     // If stars=1 is requested, return only star tasks (to allow star rendering even when tasks are hidden).
-    if (idNum >= 1 && idNum <= 3) {
+    if (idNum >= 1 && idNum <= 4) {
       if (starsMode) {
         useItems = useItems.filter((t) => (t as any).star === true);
       } else {
