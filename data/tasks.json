@@ -993,6 +993,31 @@
     },
     {
       "week": 5,
+      "day": 33,
+      "id": "pixcape-bridge",
+        "title": "Bridge Pixcape Genesis Pass to Somnia",
+        "description": "Bridge Pixcape Genesis Pass NFT to Somnia Mainnet.",
+      "type": "action",
+      "href": "https://bridge.pixcape.games/",
+      "xp": 60,
+      "star": false,   
+      "mandatory": false,
+      "category": "NFT",
+       "verify_method": "api",
+      "verify_params": { 
+      "chainId": 5031,
+      "verify_api": {
+        "url": "https://pixcapeapi.vercel.app/api/bridge-status?wallet=:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }}
+      },
+      "brand": "Pixcape",
+      "logo": "/brands/pixcape.png",
+      "brand_color": "#6366F1"
+    },
+    {
+      "week": 5,
       "day": 36,
       "id": "ruby-mint",
         "title": "Mint the RubyScore Box",
