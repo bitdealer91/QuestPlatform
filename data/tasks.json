@@ -982,7 +982,7 @@
       "verify_method": "api",
       "verify_params": { "chainId": 5031,
       "verify_api": {
-        "url": "https://warzonewarriors.xyz/warzone/dailyQuests/type/1?walletAddress=:walletAddress",
+        "url": "https://api.warzonewarriors.xyz/warzone/dailyQuests/type/1?walletAddress=:walletAddress&_t=:timestamp",
         "method": "GET",
         "body": {},
         "success": { "path": "completed", "equals": true }}
