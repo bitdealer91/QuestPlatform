@@ -1035,7 +1035,7 @@
       "method": "POST",
       "headers": { "x-api-key": "G66FT7W-XDQ4W0B-QXVRWMN-64ZBJS6", "Content-Type": "application/json" },
       "body": { "address": ":walletAddress" },
-      "success": { "path": "completed", "equals": true }
+      "success": { "path": "result.completed", "equals": true }
       }},
       "brand": "Rubyscore",
       "logo": "/brands/ruby.png",
