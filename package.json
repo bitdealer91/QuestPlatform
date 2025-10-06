@@ -10,6 +10,8 @@
     "build": "node scripts/verify-assets.mjs && next build",
     "start": "next start",
     "lint": "next lint",
+    "hh:compile": "hardhat compile",
+    "hh:deploy": "hardhat run scripts/deploy-keys.ts --network somnia",
     "test": "vitest run",
     "test:ui": "vitest",
     "playwright": "playwright test"
@@ -29,6 +31,7 @@
     "framer-motion": "^11.18.2",
     "ioredis": "^5.7.0",
     "lucide-react": "^0.462.0",
+    "motion": "^12.23.22",
     "next": "^14.2.31",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -38,6 +41,8 @@
     "zustand": "^4.5.7"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.4.0",
     "@testing-library/jest-dom": "^6.7.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -46,8 +51,10 @@
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "autoprefixer": "^10.4.21",
+    "dotenv": "^16.4.5",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.31",
+    "hardhat": "^2.22.10",
     "playwright": "^1.54.2",
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",

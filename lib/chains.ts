@@ -13,3 +13,6 @@ export const somniaMainnet = defineChain({
 	},
 	testnet: false,
 });
+
+// Optional Multicall3 override for faster reads (not strictly required for mint MVP)
+export const SOMNIA_MULTICALL3 = (process.env.NEXT_PUBLIC_MULTICALL3 || "0x5e44F178E8cF9B2F5409B6f18ce936aB817C5a11") as `0x${string}`;

@@ -236,10 +236,23 @@ export async function POST(req: Request){
           const url = rawUrl
             .replace(':userAddress', extAddr || '')
             .replace(':walletAddress', extAddr || '')
-            .replace(':address', extAddr || '');
+            .replace(':address', extAddr || '')
+            .replace(':timestamp', String(Date.now()))
+            .replace('{{timestamp}}', String(Date.now()));
           debugUrl = url;
-          const init: RequestInit = { headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'User-Agent': 'Somnia-Odyssey/1.0', 'Origin': 'https://odyssey.somnia.network' } };
-          if (method === 'POST') init.method = 'POST'; else init.method = 'GET';
+          const init: RequestInit = { headers: { } };
+          if (method === 'POST') {
+            init.method = 'POST';
+            (init.headers as Record<string, string>)['Content-Type'] = 'application/json';
+            (init.headers as Record<string, string>)['Accept'] = 'application/json';
+            (init.headers as Record<string, string>)['User-Agent'] = 'Somnia-Odyssey/1.0';
+            (init.headers as Record<string, string>)['Origin'] = 'https://odyssey.somnia.network';
+          } else {
+            init.method = 'GET';
+            // For GET avoid unnecessary headers that can trigger WAFs
+            (init.headers as Record<string, string>)['Accept'] = 'application/json';
+            (init.headers as Record<string, string>)['User-Agent'] = 'Somnia-Odyssey/1.0';
+          }
           const bodyCfg = cfg['body'];
           if (init.method === 'POST' && bodyCfg && typeof bodyCfg === 'object'){
             init.body = JSON.stringify(bodyCfg);
