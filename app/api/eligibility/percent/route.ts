@@ -173,8 +173,8 @@ export async function GET(req: Request){
     // In development, bypass this lock to allow local testing of week 4+
     const isProd = process.env.NODE_ENV === 'production';
     if (isProd) {
-      // Allow weeks 1-4 in production (0-based idx 0..3); lock weeks after 4
-      weeks.forEach((w, idx) => { if (idx > 3) w.unlockedPercentage = 0; });
+      // Allow weeks 1-5 in production (0-based idx 0..4); lock weeks after 5
+      weeks.forEach((w, idx) => { if (idx > 4) w.unlockedPercentage = 0; });
     }
     const totalUnlockedPercentage = weeks.reduce((s, w) => s + (w.unlockedPercentage || 0), 0);
 
