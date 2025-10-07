@@ -92,9 +92,13 @@ export async function GET(req: Request){
 
     // Each week gives up to 10% proportionally to completed mandatory tasks
     const capPerWeek = 10;
+    // In production, cap visible/progress week to 5 (idx 4) as requested
+    const isProd = process.env.NODE_ENV === 'production';
+    const effectiveCurrentWeek = isProd ? Math.min(currentWeek, 4) : currentWeek;
+
     const weeks = mandatoryByWeek.map((ids, idx) => {
-      // Do not unlock for future weeks; allow current and past weeks
-      if (idx > currentWeek) return { unlockedPercentage: 0 };
+      // Do not unlock for future weeks relative to effective current week
+      if (idx > effectiveCurrentWeek) return { unlockedPercentage: 0 };
       const list = Array.isArray(ids) ? ids : [];
       if (list.length === 0) return { unlockedPercentage: 0 };
       const completed = list.reduce((n, id) => n + (verifiedSet.has(id) ? 1 : 0), 0);
@@ -169,17 +173,14 @@ export async function GET(req: Request){
       } catch { /* ignore */ }
     }
 
-    // Hard lock: allow Weeks 1, 2 and 3; all subsequent weeks must be 0 until further notice
-    // In development, bypass this lock to allow local testing of week 4+
-    const isProd = process.env.NODE_ENV === 'production';
+    // Hard lock in production: allow Weeks 1–5; subsequent weeks must be 0
     if (isProd) {
-      // Allow weeks 1-5 in production (0-based idx 0..4); lock weeks after 5
       weeks.forEach((w, idx) => { if (idx > 4) w.unlockedPercentage = 0; });
     }
     const totalUnlockedPercentage = weeks.reduce((s, w) => s + (w.unlockedPercentage || 0), 0);
 
-    // Report currentWeek as 1-based in API response
-    const payload: Record<string, unknown> = { totalUnlockedPercentage, currentWeek: currentWeek + 1, endAt, weeks };
+    // Report currentWeek as 1-based in API response, capped to 5 in production
+    const payload: Record<string, unknown> = { totalUnlockedPercentage, currentWeek: effectiveCurrentWeek + 1, endAt, weeks };
     if (debug) {
       payload.debug = {
         mandatoryByWeek,
