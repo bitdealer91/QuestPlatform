@@ -178,7 +178,8 @@ export async function GET(req: Request){
     }
     const totalUnlockedPercentage = weeks.reduce((s, w) => s + (w.unlockedPercentage || 0), 0);
 
-    const payload: Record<string, unknown> = { totalUnlockedPercentage, currentWeek, endAt, weeks };
+    // Report currentWeek as 1-based in API response
+    const payload: Record<string, unknown> = { totalUnlockedPercentage, currentWeek: currentWeek + 1, endAt, weeks };
     if (debug) {
       payload.debug = {
         mandatoryByWeek,
