@@ -98,14 +98,16 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
                 {canInteract && (
                     <div className={clsx('pointer-events-none w-[260px] z-50', 'transition-all duration-200', hover ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2')}>
                         <div className="pointer-events-auto grid grid-cols-2 gap-2">
-                            <button onClick={() => onView?.(id)} className="px-3 py-2 rounded-xl bg-[var(--primary)] text-black hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" aria-label={`View tasks for ${title}`}>View Tasks</button>
+                            {(() => { const v = String(process.env.NEXT_PUBLIC_ENABLE_MINT_DEV || '0').toLowerCase(); const flag = v === '1' || v === 'true'; return (flag && address && eligible && !alreadyMinted); })() ? (
+                                <button onClick={() => setMintOpen(true)} className="px-3 py-2 rounded-xl bg-[var(--primary)] text-black hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] cursor-pointer" aria-label={`Mint key for ${title}`}>Mint</button>
+                            ) : ((() => { const v = String(process.env.NEXT_PUBLIC_ENABLE_MINT_DEV || '0').toLowerCase(); const flag = v === '1' || v === 'true'; return (flag && address && eligible && alreadyMinted); })() ? (
+                                <button disabled className="px-3 py-2 rounded-xl border bg-[color:var(--card)] text-[color:var(--muted)] border-[color:var(--outline)] cursor-not-allowed" aria-label={`Key minted for ${title}`}>Minted</button>
+                            ) : (
+                                <button onClick={() => onView?.(id)} className="px-3 py-2 rounded-xl bg-[var(--primary)] text-black hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" aria-label={`View tasks for ${title}`}>View Tasks</button>
+                            ))}
+
                             <button onClick={() => claimEnabled && onClaim?.(id)} disabled={!claimEnabled} className={clsx('px-3 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[var(--ring)]', claimEnabled ? 'bg-[var(--card)] text-[var(--text)] border-[var(--outline)] hover:brightness-110' : 'bg-[color:var(--card)]/60 text-[color:var(--muted)] border-[color:var(--outline)]/60 cursor-not-allowed')} aria-label={`Claim reward for ${title}`}>{claimEnabled ? 'Claim' : 'Claim (locked)'}</button>
                         </div>
-						{(() => { const v = String(process.env.NEXT_PUBLIC_ENABLE_MINT_DEV || '0').toLowerCase(); return v === '1' || v === 'true'; })() && eligible && !alreadyMinted && (
-							<div className="mt-2 flex justify-center pointer-events-auto">
-								<button onClick={() => setMintOpen(true)} className="px-3 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[var(--ring)] bg-[var(--card)] text-[var(--text)] border-[var(--outline)] hover:brightness-110 cursor-pointer" aria-label={`Mint key for ${title}`}>Mint</button>
-							</div>
-						)}
                     </div>
                 )}
 				{locked && hover && null}

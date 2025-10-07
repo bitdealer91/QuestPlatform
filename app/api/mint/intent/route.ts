@@ -74,7 +74,9 @@ export async function POST(req: Request){
 
     const now = Math.floor(Date.now() / 1000);
     const deadline = now + 300; // 5 min
-    const nonce = Number(BigInt.asUintN(32, BigInt(keccak256(toHex(`${address}:${week}:${now}`))))) & 0xffffffff;
+    // Create an unsigned 32-bit nonce without using bitwise ops (to avoid signed wrap)
+    const nonceBig = BigInt.asUintN(32, BigInt(keccak256(toHex(`${address}:${week}:${now}`))));
+    const nonce = Number(nonceBig);
 
     if (!useRealSign){
       return NextResponse.json({ id: week, nonce, deadline, signature: '0x' });

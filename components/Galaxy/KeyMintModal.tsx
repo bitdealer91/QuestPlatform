@@ -56,7 +56,8 @@ export default function KeyMintModal({ open, onClose, weekId, address, initialEl
 
   const alreadyMinted = (typeof bal === 'bigint' && bal > 0n) || elig?.minted || didMint;
   const isEligibleNow = (elig?.eligible ?? initialEligible) === true;
-  const canMint = enabled && isEligibleNow && !alreadyMinted;
+  const hasAddress = !!address;
+  const canMint = enabled && isEligibleNow && !alreadyMinted && hasAddress;
 
   const onMint = async () => {
     try {
@@ -64,7 +65,11 @@ export default function KeyMintModal({ open, onClose, weekId, address, initialEl
       // Dev: request intent; in prod this returns a real signature to submit on-chain
       const res = await fetch('/api/mint/intent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address, week: weekId }) });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j?.error || 'mint_intent_failed');
+      if (!res.ok) {
+        const msg = String(j?.error || 'mint_intent_failed') + (j?.detail ? `: ${String(j.detail)}` : '');
+        setError(msg);
+        return;
+      }
       // If no contract is configured or signature is empty, mark as minted to test UI
       if (!hasContract || !j?.signature || j.signature === '0x') {
         setDidMint(true);
@@ -78,8 +83,9 @@ export default function KeyMintModal({ open, onClose, weekId, address, initialEl
       });
       // Wait is handled by useWaitForTransactionReceipt; we optimistically set minted after tx hash
       setDidMint(true);
-    } catch {
-      setError('Mint failed');
+    } catch (e) {
+      const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as any).message) : 'Mint failed';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -108,9 +114,12 @@ export default function KeyMintModal({ open, onClose, weekId, address, initialEl
           {alreadyMinted && (
             <div className="text-sm text-[color:var(--ok)] text-center">Minted</div>
           )}
+          {error && (
+            <div className="text-sm text-[color:var(--danger)] text-center max-w-[360px] break-words">{error}</div>
+          )}
           <div className="flex justify-center mt-2">
-            <Tooltip content={!canMint ? (elig?.reason || error || 'Not available') : null}>
-              <Button variant={canMint ? 'primary' : 'glass'} disabled={!canMint || loading} onClick={onMint}>
+            <Tooltip content={!canMint ? (error || (!hasAddress ? 'Connect wallet' : (elig?.reason || 'Not available'))) : null}>
+              <Button variant={canMint ? 'primary' : 'glass'} disabled={!canMint || loading || waitingTx} onClick={onMint}>
                 {loading ? 'Processing…' : (canMint ? 'Mint' : 'Mint (unavailable)')}
               </Button>
             </Tooltip>
