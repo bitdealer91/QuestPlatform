@@ -1040,6 +1040,56 @@
       "brand": "Rubyscore",
       "logo": "/brands/ruby.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 5,
+      "day": 37,
+      "id": "somniaexchange-30-trades",
+      "title": "Perform 30 trades on SOMI-USDC token pair",
+      "description": "Perform at least 30 trades on SOMI-USDC token pair on Somnia Exchange",
+      "type": "action",
+      "href": "https://somnia.exchange/",
+      "xp": 60,
+      "star": true,
+      "mandatory": false,
+      "tags": ["on-chain","trade"],
+      "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://api.somnia.exchange/api/event/verify-player-swap-usdc-somi/:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Somnia Exchange",
+      "logo": "/brands/somniaexchange.png",
+      "brand_color": "#6366F1"
+    },
+    {
+      "week": 6,
+      "day": 37,
+      "id": "intraverse-rarity-8",
+        "title": "Stake a Rarity 8 Moon Pass NFT",
+        "description": "Obtain a Rarity 8 Moon Pass NFT and stake it.",
+      "type": "action",
+      "href": "https://play.intraverse.io/stakes/moon-pass",
+      "xp": 30,
+      "star": false,   
+      "mandatory": false,
+      "category": "NFT",
+       "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://api.intraverse.io/api/event/verify?wallet=:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "isVerified", "equals": true }
+      }
+      },
+      "brand": "Intraverse",
+      "logo": "/brands/intraverse.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
