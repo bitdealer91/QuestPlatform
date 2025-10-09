@@ -1109,7 +1109,7 @@
         "url": "https://somnia-q2.vercel.app/api/event?address=:walletAddress",
         "method": "GET",
         "body": {},
-        "success": { "path": "completed", "equals": true }
+        "success": { "path": "data.hole.completed", "equals": true }
         }
       },
       "brand": "Kazar",
