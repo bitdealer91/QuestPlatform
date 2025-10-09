@@ -1090,6 +1090,31 @@
       "brand": "Intraverse",
       "logo": "/brands/intraverse.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 6,
+      "day": 39,
+      "id": "black-hole",
+        "title": "Obtain 50K points in Black Hole",
+        "description": "Obtain at least 50K points in Black Hole on Somnia Mainnet.",
+      "type": "action",
+      "href": "https://somniahole.metakraft.live/",
+      "xp": 30,
+      "star": false,   
+      "mandatory": true,
+      "category": "game",
+       "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://somnia-q2.vercel.app/api/event?address=:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Kazar",
+      "logo": "/brands/kazar.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
