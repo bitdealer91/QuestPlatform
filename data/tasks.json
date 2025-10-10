@@ -1133,6 +1133,7 @@
       "verify_api": {
         "url": "https://dapp.somnex.xyz/api/event/lp-v2/:walletAddress",
         "API_KEY": "pkYnC3q2ajmPNA7kd-Bg1wsXIHz15Zv8zfrCkNkePpI",
+        "headers": { "Authorization": "Bearer pkYnC3q2ajmPNA7kd-Bg1wsXIHz15Zv8zfrCkNkePpI" },
         "method": "GET",
         "body": {},
         "success": { "path": "completed", "equals": true }
