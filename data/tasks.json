@@ -1142,6 +1142,31 @@
       "brand": "Somnex",
       "logo": "/brands/somnex.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 6,
+      "day": 43,
+      "id": "tokos-supply",
+        "title": "Supply 10 SOMI on Tokos",
+        "description": "Supply at least 10 SOMI on Tokos.",
+      "type": "action",
+      "href": "https://tokos.fi/",
+      "xp": 30,
+      "star": false,   
+      "mandatory": true,
+      "category": "lending",
+       "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://somnia-odyssey-tokos-api.vercel.app/api/score?address=:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Tokos",
+      "logo": "/brands/tokos.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
