@@ -1158,7 +1158,7 @@
        "verify_method": "api",
       "verify_params": { "chainId": 5031,
       "verify_api": {
-        "url": "https://somnia-odyssey-tokos-api.vercel.app/api/score?address=:walletAddress",
+        "url": "https://tokos-at-least-10-somi-deposit-v2.vercel.app/api/score?address=:walletAddress",
         "method": "GET",
         "body": {},
         "success": { "path": "completed", "equals": true }
