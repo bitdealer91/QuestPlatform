@@ -1167,6 +1167,31 @@
       "brand": "Tokos",
       "logo": "/brands/tokos.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 7,
+      "day": 45,
+      "id": "tokos-borrow",
+        "title": "Borrow 5 SOMI on Tokos",
+        "description": "Borrow at least 5 SOMI on Tokos.",
+      "type": "action",
+      "href": "https://tokos.fi/",
+      "xp": 30,
+      "star": false,   
+      "mandatory": true,
+      "category": "lending",
+       "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://somi-tokos-odyssey-did-wallet-borro.vercel.app/api/score?address=:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Tokos",
+      "logo": "/brands/tokos.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
