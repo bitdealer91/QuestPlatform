@@ -1183,7 +1183,7 @@
        "verify_method": "api",
       "verify_params": { "chainId": 5031,
       "verify_api": {
-        "url": "https://somi-tokos-odyssey-did-wallet-borro.vercel.app/api/score?address=:walletAddress",
+        "url": "https://tokos-at-least-5-somi-borrow-v2.vercel.app/api/score?address=:walletAddress",
         "method": "GET",
         "body": {},
         "success": { "path": "completed", "equals": true }
