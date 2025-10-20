@@ -266,8 +266,8 @@ export async function POST(req: Request){
               }
             } catch {}
           }
-          // 12s timeout with 2 retries on transient failures
-          const res = await fetchWithRetries(url, init, 2, 12000);
+          // Increase resilience for flaky providers (Warzone/Intraverse): 20s timeout, 4 retries
+          const res = await fetchWithRetries(url, init, 4, 20000);
           if (!res.ok){
             // Do not fallback if verify_api is defined; apply cooldown to let user retry
             if (addr && taskId){ await setCache(cooldownKey(addr, taskId), true, 60); writeFailure(addr, taskId, String(res.status)).catch(() => {}); }
