@@ -100,7 +100,7 @@ export async function GET(req: Request){
     // to maintain 0/5/10% mapping for two mandatory tasks
     if (isProd) {
       try {
-        mandatoryByWeek[6] = ["somniameme-trade-2", "tokos-supply-30"];
+        mandatoryByWeek[6] = ["somniameme-trade-2", "tokos-borrow"];
       } catch { /* noop */ }
     }
 
@@ -257,8 +257,8 @@ export async function GET(req: Request){
         }
         const week7Idx = 6; // zero-based index for week 7
         // Dev-only override: use EXACTLY these two as mandatory for week 7 testing
-        // per spec: somniameme-trade-2 and tokos-supply (tokos-supply-30 in tasks)
-        const ids = ["somniameme-trade-2", "tokos-supply-30"];
+        // per spec: somniameme-trade-2 and tokos-borrow
+        const ids = ["somniameme-trade-2", "tokos-borrow"];
         let extCompleted = 0;
         for (const id of ids){
           if (verifiedSet.has(id)) { extCompleted += 1; continue; }
