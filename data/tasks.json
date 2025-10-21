@@ -1320,6 +1320,56 @@
       "brand": "Tokos",
       "logo": "/brands/tokos.png",
       "brand_color": "#6366F1"
+    },
+    {
+      "week": 8,
+      "day": 52,
+      "id": "neuroguardians",
+        "title": "Mint NeuroNemesis NFT",
+        "description": "Mint NeuroNemesis NFT on Somnia Mainnet",
+      "type": "action",
+      "href": "https://opensea.io/collection/neuronemesis/overview",
+      "xp": 40,
+      "star": false,   
+      "mandatory": false,
+      "category": "nft",
+       "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://neuroguardians.com/api/event/verify-player/:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "Neuroguardians",
+      "logo": "/brands/neuroguardians.png",
+      "brand_color": "#6366F1"
+    },
+    {
+      "week": 8,
+      "day": 52,
+      "id": "msquared-avatar",
+        "title": "Mint your Somnia Avatar",
+        "description": "Mint your Genesis Edition Somnia Avatar on SomiLand.",
+      "type": "action",
+      "href": "https://somi.land/",
+      "xp": 30,
+      "star": false,   
+      "mandatory": true,
+      "category": "nft",
+       "verify_method": "api",
+      "verify_params": { "chainId": 5031,
+      "verify_api": {
+        "url": "https://somi.land/api/event/verify-player/:walletAddress",
+        "method": "GET",
+        "body": {},
+        "success": { "path": "completed", "equals": true }
+        }
+      },
+      "brand": "MSquared",
+      "logo": "/brands/m2.png",
+      "brand_color": "#6366F1"
     }
   ]
 }
