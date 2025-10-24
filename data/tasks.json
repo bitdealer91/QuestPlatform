@@ -1420,7 +1420,32 @@
       "brand": "Somnia Exchange",
       "logo": "/brands/somniaexchange.png",
       "brand_color": "#6366F1"
-    }
+    },
+    {
+      "week": 8,
+      "day": 57,
+      "id": "elixfi",
+      "title": "Perform 10 trades on WSOMI-USDC token pair",
+      "description": "Perform 10 trades on WSOMI-USDC token pair on Elix.fi",
+      "type": "action",
+      "href": "https://app.elix.fi/trade",
+      "xp": 30,
+      "star": false,
+      "mandatory": true,
+      "tags": ["on-chain","trade"],
+        "verify_method": "api",
+        "verify_params": { "chainId": 5031,
+        "verify_api": {
+          "url": "https://somnia-point-system-production.up.railway.app/api/events/verify-player?wallet=:walletAddress",
+          "method": "GET",
+          "body": {},
+          "success": { "path": "completed", "equals": true }
+          }
+          },
+     "brand": "Elix.fi",
+      "logo": "/brands/elixfi.png",
+      "brand_color": "#6366F1"
+     }
   ]
 }
 
