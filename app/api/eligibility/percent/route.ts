@@ -92,17 +92,14 @@ export async function GET(req: Request){
 
     // Each week gives up to 10% proportionally to completed mandatory tasks
     const capPerWeek = 10;
-    // In production, cap visible/progress week to 7 (idx 6)
+    // In production, cap visible/progress week to 8 (idx 7)
     const isProd = process.env.NODE_ENV === 'production';
-    const effectiveCurrentWeek = isProd ? Math.min(currentWeek, 6) : currentWeek;
+    const effectiveCurrentWeek = isProd ? Math.min(currentWeek, 7) : currentWeek;
 
-    // Week 7 mandatory override for production: use exactly these two IDs
-    // to maintain 0/5/10% mapping for two mandatory tasks
-    if (isProd) {
-      try {
-        mandatoryByWeek[6] = ["somniameme-trade-2", "tokos-borrow"];
-      } catch { /* noop */ }
-    }
+    // Week 7 mandatory override (prod): use exactly these two IDs to keep 0/5/10 mapping
+    if (isProd) { try { mandatoryByWeek[6] = ["somniameme-trade-2", "tokos-borrow"]; } catch { /* noop */ } }
+    // Week 8 mandatory override (prod): use exactly these two IDs
+    if (isProd) { try { mandatoryByWeek[7] = ["msquared-avatar", "elixfi"]; } catch { /* noop */ } }
 
     const weeks = mandatoryByWeek.map((ids, idx) => {
       // Do not unlock for future weeks relative to effective current week
@@ -315,9 +312,76 @@ export async function GET(req: Request){
       } catch { /* ignore */ }
     }
 
-    // Hard lock in production: allow Weeks 1–7; subsequent weeks must be 0
+    // Optionally compute Week 8 via external APIs (no persistence), for local testing
+    if (unlockTest) {
+      try {
+        const tasksById = Object.create(null) as Record<string, Record<string, unknown>>;
+        for (const t of allTasks){
+          const id = (t as { id?: string }).id || "";
+          if (id) tasksById[id] = t as unknown as Record<string, unknown>;
+        }
+        const week8Idx = 7; // zero-based index for week 8
+        // Use EXACTLY these two as mandatory for week 8 testing: msquared-avatar and elixfi
+        const ids = ["msquared-avatar", "elixfi"];
+        let extCompleted = 0;
+        for (const id of ids){
+          if (verifiedSet.has(id)) { extCompleted += 1; continue; }
+          const task = tasksById[id];
+          const vp = (task?.["verify_params"] as Record<string, unknown>) || {};
+          const cfg = (vp["verify_api"] as Record<string, unknown>) || {};
+          const rawUrl = String(cfg["url"] || "").trim();
+          const method = String(cfg["method"] || "GET").toUpperCase();
+          const success = (cfg["success"] || {}) as { path?: string; equals?: unknown; length_gt?: number };
+          if (!rawUrl) continue;
+          const urlFinal = rawUrl
+            .replace(":userAddress", addressRaw || address)
+            .replace(":walletAddress", addressRaw || address)
+            .replace(":address", addressRaw || address)
+            .replace(":timestamp", String(Math.floor(Date.now()/1000)));
+          const init: RequestInit = { headers: { "Accept": "application/json", "User-Agent": "Somnia-Odyssey/1.0", "Origin": "https://odyssey.somnia.network" } };
+          if (method === "POST") init.method = "POST"; else init.method = "GET";
+          const headersCfg = cfg["headers"] as Record<string, unknown> | undefined;
+          if (headersCfg && typeof headersCfg === "object"){
+            for (const [k, v] of Object.entries(headersCfg)){
+              (init.headers as Record<string, string>)[k] = String(v);
+            }
+          }
+          try {
+            const res = await fetch(urlFinal, init);
+            if (!res.ok) continue;
+            const dataUnknown: unknown = await res.json().catch(() => ({}));
+            const obj = (dataUnknown ?? {}) as Record<string, unknown>;
+            let ok = false;
+            if (success && typeof success === "object"){
+              if (success.path){
+                const val = dotGet(obj, String(success.path));
+                if (success.length_gt != null && Array.isArray(val)){
+                  ok = val.length > Number(success.length_gt);
+                } else if (success.equals !== undefined) {
+                  ok = val === success.equals;
+                } else {
+                  ok = Boolean(val);
+                }
+              } else {
+                ok = Boolean(obj["completed"] === true || obj["ok"] === true || obj["verified"] === true);
+              }
+            } else {
+              ok = Boolean(obj["completed"] === true || obj["ok"] === true || obj["verified"] === true);
+            }
+            if (ok) extCompleted += 1;
+          } catch { /* ignore */ }
+        }
+        const listLen = ids.length;
+        if (listLen > 0){
+          const pct = Math.max(0, Math.min(capPerWeek, (extCompleted * capPerWeek) / listLen));
+          weeks[week8Idx] = { unlockedPercentage: pct };
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Hard lock in production: allow Weeks 1–8; subsequent weeks must be 0
     if (isProd) {
-      weeks.forEach((w, idx) => { if (idx > 6) w.unlockedPercentage = 0; });
+      weeks.forEach((w, idx) => { if (idx > 7) w.unlockedPercentage = 0; });
     }
     const totalUnlockedPercentage = weeks.reduce((s, w) => s + (w.unlockedPercentage || 0), 0);
 
