@@ -70,7 +70,7 @@
       "verify_params": {
         "chainId": 5031,
         "verify_api": {
-          "url": "https://api-mainnet.somnia.meme/api/event/perform-trade/:userAddress",
+          "url": "https://api.somnia.meme/api/event/perform-trade-v2/:walletAddress",
           "method": "GET",
           "success": { "path": "completed", "equals": true }
         }
