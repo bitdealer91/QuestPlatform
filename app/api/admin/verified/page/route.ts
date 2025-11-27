@@ -27,13 +27,13 @@ function parseScanResult(res: unknown): { cursor: string; keys: string[] } {
   return { cursor: "0", keys: [] };
 }
 
-function parseArrayResults(res: unknown): unknown[] {
+function parseMembersResults(res: unknown): string[][] {
   try {
     const r = res as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
-    if (Array.isArray(r)) return r.map((x) => x?.result);
+    if (Array.isArray(r)) return r.map((x) => Array.isArray(x?.result as unknown[]) ? (x?.result as unknown[]).map(String) : []);
     if (r && Array.isArray(r.result)){
       const bucket = r.result[0]?.result as unknown;
-      if (Array.isArray(bucket)) return bucket as unknown[];
+      if (Array.isArray(bucket)) return bucket.map((x) => Array.isArray((x as any)) ? (x as unknown[]).map(String) : []);
     }
   } catch {}
   return [];
@@ -51,8 +51,8 @@ export async function POST(req: Request){
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
-    // Scan a page of XP keys
-    const scan = await pipeline([["SCAN", cursorIn, "MATCH", "user:xp:*", "COUNT", String(batch)]]);
+    // Scan a page of verified sets
+    const scan = await pipeline([["SCAN", cursorIn, "MATCH", "user:verified:*", "COUNT", String(batch)]]);
     if (!scan){
       return NextResponse.json({ error: "redis_unavailable" }, { status: 503 });
     }
@@ -61,19 +61,20 @@ export async function POST(req: Request){
       return NextResponse.json({ cursor, keysCount: 0, items: [] });
     }
 
-    // GET each key in batch
-    const cmds = keys.map((k) => ["GET", k] as (string|number)[]);
+    // Fetch members for each key
+    const cmds = keys.map((k) => ["SMEMBERS", k] as (string|number)[]);
     const res = await pipeline(cmds);
-    const vals = parseArrayResults(res);
+    const lists = parseMembersResults(res);
 
-    const items: Array<{ address: string; xp: number }> = [];
+    // Build results
+    const items: Array<{ address: string; verified: string[] }> = [];
     for (let i = 0; i < keys.length; i++){
       const key = keys[i] || "";
       const parts = key.split(":");
-      const address = (parts[2] || "").toLowerCase();
-      const raw = vals[i];
-      const xp = typeof raw === 'number' ? raw : Number(raw || 0) || 0;
-      if (address) items.push({ address, xp });
+      const address = parts[2] || "";
+      const verified = Array.isArray(lists[i]) ? (lists[i] as string[]).map((s) => String(s)) : [];
+      if (!address) continue;
+      items.push({ address, verified });
     }
 
     return NextResponse.json({ cursor, keysCount: keys.length, items });
@@ -81,6 +82,7 @@ export async function POST(req: Request){
     return NextResponse.json({ error: "failed" }, { status: 500 });
   }
 }
+
 
 
 

@@ -5,7 +5,8 @@ import clsx from 'clsx';
 import { Lock } from 'lucide-react';
 import { useAccount, useReadContract } from 'wagmi';
 import KeyMintModal from './KeyMintModal';
-import { ERC1155_MIN_ABI, KEYS_1155_ADDRESS, hasKeysContractConfigured } from '@/lib/contracts';
+import StarMintModal from './StarMintModal';
+import { ERC1155_MIN_ABI, KEYS_1155_ADDRESS, hasKeysContractConfigured, STARS_1155_ADDRESS, hasStarsContractConfigured } from '@/lib/contracts';
 
 export type PlanetNodeProps = {
 	id: number;
@@ -24,7 +25,9 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
 	const { address } = useAccount();
     const canInteract = !locked;
 	const [mintOpen, setMintOpen] = useState(false);
+	const [starOpen, setStarOpen] = useState(false);
 	const [eligible, setEligible] = useState<boolean | null>(null);
+	const [starAvailable, setStarAvailable] = useState<boolean>(false);
 
 	// Optional on-chain check to hide Mint if already minted
 	const hasContract = hasKeysContractConfigured();
@@ -37,6 +40,39 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
 	});
 
 	const alreadyMinted = typeof bal === 'bigint' && bal > 0n;
+	// Stars on-chain balance (token id = 1)
+	const hasStars = hasStarsContractConfigured();
+	const { data: starBal } = useReadContract({
+		abi: ERC1155_MIN_ABI,
+		address: hasStars ? (STARS_1155_ADDRESS as `0x${string}`) : undefined,
+		functionName: 'balanceOf',
+		args: [address as `0x${string}`, 1n],
+		query: { enabled: hasStars && !!address && canInteract && id === 8 },
+	});
+	const alreadyStarMinted = typeof starBal === 'bigint' && starBal > 0n;
+
+	// Check if user has any stars available to mint (sum from /api/profile minus on-chain balance)
+	useEffect(() => {
+		if (id !== 8) return;
+		if (!address || !canInteract) { setStarAvailable(false); return; }
+		let cancelled = false;
+		const run = async () => {
+			try {
+				const res = await fetch(`/api/profile?address=${address}`);
+				const j = await res.json().catch(() => ({}));
+				const byWeek = (j?.starsByWeek || {}) as Record<string, number>;
+				const total = Object.values(byWeek).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
+				const chain = typeof starBal === 'bigint' ? Number(starBal) : 0;
+				const remaining = Math.max(0, total - chain);
+				if (!cancelled) setStarAvailable(remaining > 0);
+			} catch {
+				if (!cancelled) setStarAvailable(false);
+			}
+		};
+		// Fetch only on hover to reduce calls
+		if (hover) { run(); }
+		return () => { cancelled = true; };
+	}, [id, address, hover, canInteract, starBal]);
 
 	// Fetch eligibility when user hovers and when address changes
 	useEffect(() => {
@@ -96,23 +132,51 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
 					))}
 				</div>
                 {canInteract && (
-                    <div className={clsx('pointer-events-none w-[260px] z-50', 'transition-all duration-200', hover ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2')}>
-                        <div className="pointer-events-auto grid grid-cols-2 gap-2">
-                            {(() => { const v = String(process.env.NEXT_PUBLIC_ENABLE_MINT_DEV || '0').toLowerCase(); const flag = v === '1' || v === 'true'; return (flag && address && eligible && !alreadyMinted); })() ? (
-                                <button onClick={() => setMintOpen(true)} className="px-3 py-2 rounded-xl bg-[var(--primary)] text-black hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] cursor-pointer" aria-label={`Mint key for ${title}`}>Mint</button>
-                            ) : ((() => { const v = String(process.env.NEXT_PUBLIC_ENABLE_MINT_DEV || '0').toLowerCase(); const flag = v === '1' || v === 'true'; return (flag && address && eligible && alreadyMinted); })() ? (
-                                <button disabled className="px-3 py-2 rounded-xl border bg-[color:var(--card)] text-[color:var(--muted)] border-[color:var(--outline)] cursor-not-allowed" aria-label={`Key minted for ${title}`}>Minted</button>
-                            ) : (
-                                <button onClick={() => onView?.(id)} className="px-3 py-2 rounded-xl bg-[var(--primary)] text-black hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" aria-label={`View tasks for ${title}`}>View Tasks</button>
-                            ))}
-
-                            <button onClick={() => claimEnabled && onClaim?.(id)} disabled={!claimEnabled} className={clsx('px-3 py-2 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[var(--ring)]', claimEnabled ? 'bg-[var(--card)] text-[var(--text)] border-[var(--outline)] hover:brightness-110' : 'bg-[color:var(--card)]/60 text-[color:var(--muted)] border-[color:var(--outline)]/60 cursor-not-allowed')} aria-label={`Claim reward for ${title}`}>{claimEnabled ? 'Claim' : 'Claim (locked)'}</button>
-                        </div>
-                    </div>
+                    <div className={clsx('pointer-events-none w-[292px] z-50', 'transition-all duration-200', hover ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2')}>
+						<div className="pointer-events-auto">
+							<div className="flex gap-3">
+								{(() => { const v = String(process.env.NEXT_PUBLIC_ENABLE_MINT_DEV || '0').toLowerCase(); const flag = v === '1' || v === 'true'; return (flag && address && eligible && !alreadyMinted); })() ? (
+									<button onClick={() => setMintOpen(true)} style={{ width: 140 }} className="inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border border-[color:var(--outline)] bg-[var(--primary)] text-black hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] cursor-pointer" aria-label={`Mint key for ${title}`}>Mint</button>
+								) : ((() => { const v = String(process.env.NEXT_PUBLIC_ENABLE_MINT_DEV || '0').toLowerCase(); const flag = v === '1' || v === 'true'; return (flag && address && eligible && alreadyMinted); })() ? (
+									<button disabled style={{ width: 140 }} className="inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border bg-[color:var(--card)] text-[color:var(--muted)] border-[color:var(--outline)] cursor-not-allowed" aria-label={`Key minted for ${title}`}>Minted</button>
+								) : (
+									<button onClick={() => onView?.(id)} style={{ width: 140 }} className="inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border border-[color:var(--outline)] bg-[var(--primary)] text-black hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] cursor-pointer" aria-label={`View tasks for ${title}`}>View Tasks</button>
+								))}
+								<button onClick={() => claimEnabled && onClaim?.(id)} disabled={!claimEnabled} style={{ width: 140 }} className={clsx('inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border focus:outline-none focus:ring-2 focus:ring-[var(--ring)]', claimEnabled ? 'bg-[var(--card)] text-[var(--text)] border-[var(--outline)] hover:brightness-110 cursor-pointer' : 'bg-[color:var(--card)]/60 text-[color:var(--muted)] border-[color:var(--outline)]/60 cursor-not-allowed')} aria-label={`Claim reward for ${title}`}>{claimEnabled ? 'Claim' : 'Claim (locked)'}</button>
+							</div>
+                            {id === 8 && starAvailable && (
+                                <div className="mt-4 flex justify-center">
+                                    <div className="premium-wrap">
+                                        <button
+                                            onClick={() => !alreadyStarMinted && setStarOpen(true)}
+                                            className={clsx(
+                                                'relative overflow-hidden inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border',
+                                                'focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
+                                                'bg-[var(--card)] text-[var(--text)] border-[var(--outline)]',
+                                                'transition-all duration-200',
+                                                alreadyStarMinted ? 'opacity-80 cursor-not-allowed' : 'hover:brightness-110 cursor-pointer'
+                                            )}
+                                            style={{ width: 120 }}
+                                            aria-label={`Mint stars for ${title}`}
+                                            disabled={alreadyStarMinted}
+                                        >
+                                            {alreadyStarMinted ? 'Minted' : 'Star'}
+                                            <span className="premium-border" />
+                                            {/* sheen and twinkles inside the button to ensure visibility */}
+                                            <span className="premium-sheen" style={{ zIndex: 2 }} />
+                                            <span className="premium-twinkle" style={{ left: '6px', top: '8px', zIndex: 2, animationDelay: '0ms' }} />
+                                            <span className="premium-twinkle" style={{ right: '6px', top: '4px', zIndex: 2, animationDelay: '300ms' }} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+						</div>
+					</div>
                 )}
 				{locked && hover && null}
 			</div>
 			<KeyMintModal open={mintOpen} onClose={() => setMintOpen(false)} weekId={id} address={address || undefined} initialEligible={eligible ?? undefined} />
+			{ id === 8 && <StarMintModal open={starOpen} onClose={() => setStarOpen(false)} address={address || undefined} /> }
 		</div>
 	);
 }
