@@ -63,7 +63,13 @@ export async function POST(req: Request){
     for (const log of receipt.logs) {
       if ((log.address?.toLowerCase() || '') !== String(STARS_1155_ADDRESS).toLowerCase()) continue;
       try {
-        const parsed = decodeEventLog({ abi: ERC1155_ABI, data: log.data, topics: log.topics as unknown as `0x${string}`[] });
+        const topicsTuple = log.topics as unknown as [`0x${string}`, ...`0x${string}`[]];
+        const parsed = decodeEventLog({
+          abi: ERC1155_ABI,
+          eventName: 'TransferSingle',
+          data: log.data as `0x${string}`,
+          topics: topicsTuple,
+        });
         if (parsed.eventName === 'TransferSingle') {
           const { from, to, id, value } = parsed.args as unknown as { operator: `0x${string}`; from: `0x${string}`; to: `0x${string}`; id: bigint; value: bigint };
           if (to.toLowerCase() === address && from.toLowerCase() === '0x0000000000000000000000000000000000000000' && id === 1n) {
