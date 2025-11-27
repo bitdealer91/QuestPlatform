@@ -40,10 +40,11 @@ export async function POST(req: Request){
       const cmds = slice.map((a) => ["GET", `user:xp:${a}`] as (string|number)[]);
       const res = await pipeline(cmds);
       const vals = parseArrayResults(res);
-      for (const [j, address] of slice.entries()){
+      for (let j = 0; j < slice.length; j++){
+        const addr = slice[j]!;
         const raw = vals[j];
         const xp = typeof raw === "number" ? raw : (Number(raw || 0) || 0);
-        items.push({ address, xp });
+        items.push({ address: addr, xp });
       }
     }
     return NextResponse.json({ items });

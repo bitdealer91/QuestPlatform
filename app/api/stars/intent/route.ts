@@ -45,19 +45,21 @@ export async function POST(req: Request){
       }
     } catch { totalStars = 0; }
 
-    // Subtract already minted on-chain balance to avoid over-mint and large amounts
-    let chainBal = 0n;
+    // Subtract already minted_total recorded on the server (prevents re-mint after selling)
+    let mintedTotal = 0;
     try {
-      if (STARS_1155_ADDRESS) {
-        const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || process.env.RPC_URL || 'https://api.infra.mainnet.somnia.network/';
-        const client = createPublicClient({ transport: http(rpcUrl) });
-        // minimal ABI
-        const balanceAbi = [{ type: 'function', name: 'balanceOf', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }, { name: 'id', type: 'uint256' }], outputs: [{ name: '', type: 'uint256' }] }] as const;
-        chainBal = await client.readContract({ abi: balanceAbi, address: STARS_1155_ADDRESS as `0x${string}`, functionName: 'balanceOf', args: [address as `0x${string}`, 1n] }) as unknown as bigint;
+      const m = await pipeline([["GET", `user:stars_minted:${address}`]]);
+      const rawM = (m as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
+      if (Array.isArray(rawM)) {
+        const v = rawM[0]?.result as unknown;
+        mintedTotal = typeof v === 'number' ? v : Number(v || 0) || 0;
+      } else if (rawM && Array.isArray(rawM.result)) {
+        const bucket = rawM.result[0]?.result as unknown;
+        mintedTotal = typeof bucket === 'number' ? bucket : Number(bucket || 0) || 0;
       }
-    } catch { chainBal = 0n; }
+    } catch { mintedTotal = 0; }
 
-    let remaining = Math.max(0, totalStars - Number(chainBal));
+    let remaining = Math.max(0, totalStars - mintedTotal);
     // Defensive clamp to prevent pathological amounts due to parsing errors
     const CLAMP_MAX = 50;
     if (remaining > CLAMP_MAX) remaining = CLAMP_MAX;
@@ -65,7 +67,7 @@ export async function POST(req: Request){
 
     if (remaining <= 0){
       const payload: Record<string, unknown> = { error: 'NOT_ELIGIBLE' };
-      if (debug) payload.debug = { source: 'redis+chain', totalStars, chainBal: chainBal.toString(), remaining };
+      if (debug) payload.debug = { source: 'redis+minted_total', totalStars, mintedTotal, remaining };
       return NextResponse.json(payload, { status: 400 });
     }
 
@@ -124,7 +126,7 @@ export async function POST(req: Request){
 
     const signature = await account.signTypedData({ domain, types, primaryType: 'Mint', message });
     const payload: Record<string, unknown> = { id, amount: remaining, nonce, deadline, signature };
-    if (debug) payload.debug = { mode: 'prod', signer: account.address, contract: STARS_1155_ADDRESS, chainId: somniaMainnet.id, totalStars, chainBal: chainBal.toString(), remaining };
+    if (debug) payload.debug = { mode: 'prod', signer: account.address, contract: STARS_1155_ADDRESS, chainId: somniaMainnet.id, totalStars, mintedTotal, remaining };
     return NextResponse.json(payload);
   } catch (e) {
     const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as any).message) : 'unknown_error';

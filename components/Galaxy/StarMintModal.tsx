@@ -114,6 +114,16 @@ export default function StarMintModal({ open, onClose, address }: { open: boolea
         ...(gasLimit ? { gas: gasLimit } as const : { gas: 600_000n } as const),
       });
       setDidMint(true);
+      // Fire-and-forget confirm to update minted_total on server
+      try {
+        if (txHash) {
+          await fetch('/api/stars/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ address, txHash }),
+          }).catch(() => {});
+        }
+      } catch { /* ignore */ }
     } catch (e) {
       const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as any).message) : 'Mint failed';
       setError(msg);
