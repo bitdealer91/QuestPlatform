@@ -82,7 +82,8 @@ export async function POST(req: Request){
         if (Array.isArray(normalize)) {
           for (let i = 0; i < nonces.length; i++) {
             const v = normalize[i]?.result as unknown;
-            if (v == null) { expired.push(nonces[i]); continue; }
+            const ni = nonces[i];
+            if (v == null) { if (ni) expired.push(ni); continue; }
             const n = typeof v === 'number' ? v : Number(v || 0) || 0;
             reservedTotal += n;
           }
@@ -91,7 +92,8 @@ export async function POST(req: Request){
           if (Array.isArray(bucket)) {
             for (let i = 0; i < nonces.length; i++) {
               const v = bucket[i] as unknown;
-              if (v == null) { expired.push(nonces[i]); continue; }
+              const ni = nonces[i];
+              if (v == null) { if (ni) expired.push(ni); continue; }
               const n = typeof v === 'number' ? v : Number(v || 0) || 0;
               reservedTotal += n;
             }
