@@ -83,6 +83,65 @@ export async function POST(req: Request){
       return NextResponse.json({ error: 'no_mint_found' }, { status: 400 });
     }
 
+    // Decrease active reservations first (consume from any nonce keys), then record minted_total and tx hash
+    try {
+      const members = await pipeline([["SMEMBERS", `user:stars_resv_nonces:${address}`]]);
+      const rawM = (members as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
+      let nonces: string[] = [];
+      if (Array.isArray(rawM)) {
+        const arr = rawM[0]?.result as unknown;
+        if (Array.isArray(arr)) nonces = (arr as unknown[]).map(String);
+      } else if (rawM && Array.isArray(rawM.result)) {
+        const bucket = rawM.result[0]?.result as unknown;
+        if (Array.isArray(bucket)) nonces = (bucket as unknown[]).map(String);
+      }
+      let remainingToConsume = Number(minted);
+      if (nonces.length > 0 && remainingToConsume > 0) {
+        // Load current reservation amounts
+        const gets = await pipeline(nonces.map((n) => ["GET", `user:stars_resv:${address}:${n}`]));
+        const graw = (gets as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
+        const cmds: (string|number)[][] = [];
+        if (Array.isArray(graw)) {
+          for (let i = 0; i < nonces.length && remainingToConsume > 0; i++) {
+            const cell = (graw[i] as { result?: unknown } | undefined);
+            const v: unknown = (cell && (typeof cell.result === 'number' || typeof cell.result === 'string') ? cell.result : null);
+            const cur = typeof v === 'number' ? v : Number(v || 0) || 0;
+            if (cur <= 0) { cmds.push(["SREM", `user:stars_resv_nonces:${address}`, String(nonces[i] ?? '')]); continue; }
+            const dec = Math.min(cur, remainingToConsume);
+            const left = cur - dec;
+            remainingToConsume -= dec;
+            if (left <= 0) {
+              cmds.push(["DEL", `user:stars_resv:${address}:${String(nonces[i] ?? '')}`]);
+              cmds.push(["SREM", `user:stars_resv_nonces:${address}`, String(nonces[i] ?? '')]);
+            } else {
+              // Keep small TTL so stale reservations vanish soon
+              cmds.push(["SET", `user:stars_resv:${address}:${String(nonces[i] ?? '')}`, String(left), "EX", "300"]);
+            }
+          }
+        } else if (graw && Array.isArray(graw.result)) {
+          const bucket = graw.result[0]?.result as unknown;
+          if (Array.isArray(bucket)) {
+            for (let i = 0; i < nonces.length && remainingToConsume > 0; i++) {
+              const raw = (bucket as unknown[])[i];
+              const v: unknown = (typeof raw === 'number' || typeof raw === 'string') ? raw : null;
+              const cur = typeof v === 'number' ? v : Number(v || 0) || 0;
+              if (cur <= 0) { cmds.push(["SREM", `user:stars_resv_nonces:${address}`, String(nonces[i] ?? '')]); continue; }
+              const dec = Math.min(cur, remainingToConsume);
+              const left = cur - dec;
+              remainingToConsume -= dec;
+              if (left <= 0) {
+                cmds.push(["DEL", `user:stars_resv:${address}:${String(nonces[i] ?? '')}`]);
+                cmds.push(["SREM", `user:stars_resv_nonces:${address}`, String(nonces[i] ?? '')]);
+              } else {
+                cmds.push(["SET", `user:stars_resv:${address}:${String(nonces[i] ?? '')}`, String(left), "EX", "300"]);
+              }
+            }
+          }
+        }
+        if (cmds.length > 0) await pipeline(cmds);
+      }
+    } catch { /* ignore reservation cleanup errors */ }
+
     // Record minted_total and tx hash
     await pipeline([
       ["SADD", `user:stars_tx:${address}`, txHash],

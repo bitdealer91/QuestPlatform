@@ -63,8 +63,10 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
 				const byWeek = (j?.starsByWeek || {}) as Record<string, number>;
 				const total = Object.values(byWeek).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
 				const chain = typeof starBal === 'bigint' ? Number(starBal) : 0;
-				const remaining = Math.max(0, total - chain);
-				if (!cancelled) setStarAvailable(remaining > 0);
+				const statusRes = await fetch(`/api/stars/status?address=${address}`).then(r => r.json()).catch(() => ({ mintedOnce: false, mintedTotal: 0 }));
+				const mintedOnce = Boolean((statusRes as any)?.mintedOnce);
+				const remaining = mintedOnce ? 0 : Math.max(0, total - chain);
+				if (!cancelled) setStarAvailable(remaining > 0 && !mintedOnce);
 			} catch {
 				if (!cancelled) setStarAvailable(false);
 			}

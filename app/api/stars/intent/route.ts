@@ -59,7 +59,60 @@ export async function POST(req: Request){
       }
     } catch { mintedTotal = 0; }
 
-    let remaining = Math.max(0, totalStars - mintedTotal);
+    // Sum active reservations to prevent concurrent intents (keys with TTL per nonce)
+    let reservedTotal = 0;
+    try {
+      // read active nonce set
+      const members = await pipeline([["SMEMBERS", `user:stars_resv_nonces:${address}`]]);
+      const rawM = (members as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
+      let nonces: string[] = [];
+      if (Array.isArray(rawM)) {
+        const arr = rawM[0]?.result as unknown;
+        if (Array.isArray(arr)) nonces = (arr as unknown[]).map(String);
+      } else if (rawM && Array.isArray(rawM.result)) {
+        const bucket = rawM.result[0]?.result as unknown;
+        if (Array.isArray(bucket)) nonces = (bucket as unknown[]).map(String);
+      }
+      if (nonces.length > 0) {
+        const cmds: (string|number)[][] = nonces.map((n) => ["GET", `user:stars_resv:${address}:${n}`]);
+        const vals = await pipeline(cmds);
+        // normalize results array
+        const normalize = (vals as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
+        const expired: string[] = [];
+        if (Array.isArray(normalize)) {
+          for (let i = 0; i < nonces.length; i++) {
+            const v = normalize[i]?.result as unknown;
+            if (v == null) { expired.push(nonces[i]); continue; }
+            const n = typeof v === 'number' ? v : Number(v || 0) || 0;
+            reservedTotal += n;
+          }
+        } else if (normalize && Array.isArray(normalize.result)) {
+          const bucket = normalize.result[0]?.result as unknown;
+          if (Array.isArray(bucket)) {
+            for (let i = 0; i < nonces.length; i++) {
+              const v = bucket[i] as unknown;
+              if (v == null) { expired.push(nonces[i]); continue; }
+              const n = typeof v === 'number' ? v : Number(v || 0) || 0;
+              reservedTotal += n;
+            }
+          }
+        }
+        // cleanup expired
+        if (expired.length > 0) {
+          const delCmds: (string|number)[][] = expired.map((n) => ["SREM", `user:stars_resv_nonces:${address}`, n]);
+          await pipeline(delCmds);
+        }
+      }
+    } catch { reservedTotal = 0; }
+
+    // If минт уже был хотя бы раз — блокируем повторный
+    if (mintedTotal > 0){
+      const payload: Record<string, unknown> = { error: 'NOT_ELIGIBLE' };
+      if (debug) payload.debug = { reason: 'minted_once', totalStars, mintedTotal };
+      return NextResponse.json(payload, { status: 400 });
+    }
+
+    let remaining = Math.max(0, totalStars - reservedTotal);
     // Defensive clamp to prevent pathological amounts due to parsing errors
     const CLAMP_MAX = 50;
     if (remaining > CLAMP_MAX) remaining = CLAMP_MAX;
@@ -78,9 +131,18 @@ export async function POST(req: Request){
     const nonceBig = BigInt.asUintN(32, BigInt(keccak256(toHex(`${address}:${id}:${remaining}:${now}`))));
     const nonce = Number(nonceBig);
 
+    // Reserve remaining for this nonce for the duration of the deadline (+ grace)
+    try {
+      const ttl = Math.max(60, Math.min(900, (deadline - now) + 60));
+      await pipeline([
+        ["SADD", `user:stars_resv_nonces:${address}`, String(nonce)],
+        ["SET", `user:stars_resv:${address}:${nonce}`, String(remaining), "EX", String(ttl)],
+      ]);
+    } catch { /* non-fatal */ }
+
     if (!useRealSign){
       const payload: Record<string, unknown> = { id, amount: remaining, nonce, deadline, signature: '0x' };
-      if (debug) payload.debug = { mode: 'dev', contract: STARS_1155_ADDRESS, chainId: somniaMainnet.id };
+      if (debug) payload.debug = { mode: 'dev', contract: STARS_1155_ADDRESS, chainId: somniaMainnet.id, totalStars, mintedTotal, reservedTotal, remaining };
       return NextResponse.json(payload);
     }
 
@@ -126,7 +188,7 @@ export async function POST(req: Request){
 
     const signature = await account.signTypedData({ domain, types, primaryType: 'Mint', message });
     const payload: Record<string, unknown> = { id, amount: remaining, nonce, deadline, signature };
-    if (debug) payload.debug = { mode: 'prod', signer: account.address, contract: STARS_1155_ADDRESS, chainId: somniaMainnet.id, totalStars, mintedTotal, remaining };
+    if (debug) payload.debug = { mode: 'prod', signer: account.address, contract: STARS_1155_ADDRESS, chainId: somniaMainnet.id, totalStars, mintedTotal, reservedTotal, remaining };
     return NextResponse.json(payload);
   } catch (e) {
     const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as any).message) : 'unknown_error';
