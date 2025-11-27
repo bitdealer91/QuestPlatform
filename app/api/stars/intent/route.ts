@@ -3,11 +3,22 @@ import { pipeline } from '@/lib/redis';
 import { keccak256, toHex, createPublicClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { somniaMainnet } from '@/lib/chains';
-import { STARS_1155_ADDRESS } from '@/lib/contracts';
+import { STARS_1155_ADDRESS, ERC1155_MIN_ABI } from '@/lib/contracts';
 
 export const runtime = 'nodejs';
 
 function isLowercaseHexAddress(a: string): boolean { return /^0x[0-9a-f]{40}$/.test(a); }
+
+// Quick-response denylist (extendable via env var STARS_MINT_DENYLIST=0xabc,...)
+const ENV_DENY = String(process.env.STARS_MINT_DENYLIST || '')
+  .split(',')
+  .map(s => s.trim().toLowerCase())
+  .filter(Boolean);
+const DENYLIST = new Set<string>([
+  // Abusive wallet reported
+  '0x47feb547a5ce00e2c9cbb89d97bbac9cc9b5942c',
+  ...ENV_DENY,
+]);
 
 export async function POST(req: Request){
   try {
@@ -20,6 +31,55 @@ export async function POST(req: Request){
     const cap = Number.isFinite(capRaw) && capRaw > 0 ? Math.floor(capRaw) : undefined;
     if (!isLowercaseHexAddress(address) || !Number.isInteger(id) || id < 1){
       return NextResponse.json({ error: 'INVALID_PARAMS' }, { status: 400 });
+    }
+
+    // Immediate block for denylisted addresses
+    if (DENYLIST.has(address)) {
+      return NextResponse.json({ error: 'NOT_ELIGIBLE' }, { status: 403 });
+    }
+
+    // If we've already issued any signature for this wallet, block re-issuance (prevents farming without confirm)
+    try {
+      const signedOnceRes = await pipeline([["GET", `user:stars_signed_once:${address}`]]);
+      const rawS = (signedOnceRes as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
+      let signedOnce = false;
+      if (Array.isArray(rawS)) {
+        const v = rawS[0]?.result as unknown;
+        signedOnce = String(v || '').length > 0;
+      } else if (rawS && Array.isArray(rawS.result)) {
+        const bucket = rawS.result[0]?.result as unknown;
+        signedOnce = String(bucket || '').length > 0;
+      }
+      if (signedOnce) {
+        const payload: Record<string, unknown> = { error: 'NOT_ELIGIBLE' };
+        if (debug) payload.debug = { reason: 'signed_once_flag' };
+        return NextResponse.json(payload, { status: 400 });
+      }
+    } catch { /* ignore */ }
+
+    // On-chain safety: if address already holds token id=1, block issuing new signatures
+    if (STARS_1155_ADDRESS) {
+      try {
+        const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || process.env.RPC_URL || 'https://api.infra.mainnet.somnia.network/';
+        const client = createPublicClient({ chain: somniaMainnet, transport: http(rpcUrl) });
+        const bal = await client.readContract({
+          abi: ERC1155_MIN_ABI,
+          address: STARS_1155_ADDRESS as `0x${string}`,
+          functionName: 'balanceOf',
+          args: [address as `0x${string}`, 1n],
+        }) as unknown as bigint;
+        if (typeof bal === 'bigint' && bal > 0n) {
+          try {
+            await pipeline([
+              ["SET", `user:stars_onchain_minted:${address}`, "1"],
+              ["SET", `user:stars_minted:${address}`, String(bal)],
+            ]);
+          } catch {}
+          const payload: Record<string, unknown> = { error: 'NOT_ELIGIBLE' };
+          if (debug) payload.debug = { reason: 'onchain_balance_gt_0', balance: bal.toString() };
+          return NextResponse.json(payload, { status: 400 });
+        }
+      } catch { /* ignore RPC errors */ }
     }
 
     // Compute total stars from Redis (SCARD across weeks 1..8)
@@ -189,6 +249,10 @@ export async function POST(req: Request){
     } as const;
 
     const signature = await account.signTypedData({ domain, types, primaryType: 'Mint', message });
+    // Mark that a signature was issued for this wallet (durable)
+    try {
+      await pipeline([["SET", `user:stars_signed_once:${address}`, "1"]]);
+    } catch {}
     const payload: Record<string, unknown> = { id, amount: remaining, nonce, deadline, signature };
     if (debug) payload.debug = { mode: 'prod', signer: account.address, contract: STARS_1155_ADDRESS, chainId: somniaMainnet.id, totalStars, mintedTotal, reservedTotal, remaining };
     return NextResponse.json(payload);
