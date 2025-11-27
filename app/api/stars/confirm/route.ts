@@ -146,6 +146,9 @@ export async function POST(req: Request){
     await pipeline([
       ["SADD", `user:stars_tx:${address}`, txHash],
       ["INCRBY", `user:stars_minted:${address}`, String(minted)],
+      // Clear temporary intent locks to avoid blocking future retries
+      ["DEL", `user:stars_signed_once:${address}`],
+      ["DEL", `user:stars_last_intent:${address}`],
     ]);
 
     return NextResponse.json({ ok: true, minted: Number(minted) });

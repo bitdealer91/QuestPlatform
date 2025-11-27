@@ -38,19 +38,38 @@ export async function POST(req: Request){
       return NextResponse.json({ error: 'NOT_ELIGIBLE' }, { status: 403 });
     }
 
-    // If we've already issued any signature for this wallet, block re-issuance (prevents farming without confirm)
+    // Soft lock: if a recent signature was already issued, reuse the last intent payload (idempotency window)
     try {
-      const signedOnceRes = await pipeline([["GET", `user:stars_signed_once:${address}`]]);
-      const rawS = (signedOnceRes as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
-      let signedOnce = false;
-      if (Array.isArray(rawS)) {
-        const v = rawS[0]?.result as unknown;
-        signedOnce = String(v || '').length > 0;
-      } else if (rawS && Array.isArray(rawS.result)) {
-        const bucket = rawS.result[0]?.result as unknown;
-        signedOnce = String(bucket || '').length > 0;
+      const signedOnceRes = await pipeline([
+        ["GET", `user:stars_signed_once:${address}`],
+        ["GET", `user:stars_last_intent:${address}`],
+      ]);
+      const norm = (signedOnceRes as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
+      let hasLock = false;
+      let lastIntentJson: string | null = null;
+      if (Array.isArray(norm)) {
+        const v0 = norm[0]?.result as unknown;
+        const v1 = norm[1]?.result as unknown;
+        hasLock = String(v0 || '').length > 0;
+        lastIntentJson = (typeof v1 === 'string') ? v1 : (v1 != null ? String(v1) : null);
+      } else if (norm && Array.isArray(norm.result)) {
+        const bucket = norm.result[0]?.result as unknown;
+        if (Array.isArray(bucket)) {
+          const v0 = bucket?.[0] as unknown;
+          const v1 = bucket?.[1] as unknown;
+          hasLock = String(v0 || '').length > 0;
+          lastIntentJson = (typeof v1 === 'string') ? v1 : (v1 != null ? String(v1) : null);
+        }
       }
-      if (signedOnce) {
+      if (hasLock) {
+        try {
+          if (lastIntentJson) {
+            const parsed = JSON.parse(lastIntentJson) as { id: number; amount: number; nonce: number; deadline: number; signature: string };
+            const payload: Record<string, unknown> = { id: parsed.id, amount: parsed.amount, nonce: parsed.nonce, deadline: parsed.deadline, signature: parsed.signature };
+            if (debug) payload.debug = { mode: 'reuse', reason: 'signed_once_flag', source: 'last_intent' };
+            return NextResponse.json(payload);
+          }
+        } catch { /* fallthrough to not eligible */ }
         const payload: Record<string, unknown> = { error: 'NOT_ELIGIBLE' };
         if (debug) payload.debug = { reason: 'signed_once_flag' };
         return NextResponse.json(payload, { status: 400 });
@@ -249,9 +268,15 @@ export async function POST(req: Request){
     } as const;
 
     const signature = await account.signTypedData({ domain, types, primaryType: 'Mint', message });
-    // Mark that a signature was issued for this wallet (durable)
+    // Mark that a signature was issued for this wallet (temporary lock) and store last intent for idempotent reuse
     try {
-      await pipeline([["SET", `user:stars_signed_once:${address}`, "1"]]);
+      const nowTs = Math.floor(Date.now() / 1000);
+      const ttl = Math.max(120, Math.min(1800, (Number(message.deadline) - nowTs) + 120)); // deadline + 2m grace, bounded
+      const payloadToStore = JSON.stringify({ id, amount: remaining, nonce, deadline, signature });
+      await pipeline([
+        ["SET", `user:stars_signed_once:${address}`, "1", "EX", String(ttl)],
+        ["SET", `user:stars_last_intent:${address}`, payloadToStore, "EX", String(ttl)],
+      ]);
     } catch {}
     const payload: Record<string, unknown> = { id, amount: remaining, nonce, deadline, signature };
     if (debug) payload.debug = { mode: 'prod', signer: account.address, contract: STARS_1155_ADDRESS, chainId: somniaMainnet.id, totalStars, mintedTotal, reservedTotal, remaining };
