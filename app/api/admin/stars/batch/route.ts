@@ -26,7 +26,7 @@ export async function POST(req: Request){
     const res = await pipeline(cmds);
     const items: Array<{ address: string; total: number; weeks: number[] }> = [];
     if (res && Array.isArray((res as any).result)){
-      for (let i = 0; i < addrs.length; i++){
+      for (const [i, address] of addrs.entries()){
         const weeks: number[] = [];
         let total = 0;
         for (let w = 0; w < 8; w++){
@@ -39,7 +39,7 @@ export async function POST(req: Request){
           const n = typeof v === 'number' ? v : Number(v || 0) || 0;
           weeks.push(n); total += n;
         }
-        items.push({ address: addrs[i], total, weeks });
+        items.push({ address, total, weeks });
       }
     }
     return NextResponse.json({ items });
