@@ -4,8 +4,8 @@ import { createPortal } from 'react-dom';
 import TiltedCard from '@/components/TiltedCard';
 import { Button } from '@/components/ui/Button';
 import Tooltip from '@/components/ui/Tooltip';
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract, usePublicClient } from 'wagmi';
-import { STARS_1155_ADDRESS, STARS_ABI, hasStarsContractConfigured, ERC1155_MIN_ABI } from '@/lib/contracts';
+import { useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
+import { STARS_1155_ADDRESS, STARS_ABI, hasStarsContractConfigured } from '@/lib/contracts';
 
 type ProfileStars = {
   starsByWeek?: Record<number, number>;
@@ -16,18 +16,11 @@ export default function StarMintModal({ open, onClose, address }: { open: boolea
   const [error, setError] = useState<string | null>(null);
   const [starsCount, setStarsCount] = useState<number | null>(null);
   const [didMint, setDidMint] = useState(false);
+  const [mintedOnce, setMintedOnce] = useState(false);
 
   const hasAddress = !!address;
   const hasContract = hasStarsContractConfigured();
-  // On-chain balance check to block repeat mint
-  const { data: chainBal } = useReadContract({
-    abi: ERC1155_MIN_ABI,
-    address: hasContract ? (STARS_1155_ADDRESS as `0x${string}`) : undefined,
-    functionName: 'balanceOf',
-    args: [address as `0x${string}`, 1n],
-    query: { enabled: hasContract && !!address && open },
-  });
-  const alreadyMinted = (typeof chainBal === 'bigint' && chainBal > 0n) || didMint;
+  const alreadyMinted = mintedOnce || didMint;
   const canMint = hasAddress && !loading && !alreadyMinted && (starsCount ?? 0) > 0;
   const { writeContractAsync, data: txHash } = useWriteContract();
   const { isLoading: waitingTx } = useWaitForTransactionReceipt({ hash: txHash });
@@ -35,20 +28,22 @@ export default function StarMintModal({ open, onClose, address }: { open: boolea
 
   useEffect(() => {
     if (!open) return;
-    if (!address) { setStarsCount(null); return; }
+    if (!address) { setStarsCount(null); setMintedOnce(false); return; }
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetch(`/api/profile?address=${address}`)
-      .then(r => r.json())
-      .then((j: ProfileStars) => {
-        if (cancelled) return;
-        const weeks = j?.starsByWeek || {};
-        const total = Object.values(weeks).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
-        setStarsCount(total);
-      })
-      .catch(() => { if (!cancelled) setError('Failed to load stars'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+    Promise.all([
+      fetch(`/api/profile?address=${address}`).then(r => r.json()).catch(() => null),
+      fetch(`/api/stars/status?address=${address}`).then(r => r.json()).catch(() => null),
+    ]).then(([profile, status]) => {
+      if (cancelled) return;
+      const weeks = (profile?.starsByWeek || {}) as Record<string, number>;
+      const total = Object.values(weeks).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
+      setStarsCount(total);
+      setMintedOnce(Boolean(status?.mintedOnce));
+    }).catch(() => {
+      if (!cancelled) setError('Failed to load data');
+    }).finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [open, address]);
 

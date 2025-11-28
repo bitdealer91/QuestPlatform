@@ -3,7 +3,7 @@ import { pipeline } from '@/lib/redis';
 import { keccak256, toHex, createPublicClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { somniaMainnet } from '@/lib/chains';
-import { STARS_1155_ADDRESS, ERC1155_MIN_ABI } from '@/lib/contracts';
+import { STARS_1155_ADDRESS } from '@/lib/contracts';
 
 export const runtime = 'nodejs';
 
@@ -76,26 +76,68 @@ export async function POST(req: Request){
       }
     } catch { /* ignore */ }
 
-    // On-chain safety: if address already holds token id=1, block issuing new signatures
+    // Read server-side minted_total first; if >0 — block immediately
+    let mintedTotal = 0;
+    try {
+      const m = await pipeline([["GET", `user:stars_minted:${address}`]]);
+      const rawM = (m as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
+      if (Array.isArray(rawM)) {
+        const v = rawM[0]?.result as unknown;
+        mintedTotal = typeof v === 'number' ? v : Number(v || 0) || 0;
+      } else if (rawM && Array.isArray(rawM.result)) {
+        const bucket = rawM.result[0]?.result as unknown;
+        mintedTotal = typeof bucket === 'number' ? bucket : Number(bucket || 0) || 0;
+      }
+    } catch { mintedTotal = 0; }
+    if (mintedTotal > 0){
+      const payload: Record<string, unknown> = { error: 'NOT_ELIGIBLE' };
+      if (debug) payload.debug = { reason: 'minted_once', mintedTotal };
+      return NextResponse.json(payload, { status: 400 });
+    }
+
+    // On-chain history check (minted once by logs), resilient to transfers-out
     if (STARS_1155_ADDRESS) {
       try {
         const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || process.env.RPC_URL || 'https://api.infra.mainnet.somnia.network/';
         const client = createPublicClient({ chain: somniaMainnet, transport: http(rpcUrl) });
-        const bal = await client.readContract({
-          abi: ERC1155_MIN_ABI,
+        const fromBlockEnv = String(process.env.MINT_SCAN_FROM_BLOCK || '').trim();
+        const fromBlock = (/^\d+$/.test(fromBlockEnv) ? BigInt(fromBlockEnv) : 0n);
+        const ZERO = '0x0000000000000000000000000000000000000000';
+        const ERC1155_TS = [{
+          type: 'event',
+          name: 'TransferSingle',
+          inputs: [
+            { name: 'operator', type: 'address', indexed: true },
+            { name: 'from', type: 'address', indexed: true },
+            { name: 'to', type: 'address', indexed: true },
+            { name: 'id', type: 'uint256', indexed: false },
+            { name: 'value', type: 'uint256', indexed: false },
+          ],
+        }] as const;
+        const logs = await client.getLogs({
           address: STARS_1155_ADDRESS as `0x${string}`,
-          functionName: 'balanceOf',
-          args: [address as `0x${string}`, 1n],
-        }) as unknown as bigint;
-        if (typeof bal === 'bigint' && bal > 0n) {
+          event: ERC1155_TS[0],
+          args: { from: ZERO as `0x${string}`, to: address as `0x${string}` },
+          fromBlock,
+        });
+        let mintedFromLogs = 0n;
+        for (const l of logs) {
+          // id is non-indexed; viem parsed args available when using event filter
+          const id = (l as any)?.args?.id as bigint | undefined;
+          const val = (l as any)?.args?.value as bigint | undefined;
+          if (typeof id === 'bigint' && id === 1n && typeof val === 'bigint' && val > 0n){
+            mintedFromLogs += val;
+          }
+        }
+        if (mintedFromLogs > 0n) {
           try {
             await pipeline([
               ["SET", `user:stars_onchain_minted:${address}`, "1"],
-              ["SET", `user:stars_minted:${address}`, String(bal)],
+              ["SET", `user:stars_minted:${address}`, String(mintedFromLogs)],
             ]);
           } catch {}
           const payload: Record<string, unknown> = { error: 'NOT_ELIGIBLE' };
-          if (debug) payload.debug = { reason: 'onchain_balance_gt_0', balance: bal.toString() };
+          if (debug) payload.debug = { reason: 'onchain_minted_history', amount: mintedFromLogs.toString() };
           return NextResponse.json(payload, { status: 400 });
         }
       } catch { /* ignore RPC errors */ }
@@ -123,20 +165,6 @@ export async function POST(req: Request){
         }
       }
     } catch { totalStars = 0; }
-
-    // Subtract already minted_total recorded on the server (prevents re-mint after selling)
-    let mintedTotal = 0;
-    try {
-      const m = await pipeline([["GET", `user:stars_minted:${address}`]]);
-      const rawM = (m as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
-      if (Array.isArray(rawM)) {
-        const v = rawM[0]?.result as unknown;
-        mintedTotal = typeof v === 'number' ? v : Number(v || 0) || 0;
-      } else if (rawM && Array.isArray(rawM.result)) {
-        const bucket = rawM.result[0]?.result as unknown;
-        mintedTotal = typeof bucket === 'number' ? bucket : Number(bucket || 0) || 0;
-      }
-    } catch { mintedTotal = 0; }
 
     // Sum active reservations to prevent concurrent intents (keys with TTL per nonce)
     let reservedTotal = 0;
