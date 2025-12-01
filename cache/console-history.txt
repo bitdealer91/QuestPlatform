@@ -1,0 +1,2 @@
+await Stars.setBaseURI("https://odyssey.somnia.network/metadata/stars/");
+const Stars = await ethers.getContractAt("Stars1155","0xEF7FfdB12F826eE1E2CDdb0d55C3C4160bd6EFab");
