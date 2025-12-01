@@ -19,6 +19,8 @@ const DENYLIST = new Set<string>([
   '0x47feb547a5ce00e2c9cbb89d97bbac9cc9b5942c',
   '0xe93cb912eac49170fed9e2cdbd3eaca780130200',
   '0x2907d5eed42a9d7f3723aa3aa1e32bb707708150',
+  '0x42a881ecb057d448666c74481ef4f52523a3eaba',
+  '0xe6f8e341ac1b55003df8235ded29ec3877a5ef04',
   ...ENV_DENY,
 ]);
 
