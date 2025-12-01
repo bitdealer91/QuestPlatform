@@ -17,6 +17,7 @@ const ENV_DENY = String(process.env.STARS_MINT_DENYLIST || '')
 const DENYLIST = new Set<string>([
   // Abusive wallet reported
   '0x47feb547a5ce00e2c9cbb89d97bbac9cc9b5942c',
+  '0xe93cb912eac49170fed9e2cdbd3eaca780130200',
   ...ENV_DENY,
 ]);
 
