@@ -14,6 +14,10 @@ const ENV_DENY = String(process.env.STARS_MINT_DENYLIST || '')
   .split(',')
   .map(s => s.trim().toLowerCase())
   .filter(Boolean);
+const LEGACY_STARS = String(process.env.STARS_1155_LEGACY_ADDRESSES || '')
+  .split(',')
+  .map(s => s.trim().toLowerCase())
+  .filter((s) => /^0x[0-9a-f]{40}$/.test(s));
 const DENYLIST = new Set<string>([
   // Abusive wallet reported
   '0x47feb547a5ce00e2c9cbb89d97bbac9cc9b5942c',
@@ -108,7 +112,7 @@ export async function POST(req: Request){
       return NextResponse.json(payload, { status: 400 });
     }
 
-    // On-chain history check (minted once by logs), resilient to transfers-out
+    // On-chain history check (minted once by logs), resilient to transfers-out and covers legacy contracts if provided
     if (STARS_1155_ADDRESS) {
       try {
         const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || process.env.RPC_URL || 'https://api.infra.mainnet.somnia.network/';
@@ -127,20 +131,28 @@ export async function POST(req: Request){
             { name: 'value', type: 'uint256', indexed: false },
           ],
         }] as const;
-        const logs = await client.getLogs({
-          address: STARS_1155_ADDRESS as `0x${string}`,
-          event: ERC1155_TS[0],
-          args: { from: ZERO as `0x${string}`, to: address as `0x${string}` },
-          fromBlock,
-        });
+        const contractsToScan: string[] = [
+          String(STARS_1155_ADDRESS).toLowerCase(),
+          ...LEGACY_STARS,
+        ];
         let mintedFromLogs = 0n;
-        for (const l of logs) {
-          // id is non-indexed; viem parsed args available when using event filter
-          const id = (l as any)?.args?.id as bigint | undefined;
-          const val = (l as any)?.args?.value as bigint | undefined;
-          if (typeof id === 'bigint' && id === 1n && typeof val === 'bigint' && val > 0n){
-            mintedFromLogs += val;
+        for (const caddr of contractsToScan) {
+          if (!/^0x[0-9a-f]{40}$/.test(caddr)) continue;
+          const logs = await client.getLogs({
+            address: caddr as `0x${string}`,
+            event: ERC1155_TS[0],
+            args: { from: ZERO as `0x${string}`, to: address as `0x${string}` },
+            fromBlock,
+          });
+          for (const l of logs) {
+            // id is non-indexed; viem parsed args available when using event filter
+            const id = (l as any)?.args?.id as bigint | undefined;
+            const val = (l as any)?.args?.value as bigint | undefined;
+            if (typeof id === 'bigint' && id === 1n && typeof val === 'bigint' && val > 0n){
+              mintedFromLogs += val;
+            }
           }
+          if (mintedFromLogs > 0n) break;
         }
         if (mintedFromLogs > 0n) {
           try {
@@ -150,7 +162,7 @@ export async function POST(req: Request){
             ]);
           } catch {}
           const payload: Record<string, unknown> = { error: 'NOT_ELIGIBLE' };
-          if (debug) payload.debug = { reason: 'onchain_minted_history', amount: mintedFromLogs.toString() };
+          if (debug) payload.debug = { reason: 'onchain_minted_history', amount: mintedFromLogs.toString(), scannedContracts: contractsToScan };
           return NextResponse.json(payload, { status: 400 });
         }
       } catch { /* ignore RPC errors */ }
