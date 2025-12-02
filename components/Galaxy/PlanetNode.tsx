@@ -161,26 +161,48 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
                             {id === 8 && starAvailable && (
                                 <div className="mt-4 flex justify-center">
                                     <div className="premium-wrap">
-										<button
-											onClick={() => !alreadyStarMinted && setStarOpen(true)}
-											className={clsx(
-												'relative overflow-hidden inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border',
-												'focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
-												'bg-[var(--card)] text-[var(--text)] border-[var(--outline)]',
-												'transition-all duration-200',
-												alreadyStarMinted ? 'opacity-80 cursor-not-allowed' : 'hover:brightness-110 cursor-pointer'
-											)}
-											style={{ width: 120 }}
-											aria-label={`Mint stars for ${title}`}
-											disabled={alreadyStarMinted}
-										>
-											{alreadyStarMinted ? 'Minted' : 'Star'}
-											<span className="premium-border" />
-											{/* sheen and twinkles inside the button to ensure visibility */}
-											<span className="premium-sheen" style={{ zIndex: 2 }} />
-											<span className="premium-twinkle" style={{ left: '6px', top: '8px', zIndex: 2, animationDelay: '0ms' }} />
-											<span className="premium-twinkle" style={{ right: '6px', top: '4px', zIndex: 2, animationDelay: '300ms' }} />
-										</button>
+										{ended ? (
+											<div title="Ended">
+												<button
+													disabled
+													className={clsx(
+														'relative overflow-hidden inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border',
+														'focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
+														'bg-[var(--card)] text-[var(--muted)] border-[var(--outline)]/60',
+														'transition-all duration-200',
+														'opacity-80 cursor-not-allowed'
+													)}
+													style={{ width: 120 }}
+													aria-label={`Star ended for ${title}`}
+												>
+													Star
+													<span className="premium-border" />
+													<span className="premium-sheen" style={{ zIndex: 2 }} />
+													<span className="premium-twinkle" style={{ left: '6px', top: '8px', zIndex: 2, animationDelay: '0ms' }} />
+													<span className="premium-twinkle" style={{ right: '6px', top: '4px', zIndex: 2, animationDelay: '300ms' }} />
+												</button>
+											</div>
+										) : (
+											<button
+												onClick={() => !alreadyStarMinted && setStarOpen(true)}
+												className={clsx(
+													'relative overflow-hidden inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border',
+													'focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
+													'bg-[var(--card)] text-[var(--text)] border-[var(--outline)]',
+													'transition-all duration-200',
+													alreadyStarMinted ? 'opacity-80 cursor-not-allowed' : 'hover:brightness-110 cursor-pointer'
+												)}
+												style={{ width: 120 }}
+												aria-label={`Mint stars for ${title}`}
+												disabled={alreadyStarMinted}
+											>
+												{alreadyStarMinted ? 'Minted' : 'Star'}
+												<span className="premium-border" />
+												<span className="premium-sheen" style={{ zIndex: 2 }} />
+												<span className="premium-twinkle" style={{ left: '6px', top: '8px', zIndex: 2, animationDelay: '0ms' }} />
+												<span className="premium-twinkle" style={{ right: '6px', top: '4px', zIndex: 2, animationDelay: '300ms' }} />
+											</button>
+										)}
                                     </div>
                                 </div>
                             )}
