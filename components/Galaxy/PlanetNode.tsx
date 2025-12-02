@@ -6,7 +6,7 @@ import { Lock } from 'lucide-react';
 import { useAccount, useReadContract } from 'wagmi';
 import KeyMintModal from './KeyMintModal';
 import StarMintModal from './StarMintModal';
-import { ERC1155_MIN_ABI, KEYS_1155_ADDRESS, hasKeysContractConfigured, STARS_1155_ADDRESS, hasStarsContractConfigured } from '@/lib/contracts';
+import { ERC1155_MIN_ABI, KEYS_1155_ADDRESS, hasKeysContractConfigured } from '@/lib/contracts';
 
 export type PlanetNodeProps = {
 	id: number;
@@ -28,6 +28,7 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
 	const [starOpen, setStarOpen] = useState(false);
 	const [eligible, setEligible] = useState<boolean | null>(null);
 	const [starAvailable, setStarAvailable] = useState<boolean>(false);
+	const [starMintedOnce, setStarMintedOnce] = useState<boolean>(false);
 	const DEADLINE_ISO = '2025-12-01T15:00:00Z';
 	const endedByTime = (() => {
 		const d = new Date(DEADLINE_ISO);
@@ -46,16 +47,9 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
 	});
 
 	const alreadyMinted = typeof bal === 'bigint' && bal > 0n;
-	// Stars on-chain balance (token id = 1)
-	const hasStars = hasStarsContractConfigured();
-	const { data: starBal } = useReadContract({
-		abi: ERC1155_MIN_ABI,
-		address: hasStars ? (STARS_1155_ADDRESS as `0x${string}`) : undefined,
-		functionName: 'balanceOf',
-		args: [address as `0x${string}`, 1n],
-		query: { enabled: hasStars && !!address && canInteract && id === 8 },
-	});
-	const alreadyStarMinted = typeof starBal === 'bigint' && starBal > 0n;
+	// Do not use on-chain balance to decide if user "already minted" — a user may have bought on secondary.
+	// Rely on server-side mintedOnce flag instead (set after successful mint via our flow and on-chain scan).
+	const alreadyStarMinted = starMintedOnce === true;
 
 	// Check if user has any stars available to mint (sum from /api/profile minus on-chain balance)
 	useEffect(() => {
@@ -68,19 +62,25 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
 				const j = await res.json().catch(() => ({}));
 				const byWeek = (j?.starsByWeek || {}) as Record<string, number>;
 				const total = Object.values(byWeek).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
-				const chain = typeof starBal === 'bigint' ? Number(starBal) : 0;
 				const statusRes = await fetch(`/api/stars/status?address=${address}`).then(r => r.json()).catch(() => ({ mintedOnce: false, mintedTotal: 0 }));
 				const mintedOnce = Boolean((statusRes as any)?.mintedOnce);
-				const remaining = mintedOnce ? 0 : Math.max(0, total - chain);
-				if (!cancelled) setStarAvailable(remaining > 0 && !mintedOnce);
+				// Remaining is based only on collected stars and server-side mintedOnce lock.
+				const remaining = mintedOnce ? 0 : Math.max(0, total);
+				if (!cancelled) {
+					setStarMintedOnce(mintedOnce);
+					setStarAvailable(remaining > 0 && !mintedOnce);
+				}
 			} catch {
-				if (!cancelled) setStarAvailable(false);
+				if (!cancelled) {
+					setStarMintedOnce(false);
+					setStarAvailable(false);
+				}
 			}
 		};
 		// Fetch only on hover to reduce calls
 		if (hover) { run(); }
 		return () => { cancelled = true; };
-	}, [id, address, hover, canInteract, starBal]);
+	}, [id, address, hover, canInteract]);
 
 	// Fetch eligibility when user hovers and when address changes
 	useEffect(() => {
