@@ -3,7 +3,7 @@ import { pipeline } from '@/lib/redis';
 import { keccak256, toHex, createPublicClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { somniaMainnet } from '@/lib/chains';
-import { STARS_1155_ADDRESS } from '@/lib/contracts';
+import { STARS_1155_ADDRESS, ERC1155_MIN_ABI } from '@/lib/contracts';
 
 export const runtime = 'nodejs';
 
@@ -110,6 +110,31 @@ export async function POST(req: Request){
       const payload: Record<string, unknown> = { error: 'NOT_ELIGIBLE' };
       if (debug) payload.debug = { reason: 'minted_once', mintedTotal };
       return NextResponse.json(payload, { status: 400 });
+    }
+
+    // Quick on-chain balance guard: if user still holds token id=1, block immediately (fast path)
+    if (STARS_1155_ADDRESS) {
+      try {
+        const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || process.env.RPC_URL || 'https://api.infra.mainnet.somnia.network/';
+        const client = createPublicClient({ chain: somniaMainnet, transport: http(rpcUrl) });
+        const bal = await client.readContract({
+          abi: ERC1155_MIN_ABI,
+          address: STARS_1155_ADDRESS as `0x${string}`,
+          functionName: 'balanceOf',
+          args: [address as `0x${string}`, 1n],
+        }) as unknown as bigint;
+        if (typeof bal === 'bigint' && bal > 0n) {
+          try {
+            await pipeline([
+              ["SET", `user:stars_onchain_minted:${address}`, "1"],
+              ["SET", `user:stars_minted:${address}`, String(bal)],
+            ]);
+          } catch {}
+          const payload: Record<string, unknown> = { error: 'NOT_ELIGIBLE' };
+          if (debug) payload.debug = { reason: 'onchain_balance_gt_0', balance: bal.toString() };
+          return NextResponse.json(payload, { status: 400 });
+        }
+      } catch { /* ignore RPC errors */ }
     }
 
     // On-chain history check (minted once by logs), resilient to transfers-out and covers legacy contracts if provided
