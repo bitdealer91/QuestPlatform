@@ -34,11 +34,12 @@ export async function POST(req: Request){
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
-    const envAddr = (process.env.NEXT_PUBLIC_STARS_1155_ADDRESS || "") as `0x${string}` | "";
-    const contract = (body.contract || envAddr || "") as `0x${string}` | "";
-    if (!/^0x[0-9a-fA-F]{40}$/.test(contract)){
+    const envAddr = (process.env.NEXT_PUBLIC_STARS_1155_ADDRESS || "") as string;
+    const contractIn = (body.contract || envAddr || "") as string;
+    if (!/^0x[0-9a-fA-F]{40}$/.test(contractIn)){
       return NextResponse.json({ error: "bad_contract_address" }, { status: 400 });
     }
+    const contract = contractIn as `0x${string}`;
 
     const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || process.env.RPC_URL || 'https://api.infra.mainnet.somnia.network/';
     const client = createPublicClient({ chain: somniaMainnet, transport: http(rpcUrl) });
