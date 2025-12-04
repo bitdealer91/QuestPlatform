@@ -49,22 +49,7 @@ export async function POST(req: Request){
       return NextResponse.json({ error: 'bad_relayer_pk' }, { status: 400 });
     }
 
-    // Prevent double-minting: check server-side minted_total and last tx
-    try {
-      const res = await pipeline([["GET", `user:stars_minted:${toRaw}`]]);
-      const raw = (res as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
-      let mintedTotal = 0;
-      if (Array.isArray(raw)) {
-        const v = raw[0]?.result as unknown;
-        mintedTotal = typeof v === 'number' ? v : Number(v || 0) || 0;
-      } else if (raw && Array.isArray(raw.result)) {
-        const bucket = raw.result[0]?.result as unknown;
-        mintedTotal = typeof bucket === 'number' ? bucket : Number(bucket || 0) || 0;
-      }
-      if (mintedTotal > 0) {
-        return NextResponse.json({ error: 'already_minted', mintedTotal }, { status: 400 });
-      }
-    } catch { /* ignore */ }
+    // Note: do not block if minted_total > 0 — caller (batch) computes delta to reach total entitlement.
 
     const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || process.env.RPC_URL || 'https://api.infra.mainnet.somnia.network/';
     const publicClient = createPublicClient({ chain: somniaMainnet, transport: http(rpcUrl) });
