@@ -29,6 +29,9 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
 	const DEADLINE_ISO = '2025-12-01T15:00:00Z';
 	const claimUnlocked = claimEnabled && mandatoryDone;
 	const starCtaVisible = id === 8 && starAvailable && mandatoryDone;
+	// Tasks are currently disabled (no tasks planned). Keep an env flag for quick re-enable.
+	const tasksEnabled = /^(1|true)$/i.test(String(process.env.NEXT_PUBLIC_ENABLE_TASKS || ''));
+	const viewTasksEnabled = tasksEnabled && !!onView;
 	const endedByTime = (() => {
 		const d = new Date(DEADLINE_ISO);
 		return !isNaN(d.getTime()) && Date.now() >= d.getTime();
@@ -114,7 +117,20 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
                     <div className={clsx('pointer-events-none w-[292px] z-50', 'transition-all duration-200', hover ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2')}>
 						<div className="pointer-events-auto">
 							<div className="flex gap-3">
-								<button onClick={() => onView?.(id)} style={{ width: 140 }} className="inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border border-[color:var(--outline)] bg-[var(--primary)] text-black hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] cursor-pointer" aria-label={`View tasks for ${title}`}>View Tasks</button>
+								<button
+									onClick={() => viewTasksEnabled && onView?.(id)}
+									disabled={!viewTasksEnabled}
+									style={{ width: 140 }}
+									className={clsx(
+										'inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border focus:outline-none focus:ring-2 focus:ring-[var(--ring)]',
+										viewTasksEnabled
+											? 'border-[color:var(--outline)] bg-[var(--primary)] text-black hover:brightness-110 cursor-pointer'
+											: 'bg-[color:var(--card)]/60 text-[color:var(--muted)] border-[color:var(--outline)]/60 cursor-not-allowed'
+									)}
+									aria-label={`View tasks for ${title}`}
+								>
+									View Tasks
+								</button>
 								{ended ? (
 									<div title="Ended">
 										<button disabled style={{ width: 140 }} className={clsx('inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border focus:outline-none focus:ring-2 focus:ring-[var(--ring)]', 'bg-[color:var(--card)]/60 text-[color:var(--muted)] border-[color:var(--outline)]/60 cursor-not-allowed')} aria-label={`Claim ended for ${title}`}>Claim</button>
