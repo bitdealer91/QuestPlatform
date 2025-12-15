@@ -8,7 +8,7 @@ import ProfileDrawer from '@/components/ProfileDrawer';
 import { useAccount } from 'wagmi';
 import { useAnchors } from '../../hooks/useAnchors';
 
-export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (id: number) => 0|1|2|3; openTasks: (id: number) => void }){
+export function PlanetsRail({ getStarsForWeek, openTasks, mandatoryDoneByWeek }: { getStarsForWeek: (id: number) => 0|1|2|3; openTasks: (id: number) => void; mandatoryDoneByWeek: Record<number, boolean> }){
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const [dims, setDims] = useState<{ w: number; h: number }>(() => ({ w: 1440, h: 810 }));
 	useEffect(() => {
@@ -111,7 +111,8 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 
 			{PLANETS.map(p => {
 				const locked = p.id > unlockedCount; // unlock first N by env
-				const claimEnabled = (p.id >= 1 && p.id <= 8) && !locked; // enable for weeks 1-8
+				const mandatoryDone = mandatoryDoneByWeek?.[p.id] === true;
+				const claimEnabled = (p.id >= 1 && p.id <= 8) && !locked && mandatoryDone; // enable for weeks 1-8 only after mandatory tasks
 				const claimUrl = 'https://claims.somnia.network/';
 				return (
 					<div key={p.id} className="absolute hover:z-50 focus-within:z-50" style={{ left: `${normalize(mobilePositions ? mobilePositions[p.id]?.x ?? p.x : p.x, PAD_X)}%`, top: `${normalize(mobilePositions ? mobilePositions[p.id]?.y ?? p.y : p.y, PAD_Y)}%`, transform: 'translate(-50%,-50%)' }}>
@@ -125,6 +126,7 @@ export function PlanetsRail({ getStarsForWeek, openTasks }: { getStarsForWeek: (
 							onView={locked ? undefined : (id) => openTasks(id)}
 							onClaim={claimEnabled ? () => { if (typeof window !== 'undefined') window.location.href = claimUrl; } : undefined}
 							claimEnabled={claimEnabled}
+							mandatoryDone={mandatoryDone}
 							sizePx={110}
 						/>
 					</div>

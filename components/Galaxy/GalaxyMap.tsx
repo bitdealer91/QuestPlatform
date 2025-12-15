@@ -9,6 +9,7 @@ export default function GalaxyMap(){
 	const { address } = useAccount();
 	const [verifiedIds, setVerifiedIds] = useState<Set<string> | null>(null);
 	const [starTasksByWeek, setStarTasksByWeek] = useState<Record<number, string[]>>({});
+	const [mandatoryDoneByWeek, setMandatoryDoneByWeek] = useState<Record<number, boolean>>({});
 	const starsEnabled = String(process.env.NEXT_PUBLIC_SHOW_STARS || '0').toLowerCase() === '1' || String(process.env.NEXT_PUBLIC_SHOW_STARS || '0').toLowerCase() === 'true';
 	
 	// Загружаем верификацию с сервера (Redis)
@@ -21,6 +22,32 @@ export default function GalaxyMap(){
 			.catch(() => setVerifiedIds(null));
 		return () => ctrl.abort();
 	}, [address]);
+
+	// Загружаем состояние обязательных задач (нужно для гейтинга Mint/Claim)
+	const refreshMandatory = useCallback(async (addr?: string) => {
+		const target = (addr || address || '').toLowerCase();
+		if (!target) { setMandatoryDoneByWeek({}); return; }
+		try {
+			const res = await fetch(`/api/eligibility/percent?address=${target}`, { cache: 'no-store' });
+			const json = await res.json().catch(() => null) as { weeks?: Array<{ unlockedPercentage?: number }> } | null;
+			if (!json || !Array.isArray(json.weeks)) return;
+			const map: Record<number, boolean> = {};
+			json.weeks.forEach((w, idx) => {
+				const pct = Number(w?.unlockedPercentage || 0);
+				if (Number.isFinite(pct)) {
+					map[idx + 1] = pct >= 10;
+				}
+			});
+			setMandatoryDoneByWeek(map);
+		} catch {
+			// keep previous state on error
+		}
+	}, [address]);
+
+	useEffect(() => {
+		if (!address) { setMandatoryDoneByWeek({}); return; }
+		refreshMandatory(address);
+	}, [address, refreshMandatory]);
 	
 	// Подгружаем список "звёздных" тасков по неделям (id задач со star=true)
 	useEffect(() => {
@@ -48,10 +75,12 @@ export default function GalaxyMap(){
 			if (Array.isArray(ev.detail?.verifiedIds)){
 				setVerifiedIds(new Set(ev.detail.verifiedIds.map(String)));
 			}
+			// обновляем гейтинг по обязательным таскам после верификаций
+			if (address) refreshMandatory(address);
 		};
 		window.addEventListener('galaxy:progress-updated', onProgress as EventListener);
 		return () => window.removeEventListener('galaxy:progress-updated', onProgress as EventListener);
-	}, []);
+	}, [address, refreshMandatory]);
 
 	// Функция для подсчета звезд недели
 	const getStarsForWeek = useCallback((weekId: number) => {
@@ -66,7 +95,7 @@ export default function GalaxyMap(){
 	
 	return (
 		<div className="relative w-full h-full">
-			<PlanetsRail getStarsForWeek={getStarsForWeek} openTasks={openTasks} />
+			<PlanetsRail getStarsForWeek={getStarsForWeek} openTasks={openTasks} mandatoryDoneByWeek={mandatoryDoneByWeek} />
 			<TaskDrawer weekId={openWeek} onClose={() => setOpenWeek(null)} />
 		</div>
 	);

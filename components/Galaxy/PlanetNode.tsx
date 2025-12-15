@@ -3,10 +3,8 @@ import Image from 'next/image';
 import { useState, memo, useEffect } from 'react';
 import clsx from 'clsx';
 import { Lock } from 'lucide-react';
-import { useAccount, useReadContract } from 'wagmi';
-import KeyMintModal from './KeyMintModal';
+import { useAccount } from 'wagmi';
 import StarMintModal from './StarMintModal';
-import { ERC1155_MIN_ABI, KEYS_1155_ADDRESS, hasKeysContractConfigured } from '@/lib/contracts';
 
 export type PlanetNodeProps = {
 	id: number;
@@ -18,42 +16,31 @@ export type PlanetNodeProps = {
 	onClaim?: (id: number) => void;
 	sizePx?: number;
 	claimEnabled?: boolean;
+	mandatoryDone?: boolean;
 };
 
-function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClaim, locked, claimEnabled = false }: PlanetNodeProps) {
+function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClaim, locked, claimEnabled = false, mandatoryDone = false }: PlanetNodeProps) {
     const [hover, setHover] = useState(false);
 	const { address } = useAccount();
     const canInteract = !locked;
-	const [mintOpen, setMintOpen] = useState(false);
 	const [starOpen, setStarOpen] = useState(false);
-	const [eligible, setEligible] = useState<boolean | null>(null);
 	const [starAvailable, setStarAvailable] = useState<boolean>(false);
 	const [starMintedOnce, setStarMintedOnce] = useState<boolean>(false);
 	const DEADLINE_ISO = '2025-12-01T15:00:00Z';
+	const claimUnlocked = claimEnabled && mandatoryDone;
+	const starCtaVisible = id === 8 && starAvailable && mandatoryDone;
 	const endedByTime = (() => {
 		const d = new Date(DEADLINE_ISO);
 		return !isNaN(d.getTime()) && Date.now() >= d.getTime();
 	})();
 	const ended = process.env.NEXT_PUBLIC_FORCE_ENDED === '1' || endedByTime;
 
-	// Optional on-chain check to hide Mint if already minted
-	const hasContract = hasKeysContractConfigured();
-	const { data: bal } = useReadContract({
-		abi: ERC1155_MIN_ABI,
-		address: hasContract ? (KEYS_1155_ADDRESS as `0x${string}`) : undefined,
-		functionName: 'balanceOf',
-		args: [address as `0x${string}`, BigInt(id)],
-		query: { enabled: hasContract && !!address && canInteract },
-	});
-
-	const alreadyMinted = typeof bal === 'bigint' && bal > 0n;
-	// Do not use on-chain balance to decide if user "already minted" — a user may have bought on secondary.
-	// Rely on server-side mintedOnce flag instead (set after successful mint via our flow and on-chain scan).
 	const alreadyStarMinted = starMintedOnce === true;
 
 	// Check if user has any stars available to mint (sum from /api/profile minus on-chain balance)
 	useEffect(() => {
 		if (id !== 8) return;
+		if (!mandatoryDone) { setStarAvailable(false); return; }
 		if (!address || !canInteract) { setStarAvailable(false); return; }
 		let cancelled = false;
 		const run = async () => {
@@ -80,23 +67,7 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
 		// Fetch only on hover to reduce calls
 		if (hover) { run(); }
 		return () => { cancelled = true; };
-	}, [id, address, hover, canInteract]);
-
-	// Fetch eligibility when user hovers and when address changes
-	useEffect(() => {
-		if (!address) { setEligible(null); return; }
-		if (!canInteract) { setEligible(null); return; }
-		const envVal = String(process.env.NEXT_PUBLIC_ENABLE_MINT_DEV || '0').toLowerCase();
-		const flag = envVal === '1' || envVal === 'true';
-		if (!flag) { setEligible(null); return; }
-		if (!hover) return; // fetch lazily on hover to reduce calls
-		let cancelled = false;
-		fetch(`/api/mint/eligibility?address=${address}&week=${id}`)
-			.then(r => r.json())
-			.then(j => { if (!cancelled) setEligible(Boolean(j?.eligible)); })
-			.catch(() => { if (!cancelled) setEligible(null); });
-		return () => { cancelled = true; };
-	}, [address, id, canInteract, hover]);
+	}, [id, address, hover, canInteract, mandatoryDone]);
 
 	return (
 		<div className={clsx('group outline-none', 'relative', locked && 'cursor-not-allowed')}
@@ -143,22 +114,16 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
                     <div className={clsx('pointer-events-none w-[292px] z-50', 'transition-all duration-200', hover ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2')}>
 						<div className="pointer-events-auto">
 							<div className="flex gap-3">
-								{(() => { const v = String(process.env.NEXT_PUBLIC_ENABLE_MINT_DEV || '0').toLowerCase(); const flag = v === '1' || v === 'true'; return (flag && address && eligible && !alreadyMinted); })() ? (
-									<button onClick={() => setMintOpen(true)} style={{ width: 140 }} className="inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border border-[color:var(--outline)] bg-[var(--primary)] text-black hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] cursor-pointer" aria-label={`Mint key for ${title}`}>Mint</button>
-								) : ((() => { const v = String(process.env.NEXT_PUBLIC_ENABLE_MINT_DEV || '0').toLowerCase(); const flag = v === '1' || v === 'true'; return (flag && address && eligible && alreadyMinted); })() ? (
-									<button disabled style={{ width: 140 }} className="inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border bg-[color:var(--card)] text-[color:var(--muted)] border-[color:var(--outline)] cursor-not-allowed" aria-label={`Key minted for ${title}`}>Minted</button>
-								) : (
-									<button onClick={() => onView?.(id)} style={{ width: 140 }} className="inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border border-[color:var(--outline)] bg-[var(--primary)] text-black hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] cursor-pointer" aria-label={`View tasks for ${title}`}>View Tasks</button>
-								))}
+								<button onClick={() => onView?.(id)} style={{ width: 140 }} className="inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border border-[color:var(--outline)] bg-[var(--primary)] text-black hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--ring)] cursor-pointer" aria-label={`View tasks for ${title}`}>View Tasks</button>
 								{ended ? (
 									<div title="Ended">
 										<button disabled style={{ width: 140 }} className={clsx('inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border focus:outline-none focus:ring-2 focus:ring-[var(--ring)]', 'bg-[color:var(--card)]/60 text-[color:var(--muted)] border-[color:var(--outline)]/60 cursor-not-allowed')} aria-label={`Claim ended for ${title}`}>Claim</button>
 									</div>
 								) : (
-									<button onClick={() => claimEnabled && onClaim?.(id)} disabled={!claimEnabled} style={{ width: 140 }} className={clsx('inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border focus:outline-none focus:ring-2 focus:ring-[var(--ring)]', claimEnabled ? 'bg-[var(--card)] text-[var(--text)] border-[var(--outline)] hover:brightness-110 cursor-pointer' : 'bg-[color:var(--card)]/60 text-[color:var(--muted)] border-[color:var(--outline)]/60 cursor-not-allowed')} aria-label={`Claim reward for ${title}`}>{claimEnabled ? 'Claim' : 'Claim (locked)'}</button>
+									<button onClick={() => claimUnlocked && onClaim?.(id)} disabled={!claimUnlocked} style={{ width: 140 }} className={clsx('inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border focus:outline-none focus:ring-2 focus:ring-[var(--ring)]', claimUnlocked ? 'bg-[var(--card)] text-[var(--text)] border-[var(--outline)] hover:brightness-110 cursor-pointer' : 'bg-[color:var(--card)]/60 text-[color:var(--muted)] border-[color:var(--outline)]/60 cursor-not-allowed')} aria-label={`Claim reward for ${title}`}>{claimUnlocked ? 'Claim' : 'Claim (locked)'}</button>
 								)}
 							</div>
-                            {id === 8 && starAvailable && (
+                            {starCtaVisible && (
                                 <div className="mt-4 flex justify-center">
                                     <div className="premium-wrap">
 											{ended ? (
@@ -211,7 +176,6 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
                 )}
 				{locked && hover && null}
 			</div>
-			<KeyMintModal open={mintOpen} onClose={() => setMintOpen(false)} weekId={id} address={address || undefined} initialEligible={eligible ?? undefined} />
 			{ id === 8 && <StarMintModal open={starOpen} onClose={() => setStarOpen(false)} address={address || undefined} /> }
 		</div>
 	);
