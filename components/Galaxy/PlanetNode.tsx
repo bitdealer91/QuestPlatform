@@ -17,9 +17,11 @@ export type PlanetNodeProps = {
 	sizePx?: number;
 	claimEnabled?: boolean;
 	mandatoryDone?: boolean;
+	/** Odyssey map: island art is in the scenery layer; keep only HUD + hit area. */
+	hidePlanetArt?: boolean;
 };
 
-function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClaim, locked, claimEnabled = false, mandatoryDone = false }: PlanetNodeProps) {
+function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClaim, locked, claimEnabled = false, mandatoryDone = false, hidePlanetArt = false }: PlanetNodeProps) {
     const [hover, setHover] = useState(false);
 	const { address } = useAccount();
     const canInteract = !locked;
@@ -88,6 +90,9 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
 				className={clsx('relative transition-transform duration-200', hover ? 'scale-[1.06] drop-shadow-[0_0_24px_var(--ring)]' : 'scale-100')}
 				style={{ width: sizePx, height: sizePx }}
 			>
+				{hidePlanetArt ? (
+					<div className="select-none" style={{ width: sizePx, height: sizePx }} aria-hidden />
+				) : (
 				<Image
 					src={imgSrc}
 					alt={title}
@@ -97,6 +102,7 @@ function PlanetNodeImpl({ id, imgSrc, title, stars, sizePx = 120, onView, onClai
 					className={clsx('select-none pointer-events-none object-contain')}
 					draggable={false}
 				/>
+				)}
 				{locked && hover && (
 					<div className="pointer-events-none absolute inset-0 grid place-items-center z-50">
 						<div className={clsx('grid place-items-center rounded-full border border-[color:var(--outline)]', 'bg-[radial-gradient(60%_60%_at_30%_35%,rgba(178,108,255,.45),rgba(69,214,255,.25))]', 'w-16 h-16 transition-transform duration-200', hover ? 'scale-110 drop-shadow-glow' : 'scale-100')}>

@@ -2,7 +2,7 @@
 import { createContext, useContext, useMemo } from "react";
 import { createAppKit } from "@reown/appkit";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { http, WagmiProvider, type Config } from "wagmi";
+import { createConfig, http, WagmiProvider, type Config } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { somniaMainnet } from "./chains";
 
@@ -14,7 +14,18 @@ type AppCtx = { appKit: ReturnType<typeof createAppKit>; wagmiConfig: Config; qu
 const ReownContext = createContext<AppCtx>(null);
 
 export function AppKitProvider({ children }: { children: React.ReactNode }){
-  const value = useMemo<AppCtx>(() => {
+  const queryClient = useMemo(() => new QueryClient(), []);
+
+  const fallbackWagmiConfig = useMemo(
+    () =>
+      createConfig({
+        chains: [somniaMainnet],
+        transports: { [somniaMainnet.id]: http(rpcUrl) },
+      }),
+    []
+  );
+
+  const reown = useMemo(() => {
     if (!projectId) return null;
 
     const adapter = new WagmiAdapter({
@@ -37,17 +48,25 @@ export function AppKitProvider({ children }: { children: React.ReactNode }){
       themeMode: "dark",
     });
 
-    const queryClient = new QueryClient();
     const wagmiConfig = (adapter as unknown as { wagmiConfig: Config }).wagmiConfig;
-    return { appKit, wagmiConfig, queryClient };
+    return { appKit, wagmiConfig };
   }, []);
 
-  if (!value) return children as React.ReactNode;
-  const { wagmiConfig, queryClient } = value;
+  if (!reown) {
+    return (
+      <ReownContext.Provider value={null}>
+        <WagmiProvider config={fallbackWagmiConfig}>
+          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        </WagmiProvider>
+      </ReownContext.Provider>
+    );
+  }
+
+  const ctx: NonNullable<AppCtx> = { ...reown, queryClient };
 
   return (
-    <ReownContext.Provider value={value}>
-      <WagmiProvider config={wagmiConfig}>
+    <ReownContext.Provider value={ctx}>
+      <WagmiProvider config={reown.wagmiConfig}>
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
       </WagmiProvider>
     </ReownContext.Provider>

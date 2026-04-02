@@ -1,137 +1,158 @@
 'use client';
-import Image from 'next/image';
-import { START, PLANETS } from '@/lib/planets';
+
 import { PlanetNode } from './PlanetNode';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { CosmicPath } from '@/components/Galaxy/CosmicPath';
+import { useLayoutEffect, useRef, useState } from 'react';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import { useAccount } from 'wagmi';
-import { useAnchors } from '../../hooks/useAnchors';
+import { PLANETS } from '@/lib/planets';
+import { ODYSSEY_STAGE_H, ODYSSEY_STAGE_W, WEEK_TO_ISLAND, ODYSSEY_ISLANDS } from '@/lib/odysseyLayout';
+import { OdysseyScenery } from '@/components/Odyssey/OdysseyScenery';
+import { OdysseyHeader } from '@/components/Odyssey/OdysseyHeader';
+import { OdysseyQuills } from '@/components/Odyssey/OdysseyQuills';
 
-export function PlanetsRail({ getStarsForWeek, openTasks, mandatoryDoneByWeek }: { getStarsForWeek: (id: number) => 0|1|2|3; openTasks: (id: number) => void; mandatoryDoneByWeek: Record<number, boolean> }){
+function islandCenterForWeek(weekId: number): { x: number; y: number } {
+	const k = WEEK_TO_ISLAND[weekId] ?? 1;
+	const r = ODYSSEY_ISLANDS[k];
+	return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
+}
+
+function parseQuillsWeek(): number {
+	const raw = process.env.NEXT_PUBLIC_ODYSSEY_QUILLS_WEEK;
+	if (raw === undefined || raw === '') return 1;
+	const n = Number(raw);
+	if (!Number.isFinite(n)) return 1;
+	return Math.min(8, Math.max(1, Math.floor(n)));
+}
+
+export function PlanetsRail({
+	getStarsForWeek,
+	openTasks,
+	mandatoryDoneByWeek,
+}: {
+	getStarsForWeek: (id: number) => 0 | 1 | 2 | 3;
+	openTasks: (id: number) => void;
+	mandatoryDoneByWeek: Record<number, boolean>;
+}) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
-	const [dims, setDims] = useState<{ w: number; h: number }>(() => ({ w: 1440, h: 810 }));
-	useEffect(() => {
-		if (!containerRef.current) return;
+	const [scale, setScale] = useState(1);
+	const [profileOpen, setProfileOpen] = useState(false);
+	const { address } = useAccount();
+	const quillsWeek = parseQuillsWeek();
+
+	const UNLOCK_ENV = Number(process.env.NEXT_PUBLIC_UNLOCKED_COUNT || '1');
+	const unlockedCountFromEnv = Number.isFinite(UNLOCK_ENV)
+		? Math.max(1, Math.min(PLANETS.length, Math.floor(UNLOCK_ENV)))
+		: 1;
+	const unlockedCount = Math.max(8, unlockedCountFromEnv);
+
+	useLayoutEffect(() => {
 		const el = containerRef.current;
-		const ro = new ResizeObserver((entries) => {
-			const e = entries[0]; if (!e) return;
-			const cr = e.contentRect as DOMRectReadOnly;
-			setDims({ w: cr.width || window.innerWidth, h: cr.height || Math.max(1, Math.floor((cr.width || 1) / (16/9))) });
-		});
+		if (!el) return;
+		const measure = () => {
+			const rw = el.clientWidth;
+			const rh = el.clientHeight;
+			const s = Math.min(1, rw / ODYSSEY_STAGE_W, rh / ODYSSEY_STAGE_H);
+			setScale(s || 1);
+		};
+		measure();
+		const ro = new ResizeObserver(measure);
 		ro.observe(el);
 		return () => ro.disconnect();
 	}, []);
-	const ratio = dims.w / Math.max(1, dims.h);
-	// Lock desktop padding to stabilize positions; keep a bit larger padding on narrow screens
-	const isDesktop = typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true;
-	const isMobile = typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : false;
-	const PAD_X = isDesktop ? 6 : (ratio > 1.6 ? 8 : 6);
-	const PAD_Y = isDesktop ? 6 : (ratio < 1.4 ? 8 : 6);
-	const normalize = (v: number, pad: number) => pad + (v * (100 - pad * 2)) / 100;
-	// Raise mascot higher so its center sits above the original
-	const normStart = useMemo(() => {
-		if (isMobile) return { x: normalize(10, PAD_X), y: normalize(10, PAD_Y) };
-		return { x: normalize(START.x, PAD_X), y: normalize(START.y, PAD_Y) - 3 };
-	}, [PAD_X, PAD_Y, isMobile]);
-	const points = useAnchors(containerRef.current);
-	const [profileOpen, setProfileOpen] = useState(false);
-	const [mascotHover, setMascotHover] = useState(false);
-	const { address } = useAccount();
-
-	// Unlock first N planets via env; enforce at least 8 to open week 8 drop
-	const UNLOCK_ENV = Number(process.env.NEXT_PUBLIC_UNLOCKED_COUNT || '1');
-	const unlockedCountFromEnv = Number.isFinite(UNLOCK_ENV) ? Math.max(1, Math.min(PLANETS.length, Math.floor(UNLOCK_ENV))) : 1;
-	const unlockedCount = Math.max(8, unlockedCountFromEnv);
-
-	// Precomputed mobile positions (checkerboard)
-	const mobilePositions = useMemo(() => {
-		if (!isMobile) return null as Record<number, { x:number; y:number }> | null;
-		const leftX = 24, rightX = 76; const yStart = 20, yStep = 11;
-		const map: Record<number, { x:number; y:number }> = {};
-		// Start on the right for the first planet, then alternate
-		PLANETS.forEach((p, idx) => {
-			const x = idx % 2 === 0 ? rightX : leftX;
-			let y = yStart + idx * yStep;
-			if (p.id === 2) y += 4; // lower the 2nd planet to avoid mascot overlap
-			map[p.id] = { x, y };
-		});
-		return map;
-	}, [isMobile]);
-
-	// Build path points for mobile from our computed positions so the curve crosses centers exactly
-	const pathPoints = useMemo(() => {
-		if (!isMobile) return points as { x:number;y:number }[];
-		const pts: { x:number; y:number }[] = [];
-		pts.push({ x: normStart.x, y: normStart.y });
-		PLANETS.forEach((p) => {
-			const pos = mobilePositions ? mobilePositions[p.id]! : { x: p.x, y: p.y };
-			pts.push({ x: normalize(pos.x, PAD_X), y: normalize(pos.y, PAD_Y) });
-		});
-		return pts;
-	}, [isMobile, points, normStart.x, normStart.y, mobilePositions, PAD_X, PAD_Y]);
 
 	return (
-		<div ref={containerRef} className="relative w-full h-full overflow-hidden">
-			<Image src="/assets/background.png" alt="Galaxy background" fill priority className="object-cover" />
-
-			{!isMobile && (
-				<CosmicPath points={points} chaos={0.2} />
-			)}
-
-			{/* Mascot anchor (visual only) */}
-			<div className="absolute pointer-events-none" style={{ left: `${normStart.x}%`, top: `${normStart.y}%`, transform: 'translate(-50%,-50%)' }}>
-				<div
-					data-planet-anchor
-					data-path-order={0}
-					className={`relative transition-transform duration-200 ${mascotHover ? 'scale-[1.06] drop-shadow-[0_0_24px_var(--ring)]' : 'scale-100'} animate-[bob_2.6s_ease-in-out_infinite]`}
-					style={{ width: 140, height: 140 }}
-					onMouseEnter={() => setMascotHover(true)}
-					onMouseLeave={() => setMascotHover(false)}
-					onFocus={() => setMascotHover(true)}
-					onBlur={() => setMascotHover(false)}
+		<div className="relative h-full w-full min-h-0 overflow-hidden">
+			{/* Full-bleed video background — `object-cover` под любой размер экрана. */}
+			<div className="pointer-events-none fixed inset-0 z-0 bg-[#03040c]" aria-hidden>
+				<video
+					className="absolute inset-0 h-full w-full object-cover object-center"
+					autoPlay
+					muted
+					loop
+					playsInline
+					preload="auto"
+					aria-hidden
 				>
-					<Image src={START.img} alt={START.title} width={140} height={140} priority className="select-none pointer-events-none object-contain" />
+					<source src="/assets/background.mp4" type="video/mp4" />
+				</video>
+			</div>
+			{/* Облака поверх фона, под материками (сцена z-10). */}
+			<div className="pointer-events-none fixed inset-0 z-[1] mix-blend-normal" aria-hidden>
+				<video
+					className="absolute inset-0 h-full w-full object-cover object-center"
+					autoPlay
+					muted
+					loop
+					playsInline
+					preload="auto"
+					aria-hidden
+				>
+					<source src="/assets/31-moon.webm" type="video/webm" />
+				</video>
+			</div>
+
+			<div ref={containerRef} className="relative z-10 flex h-full w-full min-h-0 items-center justify-center">
+				<div
+					className="relative overflow-visible"
+					style={{
+						width: ODYSSEY_STAGE_W * scale,
+						height: ODYSSEY_STAGE_H * scale,
+					}}
+				>
+					<div
+						className="absolute left-0 top-0 origin-top-left"
+						style={{
+							width: ODYSSEY_STAGE_W,
+							height: ODYSSEY_STAGE_H,
+							transform: `scale(${scale})`,
+						}}
+						data-figma-node="12:18"
+					>
+						<OdysseyScenery />
+						<OdysseyQuills week={quillsWeek} />
+						<OdysseyHeader onProfileClick={() => setProfileOpen(true)} />
+
+						{PLANETS.map((p) => {
+							const locked = p.id > unlockedCount;
+							const mandatoryDone = mandatoryDoneByWeek?.[p.id] === true;
+							const claimEnabled = p.id >= 1 && p.id <= 8 && !locked && mandatoryDone;
+							const claimUrl = 'https://claims.somnia.network/';
+							const c = islandCenterForWeek(p.id);
+							return (
+								<div
+									key={p.id}
+									className="absolute z-[26] hover:z-50 focus-within:z-50"
+									style={{ left: c.x, top: c.y, transform: 'translate(-50%, -50%)' }}
+								>
+									<div
+										data-week-anchor={p.id}
+										className="absolute left-1/2 top-1/2 h-px w-px -translate-x-1/2 -translate-y-1/2"
+									/>
+									<PlanetNode
+										id={p.id}
+										imgSrc={p.img}
+										title={p.title}
+										stars={getStarsForWeek(p.id)}
+										locked={locked}
+										hidePlanetArt
+										onView={locked ? undefined : (id) => openTasks(id)}
+										onClaim={
+											claimEnabled
+												? () => {
+														if (typeof window !== 'undefined') window.location.href = claimUrl;
+													}
+												: undefined
+										}
+										claimEnabled={claimEnabled}
+										mandatoryDone={mandatoryDone}
+										sizePx={110}
+									/>
+								</div>
+							);
+						})}
+					</div>
 				</div>
 			</div>
-
-			{/* Clickable overlay to open Profile */}
-			<div className="absolute" style={{ left: `${normStart.x}%`, top: `${normStart.y}%`, transform: 'translate(-50%,-50%)' }}>
-				<button
-					aria-label="Open profile"
-					onClick={() => setProfileOpen(true)}
-					onMouseEnter={() => setMascotHover(true)}
-					onMouseLeave={() => setMascotHover(false)}
-					onFocus={() => setMascotHover(true)}
-					onBlur={() => setMascotHover(false)}
-					className="relative z-40 block rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-					style={{ width: 140, height: 140 }}
-				/>
-			</div>
-
-			{PLANETS.map(p => {
-				const locked = p.id > unlockedCount; // unlock first N by env
-				const mandatoryDone = mandatoryDoneByWeek?.[p.id] === true;
-				const claimEnabled = (p.id >= 1 && p.id <= 8) && !locked && mandatoryDone; // enable for weeks 1-8 only after mandatory tasks
-				const claimUrl = 'https://claims.somnia.network/';
-				return (
-					<div key={p.id} className="absolute hover:z-50 focus-within:z-50" style={{ left: `${normalize(mobilePositions ? mobilePositions[p.id]?.x ?? p.x : p.x, PAD_X)}%`, top: `${normalize(mobilePositions ? mobilePositions[p.id]?.y ?? p.y : p.y, PAD_Y)}%`, transform: 'translate(-50%,-50%)' }}>
-						<div data-week-anchor={p.id} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-px" />
-						<PlanetNode
-							id={p.id}
-							imgSrc={p.img}
-							title={p.title}
-							stars={getStarsForWeek(p.id)}
-							locked={locked}
-							onView={locked ? undefined : (id) => openTasks(id)}
-							onClaim={claimEnabled ? () => { if (typeof window !== 'undefined') window.location.href = claimUrl; } : undefined}
-							claimEnabled={claimEnabled}
-							mandatoryDone={mandatoryDone}
-							sizePx={110}
-						/>
-					</div>
-				);
-			})}
 
 			<ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} address={address || undefined} />
 		</div>

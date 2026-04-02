@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Mooli } from "next/font/google";
 import "@/styles/globals.css";
-import Header from "@/components/Header";
 import ToastHost from "@/components/ui/ToastHost";
 import type { ReactNode } from "react";
 import VhFixer from "@/components/system/VhFixer";
@@ -16,6 +15,7 @@ const VideoLoader = dynamic(() => import('@/components/VideoLoader'), { ssr: fal
 preloadCache();
 
 const inter = Inter({ subsets: ["latin"] });
+const mooli = Mooli({ subsets: ["latin"], weight: "400", variable: "--font-mooli" });
 
 export const metadata: Metadata = {
   title: "The Somnia Odyssey",
@@ -30,12 +30,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} ${mooli.variable}`}>
         <VhFixer />
         <AppKitProvider>
           <VideoLoader />
           <NetworkGuard />
-          <Header />
           {children}
           <ToastHost />
         </AppKitProvider>
