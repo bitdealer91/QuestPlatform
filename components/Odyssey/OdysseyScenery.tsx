@@ -2,12 +2,10 @@
 
 import type { ReactNode } from 'react';
 import Image from 'next/image';
-import { Globe } from 'lucide-react';
 import {
 	ISLAND1_PATH_REL,
 	ISLAND1_ROTATE_DEG,
 	ODYSSEY_ISLANDS,
-	ODYSSEY_SOCIAL,
 	ODYSSEY_STAGE_H,
 	ODYSSEY_STAGE_W,
 	Z,
@@ -34,40 +32,6 @@ export function OdysseyScenery() {
 
 	return (
 		<>
-			{/* Figma: сразу после bg — social (ниже всех материков). */}
-			<div
-				className="absolute z-[5] flex items-end gap-[10px]"
-				style={{ left: ODYSSEY_SOCIAL.x, top: ODYSSEY_SOCIAL.y, width: ODYSSEY_SOCIAL.w, height: ODYSSEY_SOCIAL.h }}
-			>
-				<a
-					href="https://x.com/Somnia_Network"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="relative h-10 w-10 shrink-0"
-					aria-label="Somnia on X"
-				>
-					<Image src="/assets/odyssey/social-x.svg" alt="" fill className="object-contain" />
-				</a>
-				<a
-					href="https://discord.com/invite/somnia"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="relative h-10 w-10 shrink-0"
-					aria-label="Somnia Discord"
-				>
-					<Image src="/assets/odyssey/social-discord.svg" alt="" fill className="object-contain" />
-				</a>
-				<a
-					href="https://browser.somnia.network/"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/25 bg-[#1a2744]/80 text-white backdrop-blur-[2px] hover:bg-[#243352]/90"
-					aria-label="Somnia Browser"
-				>
-					<Globe className="h-[18px] w-[18px]" strokeWidth={2} />
-				</a>
-			</div>
-
 			{/* 6 — Figma 41:5 (−0.93° на фрейме, внутри −7.21°). */}
 			<IslandChrome frame={f[6]} z={Z.island6}>
 				<div

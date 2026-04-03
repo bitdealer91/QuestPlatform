@@ -9,6 +9,7 @@ import { ODYSSEY_STAGE_H, ODYSSEY_STAGE_W, WEEK_TO_ISLAND, ODYSSEY_ISLANDS } fro
 import { OdysseyScenery } from '@/components/Odyssey/OdysseyScenery';
 import { OdysseyHeader } from '@/components/Odyssey/OdysseyHeader';
 import { OdysseyQuills } from '@/components/Odyssey/OdysseyQuills';
+import { OdysseySocial } from '@/components/Odyssey/OdysseySocial';
 
 function islandCenterForWeek(weekId: number): { x: number; y: number } {
 	const k = WEEK_TO_ISLAND[weekId] ?? 1;
@@ -51,10 +52,9 @@ export function PlanetsRail({
 		const measure = () => {
 			const rw = el.clientWidth;
 			const rh = el.clientHeight;
-			// Масштабируем сцену строго по ширине, чтобы хедер/правый низ совпадали с углами.
-			// Вертикаль может быть слегка обрезана контейнером (overflow-hidden), но это
-			// соответствует ожиданиям по позиционированию элементов в макете.
-			const s = rw / ODYSSEY_STAGE_W;
+			// Масштабируем сцену так, чтобы она НИКОГДА не росла больше макета.
+			// Тогда острова остаются одного размера на любых экранах.
+			const s = Math.min(1, rw / ODYSSEY_STAGE_W, rh / ODYSSEY_STAGE_H);
 			setScale(s || 1);
 		};
 		measure();
@@ -94,7 +94,7 @@ export function PlanetsRail({
 				</video>
 			</div>
 
-			<div ref={containerRef} className="relative z-10 flex h-full w-full min-h-0 items-end justify-center">
+			<div ref={containerRef} className="relative z-10 flex h-full w-full min-h-0 items-center justify-center">
 				<div
 					className="relative overflow-visible"
 					style={{
@@ -113,7 +113,6 @@ export function PlanetsRail({
 					>
 						<OdysseyScenery />
 						<OdysseyQuills week={quillsWeek} />
-						<OdysseyHeader onProfileClick={() => setProfileOpen(true)} />
 
 						{PLANETS.map((p) => {
 							const locked = p.id > unlockedCount;
@@ -156,6 +155,12 @@ export function PlanetsRail({
 					</div>
 				</div>
 			</div>
+
+			{/* Хедер поверх масштабируемой сцены (не должен масштабироваться). */}
+			<OdysseyHeader onProfileClick={() => setProfileOpen(true)} />
+
+			{/* Соц-иконки — поверх, в углу нижнем правом. */}
+			<OdysseySocial scale={scale} />
 
 			<ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} address={address || undefined} />
 		</div>
