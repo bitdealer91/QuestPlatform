@@ -6,7 +6,7 @@ import { Globe } from 'lucide-react';
 export function OdysseySocial() {
 	return (
 		<div
-			className="pointer-events-auto absolute z-[5] flex items-end gap-[10px]"
+			className="pointer-events-auto absolute z-[60] flex items-end gap-[10px]"
 			style={{
 				right: 14,
 				bottom: 18,

@@ -113,8 +113,6 @@ export function PlanetsRail({
 					>
 						<OdysseyScenery />
 						<OdysseyQuills week={quillsWeek} />
-						<OdysseyHeader onProfileClick={() => setProfileOpen(true)} />
-						<OdysseySocial />
 
 						{PLANETS.map((p) => {
 							const locked = p.id > unlockedCount;
@@ -157,6 +155,10 @@ export function PlanetsRail({
 					</div>
 				</div>
 			</div>
+
+			{/* Хедер и соц-иконки должны быть привязаны к углам viewport, а не к stage. */}
+			<OdysseyHeader onProfileClick={() => setProfileOpen(true)} />
+			<OdysseySocial />
 
 			<ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} address={address || undefined} />
 		</div>
