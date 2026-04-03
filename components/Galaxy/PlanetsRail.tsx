@@ -51,10 +51,10 @@ export function PlanetsRail({
 		const measure = () => {
 			const rw = el.clientWidth;
 			const rh = el.clientHeight;
-			// Раньше мы жёстко ограничивали scale <= 1, из-за этого на широких экранах
-			// сцена (и хедер внутри неё) не доходили до краёв viewport.
-			// Теперь сцена может масштабироваться и вверх, чтобы заполнить доступную область.
-			const s = Math.min(rw / ODYSSEY_STAGE_W, rh / ODYSSEY_STAGE_H);
+			// Масштабируем сцену строго по ширине, чтобы хедер/правый низ совпадали с углами.
+			// Вертикаль может быть слегка обрезана контейнером (overflow-hidden), но это
+			// соответствует ожиданиям по позиционированию элементов в макете.
+			const s = rw / ODYSSEY_STAGE_W;
 			setScale(s || 1);
 		};
 		measure();
@@ -94,7 +94,7 @@ export function PlanetsRail({
 				</video>
 			</div>
 
-			<div ref={containerRef} className="relative z-10 flex h-full w-full min-h-0 items-center justify-center">
+			<div ref={containerRef} className="relative z-10 flex h-full w-full min-h-0 items-end justify-center">
 				<div
 					className="relative overflow-visible"
 					style={{
