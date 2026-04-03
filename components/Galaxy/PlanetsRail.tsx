@@ -94,7 +94,7 @@ export function PlanetsRail({
 				</video>
 			</div>
 
-			<div ref={containerRef} className="relative z-10 flex h-full w-full min-h-0 items-center justify-center">
+			<div ref={containerRef} className="relative z-10 flex h-full w-full min-h-0 items-end justify-center">
 				<div
 					className="relative overflow-visible"
 					style={{
@@ -113,6 +113,8 @@ export function PlanetsRail({
 					>
 						<OdysseyScenery />
 						<OdysseyQuills week={quillsWeek} />
+						<OdysseyHeader onProfileClick={() => setProfileOpen(true)} />
+						<OdysseySocial />
 
 						{PLANETS.map((p) => {
 							const locked = p.id > unlockedCount;
@@ -155,12 +157,6 @@ export function PlanetsRail({
 					</div>
 				</div>
 			</div>
-
-			{/* Хедер поверх масштабируемой сцены (не должен масштабироваться). */}
-			<OdysseyHeader onProfileClick={() => setProfileOpen(true)} />
-
-			{/* Соц-иконки — поверх, в углу нижнем правом. */}
-			<OdysseySocial scale={scale} />
 
 			<ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} address={address || undefined} />
 		</div>

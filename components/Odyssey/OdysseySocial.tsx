@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { Globe } from 'lucide-react';
 
-export function OdysseySocial({ scale = 1 }: { scale?: number }) {
+export function OdysseySocial() {
 	return (
 		<div
 			className="pointer-events-auto absolute z-[5] flex items-end gap-[10px]"
@@ -12,8 +12,6 @@ export function OdysseySocial({ scale = 1 }: { scale?: number }) {
 				bottom: 18,
 				width: 140,
 				height: 40,
-				transform: `scale(${scale})`,
-				transformOrigin: 'bottom right',
 			}}
 		>
 			<a
