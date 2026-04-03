@@ -1,6 +1,11 @@
 {
   "programStart": "2025-09-02T00:00:00Z",
   "weeks": 8,
+  "tasks": []
+}
+{
+  "programStart": "2025-09-02T00:00:00Z",
+  "weeks": 8,
   "tasks": [
     {
       "week": 1,
