@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { User, Wallet2 } from 'lucide-react';
-import { useAccount, useBalance } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { useReown } from '@/lib/reown';
 import { useDomain } from '@/hooks/useDomain';
 import clsx from 'clsx';
@@ -23,9 +23,6 @@ export function OdysseyHeader({ onProfileClick }: Props) {
 	const domain = useDomain({ registry: (process.env.NEXT_PUBLIC_SOMNIA_NAME_REGISTRY as `0x${string}` | undefined) });
 	const [mounted, setMounted] = useState(false);
 	useEffect(() => setMounted(true), []);
-
-	const { data: nativeBal } = useBalance({ address, chainId: SOMNIA_MAINNET_ID, query: { enabled: !!address } });
-	const formattedBal = nativeBal ? `${Number(nativeBal.formatted).toFixed(2)} ${nativeBal.symbol || 'SOMI'}` : null;
 
 	const handleWallet = () => {
 		if (!ctx?.appKit) {
@@ -107,15 +104,6 @@ export function OdysseyHeader({ onProfileClick }: Props) {
 						>
 							Somnia Mainnet
 						</p>
-
-						{formattedBal && (
-							<div
-								className="absolute flex items-center justify-center rounded-full border border-white/80 bg-transparent px-2"
-								style={{ right: 189, top: 22, width: 118, height: 29 }}
-							>
-								<span className="max-w-[104px] truncate text-[11px] font-medium tabular-nums text-white">{formattedBal}</span>
-							</div>
-						)}
 
 						<button
 							type="button"

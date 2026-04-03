@@ -51,7 +51,10 @@ export function PlanetsRail({
 		const measure = () => {
 			const rw = el.clientWidth;
 			const rh = el.clientHeight;
-			const s = Math.min(1, rw / ODYSSEY_STAGE_W, rh / ODYSSEY_STAGE_H);
+			// Раньше мы жёстко ограничивали scale <= 1, из-за этого на широких экранах
+			// сцена (и хедер внутри неё) не доходили до краёв viewport.
+			// Теперь сцена может масштабироваться и вверх, чтобы заполнить доступную область.
+			const s = Math.min(rw / ODYSSEY_STAGE_W, rh / ODYSSEY_STAGE_H);
 			setScale(s || 1);
 		};
 		measure();
