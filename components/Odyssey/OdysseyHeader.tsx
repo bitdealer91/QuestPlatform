@@ -82,7 +82,8 @@ export function OdysseyHeader({ onProfileClick }: Props) {
 							onClick={handleWallet}
 							disabled={isConnecting}
 							className="absolute overflow-hidden rounded-[19px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-							style={{ left: 1152, top: 18, width: 114, height: 37 }}
+							// Позиционируем относительно правого края (как в Figma: right ~14px)
+							style={{ right: 14, top: 18, width: 114, height: 37 }}
 							aria-label="Sign in"
 						>
 							<Image src="/assets/odyssey/header-signin.svg" alt="" width={114} height={37} className="pointer-events-none object-fill" />
@@ -90,7 +91,7 @@ export function OdysseyHeader({ onProfileClick }: Props) {
 								className="pointer-events-none absolute left-[33px] top-[7px] z-[1] text-[15px] font-normal leading-[1.5] tracking-[-0.345px] text-black"
 								style={{ fontFamily: 'var(--font-mooli), system-ui, sans-serif' }}
 							>
-								{isConnecting ? '…' : 'Sing in'}
+								{isConnecting ? '…' : 'Sign in'}
 							</span>
 						</button>
 					</>
