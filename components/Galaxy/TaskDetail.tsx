@@ -123,7 +123,11 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 	], []);
 
 	return (
-		<motion.section initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="h-full flex flex-col gap-4 rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card-elev)] shadow-elevated p-5">
+		<motion.section
+			initial={{ opacity: 0, y: 6 }}
+			animate={{ opacity: 1, y: 0 }}
+			className="flex h-full flex-col gap-4 rounded-[var(--radius-lg)] border border-white/10 bg-black p-5 shadow-elevated"
+		>
 			<TaskDetailHeader task={{
 				id: task.id,
 				title: task.title,
@@ -140,10 +144,10 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 				category: task.category,
 			}} />
 
-			<RewardSummary xp={task.xp} star={task.star} status={status} />
+			<RewardSummary xp={task.xp} star={task.star} status={status} odysseyStyle />
 
 			{task.description && (
-				<p className="text-sm text-[color:var(--muted)] leading-relaxed max-w-[65ch]">
+				<p className="max-w-[65ch] text-sm leading-relaxed text-[color:var(--odyssey-task-muted)]">
 					{task.description}
 				</p>
 			)}
@@ -151,7 +155,11 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 			<div className="mt-auto" />
 
 			{status !== 'idle' && (
-				<div className={`rounded-[var(--radius)] border px-3 py-2 text-sm ${status === 'verified' ? 'bg-[color:var(--ok)]/14 border-[color:var(--outline)]' : status === 'pending' ? 'bg-[color:var(--accent)]/14 border-[color:var(--outline)]' : 'bg-[color:var(--danger)]/16 border-[color:var(--outline)]'}`} role="status" aria-live="polite">
+				<div
+					className={`rounded-[var(--radius-lg)] border px-3 py-2 text-sm ${status === 'verified' ? 'border-[color:var(--odyssey-task-active)]/50 bg-[color:var(--odyssey-task-active)]/12 text-[color:var(--odyssey-task-active)]' : status === 'pending' ? 'border-white/10 bg-black text-[color:var(--odyssey-task-muted)]' : 'border-[color:var(--danger)]/40 bg-[color:var(--danger)]/12 text-[color:var(--danger)]'}`}
+					role="status"
+					aria-live="polite"
+				>
 					{status === 'pending' && 'Verification in progress…'}
 					{status === 'verified' && 'Verified. Reward granted.'}
 					{status === 'error' && (
@@ -165,14 +173,29 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 			<div ref={liveRegionRef} className="sr-only" aria-live="polite" />
 
 			<div className="flex items-center justify-between gap-3 sticky bottom-[max(env(safe-area-inset-bottom),12px)] lg:static bg-transparent">
-				<TaskActions goHref={task.href} canVerify={canVerify} loading={loading} onVerify={handleVerify} taskId={task.id} cooldownSec={cooldownSec ?? undefined as unknown as number | null} isVerified={status === 'verified' || (alreadyVerified && !forceVerify)} />
+				<TaskActions
+					goHref={task.href}
+					canVerify={canVerify}
+					loading={loading}
+					onVerify={handleVerify}
+					taskId={task.id}
+					cooldownSec={cooldownSec ?? undefined as unknown as number | null}
+					isVerified={status === 'verified' || (alreadyVerified && !forceVerify)}
+					odysseyStyle
+				/>
 				<Tooltip content={<div className="max-w-[220px]">
 					<div className="font-medium mb-1">Having trouble verifying?</div>
 					<ul className="list-disc pl-4 space-y-0.5 text-xs text-[color:var(--muted)]">
 						{tips.map((t, i) => <li key={i}>{t}</li>)}
 					</ul>
 				</div>}>
-					<button className="text-xs underline decoration-dotted hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]" aria-label="Help verifying">Having trouble verifying?</button>
+					<button
+						type="button"
+						className="text-xs text-white/90 underline decoration-dotted underline-offset-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+						aria-label="Help verifying"
+					>
+						Having trouble verifying?
+					</button>
 				</Tooltip>
 			</div>
 		</motion.section>

@@ -28,7 +28,7 @@ export const ODYSSEY_ISLANDS: Record<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8, OdysseyRect>
 export const ISLAND1_ART_NUDGE_Y = -30;
 
 /** Доп. сдвиг слоя пунктира вниз внутри фрейма «1» (путь не привязан к сдвигу арта). */
-export const ISLAND1_PATH_EXTRA_TOP_PX = 3;
+export const ISLAND1_PATH_EXTRA_TOP_PX = -2;
 
 /** Z-index по порядку слоёв Figma (первый в списке = ниже). После bg идёт social, затем 6→7→5→8→4→3→2→1. */
 export const Z = {

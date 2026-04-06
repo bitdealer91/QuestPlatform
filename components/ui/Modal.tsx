@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
-export default function Modal({ open, onClose, title, subtitle, children, size = 'lg', footer, headerAdornment }: { open: boolean; onClose: () => void; title?: string | React.ReactNode; subtitle?: string; children: React.ReactNode; size?: 'sm'|'md'|'lg'|'xl'; footer?: React.ReactNode; headerAdornment?: React.ReactNode }){
+export default function Modal({ open, onClose, title, subtitle, children, size = 'lg', footer, headerAdornment }: { open: boolean; onClose: () => void; title?: string | React.ReactNode; subtitle?: string; children: React.ReactNode; size?: 'sm'|'md'|'lg'|'xl'|'profile'; footer?: React.ReactNode; headerAdornment?: React.ReactNode }){
 	const panelRef = useRef<HTMLDivElement | null>(null);
 	useEffect(() => {
 		if (!open) return;
@@ -25,7 +25,13 @@ export default function Modal({ open, onClose, title, subtitle, children, size =
 		else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
 	};
 
-	const sizes = { sm: 'w-[min(420px,92vw)]', md: 'w-[min(560px,92vw)]', lg: 'w-[min(720px,92vw)]', xl: 'w-[min(920px,94vw)]' };
+	const sizes = {
+		sm: 'w-[min(420px,92vw)]',
+		md: 'w-[min(560px,92vw)]',
+		lg: 'w-[min(720px,92vw)]',
+		xl: 'w-[min(920px,94vw)]',
+		profile: 'w-[min(668px,92vw)]',
+	};
 	return (
 		<AnimatePresence>
 			{open && (
@@ -38,21 +44,57 @@ export default function Modal({ open, onClose, title, subtitle, children, size =
 					<motion.div className="absolute inset-0 bg-black/55 backdrop-blur-[14px]" onClick={onClose} />
 					<motion.div
 						ref={panelRef}
-						className={clsx('relative modal-card rounded-[var(--radius-lg)] bg-[color:var(--card-elev)] border border-[color:var(--outline)] shadow-elevated', sizes[size])}
+						className={clsx(
+							'relative modal-card rounded-[var(--radius-lg)] shadow-elevated',
+							size === 'profile'
+								? 'border border-white/10 bg-[color:var(--odyssey-panel)]'
+								: 'border border-[color:var(--outline)] bg-[color:var(--card-elev)]',
+							sizes[size],
+						)}
 						initial={{ scale: 0.96, opacity: 0 }}
 						animate={{ scale: 1, opacity: 1, transition: { type: 'spring', stiffness: 220, damping: 22 } }}
 						exit={{ scale: 0.98, opacity: 0, transition: { duration: 0.2 } }}
 					>
 						{(title || headerAdornment) && (
-							<div className="flex items-center justify-between px-5 py-4 border-b border-[color:var(--outline)]">
+							<div
+								className={clsx(
+									'flex items-center justify-between border-b px-5 py-4',
+									size === 'profile' ? 'border-white/10' : 'border-[color:var(--outline)]',
+								)}
+							>
 								<div className="min-w-0">
-									{typeof title === 'string' ? <h2 className="text-lg font-semibold truncate">{title}</h2> : title}
-									{subtitle && <p className="mt-0.5 text-sm text-[color:var(--muted)]">{subtitle}</p>}
+									{typeof title === 'string' ? (
+										<h2
+											className={
+												size === 'profile'
+													? 'truncate text-[15px] font-normal tracking-[-0.345px] text-white'
+													: 'text-lg font-semibold truncate'
+											}
+										>
+											{title}
+										</h2>
+									) : (
+										title
+									)}
+									{subtitle && (
+										<p
+											className={
+												size === 'profile'
+													? 'mt-0.5 text-[12px] tracking-[-0.276px] text-[color:var(--odyssey-task-muted)]'
+													: 'mt-0.5 text-sm text-[color:var(--muted)]'
+											}
+										>
+											{subtitle}
+										</p>
+									)}
 								</div>
 								<div className="flex items-center gap-3">
 									{headerAdornment}
 									<button aria-label="Close"
-										className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius)] border border-[color:var(--outline)] hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+										className={clsx(
+											'inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius)] hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]',
+											size === 'profile' ? 'border border-white/15' : 'border border-[color:var(--outline)]',
+										)}
 										onClick={onClose}
 									>
 										<X className="h-4 w-4" />

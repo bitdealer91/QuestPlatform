@@ -32,32 +32,30 @@ export default function TaskDetailHeader({ task }: TaskDetailHeaderProps){
 				<motion.div
 					initial={{ opacity: 0, y: 4 }}
 					animate={{ opacity: 1, y: 0, transition: { type: 'spring', stiffness: 280, damping: 20, delay: 0.02 } }}
-					className="flex items-center gap-3 p-3 rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card-elev)] shadow-sm"
+					className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-white/10 bg-black p-3 shadow-sm"
 				>
-					{/* Логотип */}
-					<div className="shrink-0 w-12 h-12 rounded-[var(--radius)] overflow-hidden bg-white/5 flex items-center justify-center">
-						<Image 
-							src={task.logo} 
-							alt={`${task.brand} logo`} 
-							width={48} 
+					<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius)] bg-white/5">
+						<Image
+							src={task.logo}
+							alt={`${task.brand} logo`}
+							width={48}
 							height={48}
 							className="object-contain"
 						/>
 					</div>
-					
-					{/* Название в цветах партнера */}
+
 					<div className="min-w-0">
-						<h4 
-							className="text-lg font-semibold leading-tight"
-							style={{ 
-								color: task.brand_color || 'var(--foreground)',
-								textShadow: task.brand_color ? `0 0 20px ${task.brand_color}40` : 'none'
+						<h4
+							className="text-lg font-semibold leading-tight text-white"
+							style={{
+								color: task.brand_color || undefined,
+								textShadow: task.brand_color ? `0 0 20px ${task.brand_color}40` : undefined,
 							}}
 						>
 							{task.brand}
 						</h4>
 						{task.category && (
-							<div className="text-xs text-[color:var(--muted)] mt-0.5">
+							<div className="mt-0.5 text-xs text-[color:var(--odyssey-task-muted)]">
 								{task.category}
 							</div>
 						)}
@@ -65,9 +63,8 @@ export default function TaskDetailHeader({ task }: TaskDetailHeaderProps){
 				</motion.div>
 			)}
 
-			{/* Заголовок задачи - без маркировок */}
 			<div className="min-w-0">
-				<h3 className="text-xl leading-snug font-semibold line-clamp-2 text-[color:var(--foreground)]">
+				<h3 className="line-clamp-2 text-xl font-semibold leading-snug text-white">
 					{task.title}
 				</h3>
 			</div>

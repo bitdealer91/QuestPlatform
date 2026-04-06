@@ -6,6 +6,15 @@
 	--outline:rgba(255,255,255,.08); --ring:rgba(182,112,255,.55);
 	--shadow:0 16px 40px rgba(0,0,0,.45), 0 0 0 1px var(--outline);
 	--radius:18px; --radius-lg:22px; --radius-xl:28px;
+	/* Figma Odyssey task drawer / profile (MCP 130:155, 136:3555) */
+	--odyssey-go:#78a3c8;
+	--odyssey-task-muted:#8e8e8e;
+	--odyssey-task-active:#58edbd;
+	/* Сплошной чёрный для панелей тасков / ЛК (скрины Odyssey). */
+	--odyssey-task-surface:#000000;
+	--odyssey-panel:#000000;
+	--odyssey-task-border:rgba(255,255,255,.3);
+	--odyssey-task-outline-strong:rgba(120,163,200,.85);
 }
 
 @media (prefers-color-scheme: dark){

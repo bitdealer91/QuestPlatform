@@ -5,9 +5,11 @@ export type RewardSummaryProps = {
 	xp: number;
 	star?: boolean;
 	status?: 'idle' | 'pending' | 'verified' | 'error';
+	/** Стили карточки награды как в Figma `136:1451`. */
+	odysseyStyle?: boolean;
 };
 
-export default function RewardSummary({ xp, star, status = 'idle' }: RewardSummaryProps){
+export default function RewardSummary({ xp, star, status = 'idle', odysseyStyle = false }: RewardSummaryProps) {
 	// Вычисляем прогресс на основе статуса
 	const getProgressValue = () => {
 		switch (status) {
@@ -50,15 +52,27 @@ export default function RewardSummary({ xp, star, status = 'idle' }: RewardSumma
 		}
 	};
 
+	const shell = odysseyStyle
+		? 'rounded-[var(--radius-lg)] border border-white/10 bg-[color:var(--odyssey-task-surface)] p-3'
+		: 'rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)] p-3';
+
 	return (
-		<div className="rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)] p-3">
-			<div className="flex items-center justify-between text-sm mb-2">
-				<span className="text-[color:var(--muted)]">Reward</span>
-				<span className="font-medium">+{xp} XP{star ? ' · Core Star' : ''}</span>
+		<div className={shell}>
+			<div className={`flex items-center justify-between mb-2 ${odysseyStyle ? 'text-[12px] tracking-[-0.276px]' : 'text-sm'}`}>
+				<span className={odysseyStyle ? 'text-[color:var(--odyssey-task-muted)]' : 'text-[color:var(--muted)]'}>Reward</span>
+				<span className={odysseyStyle ? 'text-[12px] text-white' : 'font-medium'}>
+					+{xp} XP{star ? ' · Core Star' : ''}
+				</span>
 			</div>
-			<Progress value={getProgressValue()} label={getStatusText()} />
-			<div className="mt-2 text-xs text-center">
-				<span className={getStatusColor()}>{getStatusText()}</span>
+			<Progress
+				value={getProgressValue()}
+				label={getStatusText()}
+				variant={odysseyStyle ? 'odyssey' : 'default'}
+			/>
+			<div className="mt-2 text-center text-[12px] tracking-[-0.276px]">
+				<span className={odysseyStyle ? (status === 'verified' ? 'text-[color:var(--odyssey-task-active)]' : 'text-[color:var(--odyssey-task-muted)]') : getStatusColor()}>
+					{getStatusText()}
+				</span>
 			</div>
 		</div>
 	);
