@@ -1,11 +1,17 @@
 'use client';
 
 import { PlanetNode } from './PlanetNode';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import { useAccount } from 'wagmi';
 import { PLANETS } from '@/lib/planets';
-import { ODYSSEY_STAGE_H, ODYSSEY_STAGE_W, WEEK_TO_ISLAND, ODYSSEY_ISLANDS } from '@/lib/odysseyLayout';
+import {
+	ISLAND1_ART_NUDGE_Y,
+	ODYSSEY_STAGE_H,
+	ODYSSEY_STAGE_W,
+	WEEK_TO_ISLAND,
+	ODYSSEY_ISLANDS,
+} from '@/lib/odysseyLayout';
 import { OdysseyScenery } from '@/components/Odyssey/OdysseyScenery';
 import { OdysseyHeader } from '@/components/Odyssey/OdysseyHeader';
 import { OdysseyQuills } from '@/components/Odyssey/OdysseyQuills';
@@ -14,7 +20,10 @@ import { OdysseySocial } from '@/components/Odyssey/OdysseySocial';
 function islandCenterForWeek(weekId: number): { x: number; y: number } {
 	const k = WEEK_TO_ISLAND[weekId] ?? 1;
 	const r = ODYSSEY_ISLANDS[k];
-	return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
+	const cx = r.x + r.w / 2;
+	const cy = r.y + r.h / 2;
+	if (weekId === 1) return { x: cx, y: cy + ISLAND1_ART_NUDGE_Y };
+	return { x: cx, y: cy };
 }
 
 function parseQuillsWeek(): number {
@@ -26,19 +35,25 @@ function parseQuillsWeek(): number {
 }
 
 export function PlanetsRail({
-	getStarsForWeek,
 	openTasks,
 	mandatoryDoneByWeek,
 }: {
-	getStarsForWeek: (id: number) => 0 | 1 | 2 | 3;
 	openTasks: (id: number) => void;
 	mandatoryDoneByWeek: Record<number, boolean>;
 }) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const [scale, setScale] = useState(1);
 	const [profileOpen, setProfileOpen] = useState(false);
+	const [highlightedWeek, setHighlightedWeek] = useState<number | null>(null);
 	const { address } = useAccount();
 	const quillsWeek = parseQuillsWeek();
+
+	const onPlanetHoverChange = useCallback((id: number, hovering: boolean) => {
+		setHighlightedWeek((prev) => {
+			if (hovering) return id;
+			return prev === id ? null : prev;
+		});
+	}, []);
 
 	const UNLOCK_ENV = Number(process.env.NEXT_PUBLIC_UNLOCKED_COUNT || '1');
 	const unlockedCountFromEnv = Number.isFinite(UNLOCK_ENV)
@@ -111,7 +126,7 @@ export function PlanetsRail({
 						}}
 						data-figma-node="12:18"
 					>
-						<OdysseyScenery />
+						<OdysseyScenery highlightedWeek={highlightedWeek} />
 						<OdysseyQuills week={quillsWeek} />
 
 						{PLANETS.map((p) => {
@@ -120,6 +135,9 @@ export function PlanetsRail({
 							const claimEnabled = p.id >= 1 && p.id <= 8 && !locked && mandatoryDone;
 							const claimUrl = 'https://claims.somnia.network/';
 							const c = islandCenterForWeek(p.id);
+							const islandKey = WEEK_TO_ISLAND[p.id] ?? 1;
+							const island = ODYSSEY_ISLANDS[islandKey];
+							const hitPx = Math.min(340, Math.round(Math.min(island.w, island.h) * 0.9));
 							return (
 								<div
 									key={p.id}
@@ -134,9 +152,9 @@ export function PlanetsRail({
 										id={p.id}
 										imgSrc={p.img}
 										title={p.title}
-										stars={getStarsForWeek(p.id)}
 										locked={locked}
 										hidePlanetArt
+										hudNudgeYPx={p.id === 2 ? -40 : 0}
 										onView={locked ? undefined : (id) => openTasks(id)}
 										onClaim={
 											claimEnabled
@@ -147,7 +165,8 @@ export function PlanetsRail({
 										}
 										claimEnabled={claimEnabled}
 										mandatoryDone={mandatoryDone}
-										sizePx={110}
+										sizePx={hitPx}
+										onHoverChange={onPlanetHoverChange}
 									/>
 								</div>
 							);

@@ -14,7 +14,9 @@ function isLowercaseHexAddress(a: string): boolean {
 export async function GET(req: Request){
   try {
     const url = new URL(req.url);
-    const addressRaw = String(url.searchParams.get("address") || "").trim();
+    const addressRaw = String(
+      url.searchParams.get("address") || url.searchParams.get("walletAddress") || ""
+    ).trim();
     const address = addressRaw.toLowerCase();
     const debug = /^(1|true)$/i.test(String(url.searchParams.get("debug") || ""));
     const onlyWeekParam = url.searchParams.get("week");
