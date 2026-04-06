@@ -26,8 +26,8 @@ html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; overscroll-b
 .ui-fixed-layer { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
 .ui-fixed-layer > * { pointer-events: auto; }
 
-.modal-card,
-.drawer-panel { max-height: min(90dvh, calc(var(--app-vh) * 90)); overflow: auto; }
+/* Дровер тасков — на всю высоту в компоненте; лимит только у модалок. */
+.modal-card { max-height: min(90dvh, calc(var(--app-vh) * 90)); overflow: auto; }
 
 * { box-sizing: border-box; }
 

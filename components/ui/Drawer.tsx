@@ -1,7 +1,12 @@
 'use client';
+import { useLayoutEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import clsx from 'clsx';
 import { X } from 'lucide-react';
+
+/** Выше OdysseyHeader (50), OdysseySocial (60), ui-fixed-layer (60); ниже полноэкранного VideoLoader. */
+const DRAWER_Z = 8000;
 
 export default function Drawer({
 	open,
@@ -26,22 +31,36 @@ export default function Drawer({
 	/** Чёрная панель как на скринах Odyssey (не `card-elev`). */
 	panel?: 'default' | 'black';
 }){
+	const [mounted, setMounted] = useState(false);
+	useLayoutEffect(() => setMounted(true), []);
+
 	const sizes = {
 		md: 'w-[min(520px,92vw)]',
 		lg: 'w-[min(720px,92vw)]',
 		xl: 'w-[min(980px,96vw)]',
 		task: 'w-[min(660px,96vw)]',
 	};
-	return (
+	const layer = (
 		<AnimatePresence>
 			{open && (
-				<motion.div className="fixed inset-0 z-50" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-					<motion.div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
+				<motion.div
+					className="fixed left-0 right-0 top-0 flex min-h-0 flex-row justify-end overflow-hidden"
+					style={{
+						zIndex: DRAWER_Z,
+						/* Явная высота: иначе при only-abs children + Framer слой иногда схлопывается по контенту. */
+						height: '100dvh',
+						maxHeight: '100dvh',
+					}}
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					exit={{ opacity: 0 }}
+				>
+					<motion.div className="absolute inset-0 z-0 bg-black/60 backdrop-blur-md" onClick={onClose} aria-hidden />
 					<motion.aside
 						className={clsx(
-							'drawer-panel absolute right-0 top-0 flex h-full flex-col border-l shadow-elevated',
+							'relative z-10 flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-l shadow-elevated',
 							panel === 'black'
-								? 'border-white/10 bg-[color:var(--odyssey-panel)]'
+								? 'border-white/10 bg-[color:var(--odyssey-panel)] backdrop-blur-xl backdrop-saturate-150'
 								: 'border-[color:var(--outline)] bg-[color:var(--card-elev)]',
 							sizes[size],
 						)}
@@ -92,12 +111,15 @@ export default function Drawer({
 								</button>
 							</header>
 						)}
-						<div className="flex-1 min-h-0 overflow-auto">{children}</div>
+						<div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
 					</motion.aside>
 				</motion.div>
 			)}
 		</AnimatePresence>
 	);
+
+	if (!mounted) return null;
+	return createPortal(layer, document.body);
 }
 
 

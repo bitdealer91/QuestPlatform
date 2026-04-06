@@ -1,11 +1,17 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
+/** Согласовано с `Drawer`: поверх Odyssey UI, без влияния transform сцены. */
+const MODAL_Z = 8000;
+
 export default function Modal({ open, onClose, title, subtitle, children, size = 'lg', footer, headerAdornment }: { open: boolean; onClose: () => void; title?: string | React.ReactNode; subtitle?: string; children: React.ReactNode; size?: 'sm'|'md'|'lg'|'xl'|'profile'; footer?: React.ReactNode; headerAdornment?: React.ReactNode }){
 	const panelRef = useRef<HTMLDivElement | null>(null);
+	const [mounted, setMounted] = useState(false);
+	useLayoutEffect(() => setMounted(true), []);
 	useEffect(() => {
 		if (!open) return;
 		const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); if (e.key === 'Tab') trapFocus(e); };
@@ -32,11 +38,15 @@ export default function Modal({ open, onClose, title, subtitle, children, size =
 		xl: 'w-[min(920px,94vw)]',
 		profile: 'w-[min(668px,92vw)]',
 	};
-	return (
+	const layer = (
 		<AnimatePresence>
 			{open && (
-				<motion.div role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined}
-					className="fixed inset-0 z-50 flex items-center justify-center"
+				<motion.div
+					role="dialog"
+					aria-modal="true"
+					aria-label={typeof title === 'string' ? title : undefined}
+					className="fixed inset-0 flex min-h-0 items-center justify-center"
+					style={{ zIndex: MODAL_Z }}
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
 					exit={{ opacity: 0 }}
@@ -47,7 +57,7 @@ export default function Modal({ open, onClose, title, subtitle, children, size =
 						className={clsx(
 							'relative modal-card rounded-[var(--radius-lg)] shadow-elevated',
 							size === 'profile'
-								? 'border border-white/10 bg-[color:var(--odyssey-panel)]'
+								? 'border border-white/10 bg-[color:var(--odyssey-panel)] backdrop-blur-xl backdrop-saturate-150'
 								: 'border border-[color:var(--outline)] bg-[color:var(--card-elev)]',
 							sizes[size],
 						)}
@@ -109,4 +119,7 @@ export default function Modal({ open, onClose, title, subtitle, children, size =
 			)}
 		</AnimatePresence>
 	);
+
+	if (!mounted) return null;
+	return createPortal(layer, document.body);
 }

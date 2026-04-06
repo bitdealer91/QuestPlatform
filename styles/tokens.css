@@ -10,9 +10,9 @@
 	--odyssey-go:#78a3c8;
 	--odyssey-task-muted:#8e8e8e;
 	--odyssey-task-active:#58edbd;
-	/* Сплошной чёрный для панелей тасков / ЛК (скрины Odyssey). */
-	--odyssey-task-surface:#000000;
-	--odyssey-panel:#000000;
+	/* Панели тасков / ЛК: как в Figma — тёмный слой с alpha + blur в компонентах. */
+	--odyssey-panel:rgba(10, 10, 10, 0.78);
+	--odyssey-task-surface:rgba(10, 10, 10, 0.62);
 	--odyssey-task-border:rgba(255,255,255,.3);
 	--odyssey-task-outline-strong:rgba(120,163,200,.85);
 }

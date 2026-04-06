@@ -126,7 +126,7 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 		<motion.section
 			initial={{ opacity: 0, y: 6 }}
 			animate={{ opacity: 1, y: 0 }}
-			className="flex h-full flex-col gap-4 rounded-[var(--radius-lg)] border border-white/10 bg-black p-5 shadow-elevated"
+			className="flex h-full flex-col gap-4 rounded-[var(--radius-lg)] border border-white/10 bg-[color:var(--odyssey-task-surface)] p-5 shadow-elevated"
 		>
 			<TaskDetailHeader task={{
 				id: task.id,
@@ -156,7 +156,7 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 
 			{status !== 'idle' && (
 				<div
-					className={`rounded-[var(--radius-lg)] border px-3 py-2 text-sm ${status === 'verified' ? 'border-[color:var(--odyssey-task-active)]/50 bg-[color:var(--odyssey-task-active)]/12 text-[color:var(--odyssey-task-active)]' : status === 'pending' ? 'border-white/10 bg-black text-[color:var(--odyssey-task-muted)]' : 'border-[color:var(--danger)]/40 bg-[color:var(--danger)]/12 text-[color:var(--danger)]'}`}
+					className={`rounded-[var(--radius-lg)] border px-3 py-2 text-sm ${status === 'verified' ? 'border-[color:var(--odyssey-task-active)]/50 bg-[color:var(--odyssey-task-active)]/12 text-[color:var(--odyssey-task-active)]' : status === 'pending' ? 'border-white/10 bg-[color:var(--odyssey-task-surface)] text-[color:var(--odyssey-task-muted)]' : 'border-[color:var(--danger)]/40 bg-[color:var(--danger)]/12 text-[color:var(--danger)]'}`}
 					role="status"
 					aria-live="polite"
 				>

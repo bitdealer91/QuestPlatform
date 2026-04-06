@@ -32,7 +32,7 @@ export default function TaskDetailHeader({ task }: TaskDetailHeaderProps){
 				<motion.div
 					initial={{ opacity: 0, y: 4 }}
 					animate={{ opacity: 1, y: 0, transition: { type: 'spring', stiffness: 280, damping: 20, delay: 0.02 } }}
-					className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-white/10 bg-black p-3 shadow-sm"
+					className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-white/10 bg-[color:var(--odyssey-task-surface)] p-3 shadow-sm"
 				>
 					<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius)] bg-white/5">
 						<Image

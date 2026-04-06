@@ -91,7 +91,7 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 					</div>
 				}
 			>
-				<div className="flex h-full min-h-0">
+				<div className="flex min-h-0 flex-1 flex-row">
 					<aside
 						className="w-[38%] shrink-0 overflow-y-auto border-r border-white/10"
 						role="listbox"
@@ -103,7 +103,7 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 									<div className="text-center text-sm text-[color:var(--odyssey-task-muted)]">Loading tasks...</div>
 									{[1, 2, 3].map(i => (
 										<div key={i} className="animate-pulse">
-											<div className="h-16 rounded-[var(--radius)] border border-white/10 bg-black p-3">
+											<div className="h-16 rounded-[var(--radius)] border border-white/10 bg-[color:var(--odyssey-task-surface)] p-3">
 												<div className="mb-2 h-4 w-3/4 rounded bg-white/10" />
 												<div className="h-3 w-1/2 rounded bg-white/10" />
 											</div>
@@ -121,7 +121,7 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 										role="option"
 										aria-selected={isActive}
 										onClick={() => setActiveId(t.id)}
-										className={`mb-2 w-full rounded-[var(--radius-lg)] border bg-black px-3 py-3 text-left transition-colors hover:bg-white/[0.04] ${isActive ? 'border-[color:var(--odyssey-task-active)] ring-1 ring-[color:var(--odyssey-task-active)]' : 'border-white/10'} `}
+										className={`mb-2 w-full rounded-[var(--radius-lg)] border bg-[color:var(--odyssey-task-surface)] px-3 py-3 text-left transition-colors hover:bg-white/[0.06] ${isActive ? 'border-[color:var(--odyssey-task-active)] ring-1 ring-[color:var(--odyssey-task-active)]' : 'border-white/10'} `}
 									>
 										<div className="flex items-center justify-between gap-2">
 											<div className={`truncate font-medium ${isActive ? 'text-[color:var(--odyssey-task-active)]' : t.mandatory ? 'text-[color:var(--odyssey-task-active)]' : 'text-white'}`}>

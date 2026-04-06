@@ -15,7 +15,7 @@ type ProfileDto = {
 function ProfileMascot() {
 	return (
 		<video
-			className="size-[89px] shrink-0 rounded-[var(--radius-lg)] bg-black object-cover"
+			className="size-[89px] shrink-0 rounded-[var(--radius-lg)] bg-[color:var(--odyssey-task-surface)] object-cover"
 			autoPlay
 			playsInline
 			muted
