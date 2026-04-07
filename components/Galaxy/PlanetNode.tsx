@@ -41,15 +41,11 @@ function PlanetNodeImpl({
 }: PlanetNodeProps) {
     const [hover, setHover] = useState(false);
     const canInteract = !locked;
-	const DEADLINE_ISO = '2025-12-01T15:00:00Z';
 	const claimUnlocked = claimEnabled && mandatoryDone;
 	const tasksExplicitlyOff = /^(0|false)$/i.test(String(process.env.NEXT_PUBLIC_ENABLE_TASKS ?? ''));
 	const viewTasksEnabled = !tasksExplicitlyOff && !!onView;
-	const endedByTime = (() => {
-		const d = new Date(DEADLINE_ISO);
-		return !isNaN(d.getTime()) && Date.now() >= d.getTime();
-	})();
-	const ended = process.env.NEXT_PUBLIC_FORCE_ENDED === '1' || endedByTime;
+	// Для новой фазы оставляем только ручной флаг завершения.
+	const ended = process.env.NEXT_PUBLIC_FORCE_ENDED === '1';
 
 	useEffect(() => {
 		onHoverChange?.(id, hover);
@@ -117,11 +113,11 @@ function PlanetNodeImpl({
 										...(viewTasksEnabled && hover ? { backgroundColor: ODYSSEY_ISLAND_HOVER_FILL } : {}),
 									}}
 									className={clsx(
-										'inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-[background-color,border-color,color,filter] duration-200',
+										'inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-[transform,background-color,border-color,color,filter,box-shadow] duration-200 active:scale-[0.985] active:translate-y-[1px]',
 										viewTasksEnabled
 											? hover
-												? 'border-[#78a3c8] text-black cursor-pointer'
-												: 'border-[color:var(--outline)] bg-[var(--primary)] text-black hover:brightness-110 cursor-pointer'
+												? 'border-[#78a3c8] text-black cursor-pointer shadow-[0_0_16px_rgba(120,163,200,0.42)]'
+												: 'border-[color:var(--outline)] bg-[var(--primary)] text-black hover:brightness-110 hover:shadow-[0_0_14px_rgba(120,163,200,0.35)] cursor-pointer'
 											: 'bg-[color:var(--card)]/60 text-[color:var(--muted)] border-[color:var(--outline)]/60 cursor-not-allowed'
 									)}
 									aria-label={`View tasks for ${title}`}
@@ -138,11 +134,11 @@ function PlanetNodeImpl({
 										disabled={!claimUnlocked}
 										style={{ width: 140 }}
 										className={clsx(
-											'inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-[background-color,border-color,color] duration-200',
+											'inline-flex flex-none items-center justify-center whitespace-nowrap h-12 px-6 rounded-full border focus:outline-none focus:ring-2 focus:ring-[var(--ring)] transition-[transform,background-color,border-color,color,box-shadow] duration-200 active:scale-[0.985] active:translate-y-[1px]',
 											claimUnlocked
 												? hover
-													? 'bg-transparent text-white border-white/90 cursor-pointer'
-													: 'bg-[var(--card)] text-[var(--text)] border-[var(--outline)] hover:brightness-110 cursor-pointer'
+													? 'bg-transparent text-white border-white/90 cursor-pointer shadow-[0_0_16px_rgba(120,163,200,0.38)]'
+													: 'bg-[var(--card)] text-[var(--text)] border-[var(--outline)] hover:brightness-110 hover:shadow-[0_0_14px_rgba(120,163,200,0.32)] cursor-pointer'
 												: 'bg-[color:var(--card)]/60 text-[color:var(--muted)] border-[color:var(--outline)]/60 cursor-not-allowed'
 										)}
 										aria-label={`Claim reward for ${title}`}

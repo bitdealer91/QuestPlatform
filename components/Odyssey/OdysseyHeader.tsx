@@ -81,7 +81,7 @@ export function OdysseyHeader({ onProfileClick }: Props) {
 							type="button"
 							onClick={handleWallet}
 							disabled={isConnecting}
-							className="absolute overflow-hidden rounded-[19px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+							className="absolute overflow-hidden rounded-[19px] transition-all duration-200 hover:scale-[1.02] hover:brightness-105 hover:drop-shadow-[0_0_18px_rgba(120,163,200,0.45)] active:scale-[0.985] active:translate-y-[1px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
 							// Позиционируем относительно правого края (как в Figma: right ~14px)
 							style={{ right: 14, top: 18, width: 114, height: 37 }}
 							aria-label="Sign in"
@@ -109,7 +109,7 @@ export function OdysseyHeader({ onProfileClick }: Props) {
 						<button
 							type="button"
 							onClick={handleWallet}
-							className="absolute flex items-center justify-center gap-1 rounded-[19px] bg-[#7eb8d9] px-2 text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+							className="absolute flex items-center justify-center gap-1 rounded-[19px] bg-[#7eb8d9] px-2 text-black transition-all duration-200 hover:scale-[1.02] hover:brightness-105 hover:drop-shadow-[0_0_18px_rgba(120,163,200,0.45)] active:scale-[0.985] active:translate-y-[1px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
 							style={{ right: 62, top: 18, width: 114, height: 37, fontFamily: 'var(--font-mooli), system-ui, sans-serif' }}
 							aria-label="Wallet"
 						>
@@ -122,7 +122,7 @@ export function OdysseyHeader({ onProfileClick }: Props) {
 						<button
 							type="button"
 							onClick={onProfileClick}
-							className="absolute flex items-center justify-center rounded-full border border-white/85 bg-black/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+							className="absolute flex items-center justify-center rounded-full border border-white/85 bg-black/20 transition-all duration-200 hover:scale-105 hover:border-white hover:bg-black/35 hover:drop-shadow-[0_0_16px_rgba(120,163,200,0.4)] active:scale-[0.97] active:translate-y-[1px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
 							style={{ right: 14, top: 19, width: 35, height: 35 }}
 							aria-label="Profile"
 						>

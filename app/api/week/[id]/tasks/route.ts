@@ -9,7 +9,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
   try {
     const url = new URL(req.url);
-    const starsMode = /^(1|true)$/i.test(String(url.searchParams.get('stars') || ''));
     const items = await getWeekTasks(idNum);
     let useItems = items;
     // Hide tasks explicitly marked as hidden
@@ -35,11 +34,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       const start = await getProgramStart();
       if (start) {
         const now = new Date();
-        // If program has ended (time-based) or forced via env, only allow Star/Mint tasks in the main UI.
-        // Stars-only mode (stars=1) remains available regardless to allow minting UI to function.
-        const forceEnded = /^(1|true)$/i.test(String(process.env.NEXT_PUBLIC_FORCE_ENDED || ''));
-        const endedAt = new Date('2025-12-01T15:00:00Z');
-        const isEnded = forceEnded || now >= endedAt;
         // Считаем дни с опорой на локальную дату (UTC-нейтрально): округляем до полночей
         const dayMs = 24 * 60 * 60 * 1000;
         const noonOffsetMs = 12 * 60 * 60 * 1000; // 12:00 UTC граница
@@ -48,20 +42,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         // Фильтруем по полю day
         const gated = items.filter((t) => (typeof (t as any).day === 'number' ? (t as any).day <= elapsed : true));
         useItems = gated;
-        if (isEnded && !starsMode){
-          useItems = useItems.filter((t) => (t as any).star === true);
-        }
       }
     } catch {}
-    // For weeks 1-8, hide all non-mandatory tasks by default.
-    // If stars=1 is requested, return only star tasks (to allow star rendering even when tasks are hidden).
-    if (idNum >= 1 && idNum <= 8) {
-      if (starsMode) {
-        useItems = useItems.filter((t) => (t as any).star === true);
-      } else {
-        useItems = useItems.filter((t) => (t as any).mandatory === true || (t as any)["mandatory task"] === true);
-      }
-    }
 
     const transformed = useItems.map((t) => ({
       id: t.id,

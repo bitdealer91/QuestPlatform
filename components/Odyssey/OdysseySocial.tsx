@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { Globe } from 'lucide-react';
 
 export function OdysseySocial() {
 	return (
@@ -18,30 +17,30 @@ export function OdysseySocial() {
 				href="https://x.com/Somnia_Network"
 				target="_blank"
 				rel="noopener noreferrer"
-				className="relative h-10 w-10 shrink-0"
+				className="group relative h-10 w-10 shrink-0 transition-all duration-200 hover:scale-105 hover:drop-shadow-[0_0_14px_rgba(120,163,200,0.45)] active:scale-[0.97] active:translate-y-[1px]"
 				aria-label="Somnia on X"
 			>
-				<Image src="/assets/odyssey/social-x.svg" alt="" fill className="object-contain" />
+				<Image src="/assets/odyssey/social-x-figma.svg" alt="" fill className="object-contain" />
 			</a>
 
 			<a
 				href="https://discord.com/invite/somnia"
 				target="_blank"
 				rel="noopener noreferrer"
-				className="relative h-10 w-10 shrink-0"
+				className="group relative h-10 w-10 shrink-0 transition-all duration-200 hover:scale-105 hover:drop-shadow-[0_0_14px_rgba(120,163,200,0.45)] active:scale-[0.97] active:translate-y-[1px]"
 				aria-label="Somnia Discord"
 			>
-				<Image src="/assets/odyssey/social-discord.svg" alt="" fill className="object-contain" />
+				<Image src="/assets/odyssey/social-discord-figma.svg" alt="" fill className="object-contain" />
 			</a>
 
 			<a
 				href="https://browser.somnia.network/"
 				target="_blank"
 				rel="noopener noreferrer"
-				className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/25 bg-[#1a2744]/80 text-white backdrop-blur-[2px] hover:bg-[#243352]/90"
+				className="group relative h-10 w-10 shrink-0 transition-all duration-200 hover:scale-105 hover:drop-shadow-[0_0_14px_rgba(120,163,200,0.45)] active:scale-[0.97] active:translate-y-[1px]"
 				aria-label="Somnia Browser"
 			>
-				<Globe className="h-[18px] w-[18px]" strokeWidth={2} />
+				<Image src="/assets/odyssey/social-site-figma.svg" alt="" fill className="object-contain" />
 			</a>
 		</div>
 	);

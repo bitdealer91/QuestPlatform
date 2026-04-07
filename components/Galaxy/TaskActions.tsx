@@ -16,7 +16,7 @@ export type TaskActionsProps = {
 	odysseyStyle?: boolean;
 };
 
-const odysseyPill = 'h-[23px] min-h-[23px] rounded-[20px] text-[12px] font-normal tracking-[-0.276px] inline-flex items-center justify-center transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:opacity-50 disabled:cursor-not-allowed';
+const odysseyPill = 'h-[23px] min-h-[23px] rounded-[20px] text-[12px] font-normal tracking-[-0.276px] inline-flex items-center justify-center transition-[transform,opacity,filter,box-shadow] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.985] active:translate-y-[1px]';
 
 export default function TaskActions({
 	goHref,
@@ -28,19 +28,16 @@ export default function TaskActions({
 	isVerified,
 	odysseyStyle = false,
 }: TaskActionsProps) {
-	const DEADLINE_ISO = '2025-12-01T15:00:00Z';
-	const endedByTime = (() => {
-		const d = new Date(DEADLINE_ISO);
-		return !isNaN(d.getTime()) && Date.now() >= d.getTime();
-	})();
-	const ended = process.env.NEXT_PUBLIC_FORCE_ENDED === '1' || endedByTime;
+	// Для новой фазы не используем жесткий дедлайн по дате.
+	// Оставляем только ручной флаг через env при необходимости.
+	const ended = process.env.NEXT_PUBLIC_FORCE_ENDED === '1';
 	const label = typeof cooldownSec === 'number' && cooldownSec > 0
 		? `Verify in ${cooldownSec}s`
 		: 'Verify';
 
 	if (odysseyStyle) {
-		const goClass = clsx(odysseyPill, 'min-w-[38px] bg-[color:var(--odyssey-go)] text-black px-2');
-		const verifyOutline = clsx(odysseyPill, 'min-w-[70px] border-[0.3px] border-white bg-transparent text-white px-3');
+		const goClass = clsx(odysseyPill, 'min-w-[38px] bg-[color:var(--odyssey-go)] text-black px-2 hover:brightness-105 hover:shadow-[0_0_12px_rgba(120,163,200,0.45)]');
+		const verifyOutline = clsx(odysseyPill, 'min-w-[70px] border-[0.3px] border-white bg-transparent text-white px-3 hover:shadow-[0_0_12px_rgba(120,163,200,0.36)]');
 		const verifiedOutline = clsx(
 			odysseyPill,
 			'min-w-[70px] border-[0.3px] border-[color:var(--odyssey-task-active)] bg-transparent text-[color:var(--odyssey-task-active)] px-3',

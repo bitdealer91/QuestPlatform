@@ -14,8 +14,8 @@ export default function Progress({
 	if (variant === 'odyssey') {
 		const fill = 'linear-gradient(90deg, var(--odyssey-task-active), var(--odyssey-go))';
 		return (
-			<div className="max-w-[173px]">
-				<div className="h-[6px] w-full max-w-[173px] rounded-full bg-[color:var(--odyssey-task-muted)] overflow-hidden">
+			<div className="w-full">
+				<div className="h-[6px] w-full rounded-full bg-[color:var(--odyssey-task-muted)] overflow-hidden">
 					<div className="h-full rounded-full" style={{ width: `${v}%`, background: fill }} />
 				</div>
 				{label && (

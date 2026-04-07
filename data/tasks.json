@@ -1,5 +1,29 @@
 {
-  "programStart": "2025-09-02T00:00:00Z",
+  "programStart": "2026-04-07T00:00:00Z",
   "weeks": 8,
-  "tasks": []
+  "tasks": [
+    {
+      "week": 1,
+      "day": 1,
+      "id": "playonjoy",
+      "title": "Genesis Run: score 8,000 and sign transaction",
+      "description": "Open Genesis Run, reach 8,000 points, then sign the transaction in-game.",
+      "type": "action",
+      "href": "https://playonjoy.com/game",
+      "xp": 20,
+      "star": false,
+      "mandatory": false,
+      "brand": "JOY",
+      "category": "Game",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "https://playonjoy.com/api/game/verify-quest?wallet=:address",
+          "method": "GET"
+        }
+      },
+      "logo": "/brands/variance.png",
+      "brand_color": "#78A3C8"
+    }
+  ]
 }
