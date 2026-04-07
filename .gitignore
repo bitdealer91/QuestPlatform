@@ -34,20 +34,19 @@ pnpm-debug.log*
 *.swp
 *.swo
 
-# Local-only wallet/XP export outputs & scripts (не коммитить)
+# Local-only: отчёты, экспорты, Hardhat/деплой-скрипты, контракты, кэш, артефакты, копия odyssey
 report_*.csv
 report_*.txt
 stars_raw.csv
 /export_xp.cjs
 /export_stars.cjs
-/scripts/aggregate_stars_total.cjs
-/scripts/export_prod_xp.cjs
-/scripts/export_prod_stars.cjs
-/scripts/export_xp_from_wallets.cjs
-/scripts/report_wallet_xp.cjs
-/scripts/report_wallet_stars.cjs
 .tmp_*.cjs
 .tmp_format_reports.js
+/scripts/
+/artifacts/
+/cache/
+/contracts/
+/.tmp-odyssey/
 
 # TypeScript build cache
 tsconfig.tsbuildinfo
