@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { User, Wallet2 } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useReown } from '@/lib/reown';
-import { useDomain } from '@/hooks/useDomain';
 import clsx from 'clsx';
 
 const SOMNIA_MAINNET_ID = 5031;
@@ -20,7 +19,6 @@ type Props = {
 export function OdysseyHeader({ onProfileClick }: Props) {
 	const ctx = useReown();
 	const { address, isConnected, isConnecting } = useAccount();
-	const domain = useDomain({ registry: (process.env.NEXT_PUBLIC_SOMNIA_NAME_REGISTRY as `0x${string}` | undefined) });
 	const [mounted, setMounted] = useState(false);
 	useEffect(() => setMounted(true), []);
 
@@ -32,7 +30,7 @@ export function OdysseyHeader({ onProfileClick }: Props) {
 		ctx.appKit.open?.();
 	};
 
-	const short = (a?: string) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '0x0000…0000');
+	const short = (a?: string) => (a ? `${a.slice(0, 6)}…${a.slice(-3)}` : '0x0000…000');
 
 	const showConnectedChrome = mounted && isConnected && !!address;
 
@@ -99,23 +97,16 @@ export function OdysseyHeader({ onProfileClick }: Props) {
 
 				{showConnectedChrome && (
 					<>
-						<p
-							className="absolute text-[12px] font-normal leading-[1.5] tracking-[-0.276px] text-white"
-							style={{ left: 985, top: 25, fontFamily: 'var(--font-mooli), system-ui, sans-serif' }}
-						>
-							Somnia Mainnet
-						</p>
-
 						<button
 							type="button"
 							onClick={handleWallet}
 							className="absolute flex items-center justify-center gap-1 rounded-[19px] bg-[#7eb8d9] px-2 text-black transition-all duration-200 hover:scale-[1.02] hover:brightness-105 hover:drop-shadow-[0_0_18px_rgba(120,163,200,0.45)] active:scale-[0.985] active:translate-y-[1px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-							style={{ right: 62, top: 18, width: 114, height: 37, fontFamily: 'var(--font-mooli), system-ui, sans-serif' }}
+							style={{ right: 58, top: 18, width: 136, height: 37, fontFamily: 'var(--font-mooli), system-ui, sans-serif' }}
 							aria-label="Wallet"
 						>
 							<Wallet2 className="h-[15px] w-[15px] shrink-0 opacity-90" />
-							<span className="max-w-[78px] truncate text-[15px] font-normal leading-none tracking-[-0.345px]">
-								{domain || short(address)}
+							<span className="whitespace-nowrap tabular-nums text-[14px] font-normal leading-none tracking-[-0.2px]">
+								{short(address)}
 							</span>
 						</button>
 
@@ -123,7 +114,7 @@ export function OdysseyHeader({ onProfileClick }: Props) {
 							type="button"
 							onClick={onProfileClick}
 							className="absolute flex items-center justify-center rounded-full border border-white/85 bg-black/20 transition-all duration-200 hover:scale-105 hover:border-white hover:bg-black/35 hover:drop-shadow-[0_0_16px_rgba(120,163,200,0.4)] active:scale-[0.97] active:translate-y-[1px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
-							style={{ right: 14, top: 19, width: 35, height: 35 }}
+							style={{ right: 10, top: 19, width: 35, height: 35 }}
 							aria-label="Profile"
 						>
 							<User className="h-4 w-4 text-white" />

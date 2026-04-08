@@ -6,7 +6,6 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import { useAccount, useBalance } from "wagmi";
-import { useDomain } from "@/hooks/useDomain";
 import AboutOverlay from "@/components/AboutOverlay";
 // Full-screen About overlay (no modal chrome)
 
@@ -15,7 +14,6 @@ const SOMNIA_MAINNET_ID = 5031;
 export default function Header(){
 	const ctx = useReown();
 	const { address, isConnected, isConnecting } = useAccount();
-	const domain = useDomain({ registry: (process.env.NEXT_PUBLIC_SOMNIA_NAME_REGISTRY as `0x${string}` | undefined) });
 	const [profileOpen, setProfileOpen] = useState(false);
 	const [mounted, setMounted] = useState(false);
 	useEffect(() => setMounted(true), []);
@@ -32,7 +30,7 @@ export default function Header(){
 	const { data: nativeBal } = useBalance({ address, chainId: SOMNIA_MAINNET_ID, query: { enabled: !!address } });
 	const formattedBal = nativeBal ? `${Number(nativeBal.formatted).toFixed(2)} ${nativeBal.symbol || "SOMI"}` : undefined;
 
-	const short = (a?: string) => a ? `${a.slice(0,6)}…${a.slice(-4)}` : "0x0000…0000";
+	const short = (a?: string) => a ? `${a.slice(0,6)}…${a.slice(-3)}` : "0x0000…000";
 
 	return (
 		<header className="absolute top-[var(--safe-top)] left-[var(--safe-left)] right-[var(--safe-right)] z-40 pt-3">
@@ -46,7 +44,6 @@ export default function Header(){
 						<AboutOverlay />
 					</div>
 					<div className="flex items-center gap-3 pr-3">
-						<span className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[color:var(--outline)] bg-[color:var(--card)] text-xs">Somnia Mainnet</span>
 						{formattedBal && (
 							<span className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[color:var(--outline)] bg-[color:var(--card)] text-xs">
 								<Image src="/assets/somnia-logo.svg" alt="SOMI" width={14} height={14} />
@@ -56,13 +53,13 @@ export default function Header(){
 						{!mounted ? (
 							<Button variant="glass" className="pl-3 pr-2 gap-2" aria-hidden>
 								<span className="inline-block h-2 w-2 rounded-full bg-[color:var(--muted)]" />
-								<span className="tabular-nums">0x0000…0000</span>
+								<span className="tabular-nums">0x0000…000</span>
 								<ChevronDown className="h-4 w-4 opacity-80" />
 							</Button>
 						) : isConnected && address ? (
 							<Button variant="glass" onClick={handleWallet} className="pl-3 pr-2 gap-2">
 								<span className="inline-block h-2 w-2 rounded-full bg-[color:var(--ok)]" />
-								<span className="tabular-nums">{domain || short(address)}</span>
+								<span className="whitespace-nowrap tabular-nums">{short(address)}</span>
 								<ChevronDown className="h-4 w-4 opacity-80" />
 							</Button>
 						) : (

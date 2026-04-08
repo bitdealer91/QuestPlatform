@@ -6,6 +6,7 @@ export default function VideoLoader() {
 	const [done, setDone] = useState(false);
 	const [progress, setProgress] = useState(0);
 	const [mounted, setMounted] = useState(false);
+	const [firstVisitMode, setFirstVisitMode] = useState<boolean | null>(null);
 	const rafRef = useRef<number | null>(null);
 	const targetRef = useRef(0);
 	const settledRef = useRef(false);
@@ -14,10 +15,21 @@ export default function VideoLoader() {
 	const fullyReadyRef = useRef(false);
 	const startTsRef = useRef<number>(Date.now());
 	const minShowMsRef = useRef<number>(1200);
+	const FIRST_LOADER_KEY = "odyssey_loader_seen_v1";
 
 	useEffect(() => { setMounted(true); }, []);
+	useEffect(() => {
+		if (!mounted) return;
+		try {
+			const seen = window.localStorage.getItem(FIRST_LOADER_KEY) === "1";
+			setFirstVisitMode(!seen);
+		} catch {
+			setFirstVisitMode(false);
+		}
+	}, [mounted]);
 
 	useEffect(() => {
+		if (firstVisitMode !== false) return;
 		let perfObs: PerformanceObserver | null = null;
 		const compute = () => {
 			const parts: number[] = [];
@@ -71,22 +83,47 @@ export default function VideoLoader() {
 			try { perfObs?.disconnect(); } catch {}
 			document.removeEventListener("readystatechange", onRS);
 		};
-	}, []);
+	}, [firstVisitMode]);
 
 	useEffect(() => {
 		const v = videoRef.current;
 		if (!v) return;
-		const onErr = () => setVideoErrored(true);
+		const onErr = () => {
+			setVideoErrored(true);
+			// If the first-run video cannot play, fall back to normal loading mode.
+			if (firstVisitMode) setFirstVisitMode(false);
+		};
+		const onTimeUpdate = () => {
+			if (!firstVisitMode) return;
+			const d = Number(v.duration || 0);
+			const t = Number(v.currentTime || 0);
+			if (d > 0) setProgress(Math.max(0, Math.min(100, (t / d) * 100)));
+		};
+		const onEnded = () => {
+			if (!firstVisitMode) return;
+			setProgress(100);
+			try { window.localStorage.setItem(FIRST_LOADER_KEY, "1"); } catch {}
+			setDone(true);
+		};
 		v.addEventListener("error", onErr);
 		v.addEventListener("stalled", onErr);
 		v.addEventListener("abort", onErr);
+		v.addEventListener("timeupdate", onTimeUpdate);
+		v.addEventListener("ended", onEnded);
 		v.play?.().catch(() => {});
 		return () => {
 			v.removeEventListener("error", onErr);
 			v.removeEventListener("stalled", onErr);
 			v.removeEventListener("abort", onErr);
+			v.removeEventListener("timeupdate", onTimeUpdate);
+			v.removeEventListener("ended", onEnded);
 		};
-	}, []);
+	}, [firstVisitMode]);
+
+	useEffect(() => {
+		if (!done) return;
+		try { window.localStorage.setItem(FIRST_LOADER_KEY, "1"); } catch {}
+	}, [done]);
 
 	if (done || !mounted) return null;
 
@@ -98,7 +135,7 @@ export default function VideoLoader() {
 				autoPlay
 				muted
 				playsInline
-				loop
+				loop={!firstVisitMode}
 			>
 				<source src="/video/loading.MP4" type="video/mp4" />
 			</video>
@@ -111,13 +148,15 @@ export default function VideoLoader() {
 			<div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-[min(640px,90vw)]">
 				<div className="h-3 rounded-md overflow-hidden bg-white/10 backdrop-blur">
 					<div
-						className="h-full bg-[color:var(--primary)] transition-[width] duration-200"
-						style={{ width: `${Math.round(progress)}%` }}
+						className="h-full transition-[width] duration-200"
+						style={{ width: `${Math.round(progress)}%`, backgroundColor: "#78A3C8" }}
 					/>
 				</div>
-				<div className="mt-2 text-center text-sm text-white/80 font-mono">
-					{Math.round(progress)}%
-					<span className="ml-2 opacity-70">Priming Dreamverse…</span>
+				<div
+					className="mt-1 text-center text-[12px] leading-[1.5] tracking-[-0.276px] text-[#8e8e8e]"
+					style={{ fontFamily: 'var(--font-mooli), system-ui, sans-serif' }}
+				>
+					{`${Math.round(progress)} % Priming Dreamverse...`}
 				</div>
 			</div>
 		</div>
