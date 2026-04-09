@@ -7,6 +7,7 @@ export default function VideoLoader() {
 	const [progress, setProgress] = useState(0);
 	const [mounted, setMounted] = useState(false);
 	const [firstVisitMode, setFirstVisitMode] = useState<boolean | null>(null);
+	const [preferMobileVideo, setPreferMobileVideo] = useState(false);
 	const rafRef = useRef<number | null>(null);
 	const targetRef = useRef(0);
 	const settledRef = useRef(false);
@@ -18,6 +19,14 @@ export default function VideoLoader() {
 	const FIRST_LOADER_KEY = "odyssey_loader_seen_v1";
 
 	useEffect(() => { setMounted(true); }, []);
+	useEffect(() => {
+		if (!mounted) return;
+		try {
+			setPreferMobileVideo(window.matchMedia('(max-width: 767px)').matches);
+		} catch {
+			setPreferMobileVideo(false);
+		}
+	}, [mounted]);
 	useEffect(() => {
 		if (!mounted) return;
 		try {
@@ -89,6 +98,11 @@ export default function VideoLoader() {
 		const v = videoRef.current;
 		if (!v) return;
 		const onErr = () => {
+			// Mobile asset might be missing on some envs: fallback to desktop loader video first.
+			if (preferMobileVideo) {
+				setPreferMobileVideo(false);
+				return;
+			}
 			setVideoErrored(true);
 			// If the first-run video cannot play, fall back to normal loading mode.
 			if (firstVisitMode) setFirstVisitMode(false);
@@ -118,7 +132,7 @@ export default function VideoLoader() {
 			v.removeEventListener("timeupdate", onTimeUpdate);
 			v.removeEventListener("ended", onEnded);
 		};
-	}, [firstVisitMode]);
+	}, [firstVisitMode, preferMobileVideo]);
 
 	useEffect(() => {
 		if (!done) return;
@@ -130,6 +144,7 @@ export default function VideoLoader() {
 	const overlay = (
 		<div className="fixed inset-0 pointer-events-none" style={{ zIndex: 2147483647 }} aria-label="Loading">
 			<video
+				key={preferMobileVideo ? 'mobile-loader' : 'desktop-loader'}
 				ref={videoRef}
 				className={`absolute inset-0 w-full h-full object-cover ${videoErrored ? "hidden" : ""}`}
 				autoPlay
@@ -137,7 +152,7 @@ export default function VideoLoader() {
 				playsInline
 				loop={!firstVisitMode}
 			>
-				<source src="/video/loading.MP4" type="video/mp4" />
+				<source src={preferMobileVideo ? "/video/loadingMobile.mp4" : "/video/loading.MP4"} type="video/mp4" />
 			</video>
 			{videoErrored && (
 				<div className="absolute inset-0">

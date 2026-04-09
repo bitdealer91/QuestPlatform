@@ -35,6 +35,20 @@ import { OdysseyQuills } from '@/components/Odyssey/OdysseyQuills';
 import { OdysseySocial } from '@/components/Odyssey/OdysseySocial';
 import { useReown } from '@/lib/reown';
 
+const MOBILE_ISLAND_FRAME: Record<
+	OdysseyMobileIslandWeek,
+	{ w: number; h: number; shadow: string; bear: { xPct: number; yPct: number; w: number; h: number } }
+> = {
+	1: { w: 326, h: 251, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[1], bear: { xPct: 0.32, yPct: 0.36, w: 96, h: 96 } },
+	2: { w: 334, h: 196, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[2], bear: { xPct: 0.32, yPct: 0.4, w: 92, h: 92 } },
+	3: { w: 346, h: 241, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[3], bear: { xPct: 0.33, yPct: 0.37, w: 94, h: 94 } },
+	4: { w: 333, h: 232, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[4], bear: { xPct: 0.34, yPct: 0.38, w: 94, h: 94 } },
+	5: { w: 335, h: 234, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[5], bear: { xPct: 0.34, yPct: 0.38, w: 94, h: 94 } },
+	6: { w: 346, h: 241, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[6], bear: { xPct: 0.33, yPct: 0.37, w: 94, h: 94 } },
+	7: { w: 333, h: 232, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[7], bear: { xPct: 0.34, yPct: 0.38, w: 94, h: 94 } },
+	8: { w: 335, h: 234, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[8], bear: { xPct: 0.34, yPct: 0.38, w: 94, h: 94 } },
+};
+
 function islandCenterForWeek(weekId: number): { x: number; y: number } {
 	const k = WEEK_TO_ISLAND[weekId] ?? 1;
 	const r = ODYSSEY_ISLANDS[k];
@@ -211,6 +225,7 @@ export function PlanetsRail({
 	const mobileWeekLocked = mobileWeekId > unlockedCount;
 	const mobilePlanet = PLANETS[mobileIndex];
 	const mobileIslandKey = mobileWeekId as OdysseyMobileIslandWeek;
+	const mobileIslandFrame = MOBILE_ISLAND_FRAME[mobileIslandKey];
 
 	useLayoutEffect(() => {
 		const el = containerRef.current;
@@ -325,15 +340,14 @@ export function PlanetsRail({
 						<div
 							className="relative w-full"
 							style={{
-								maxWidth: ODYSSEY_MOBILE_ISLAND_CARD_W,
+								maxWidth: mobileIslandFrame.w,
 								margin: '0 auto',
 							}}
 						>
 							<div
 								className="relative w-full overflow-visible"
 								style={{
-									aspectRatio: `${ODYSSEY_MOBILE_ISLAND_CARD_W} / ${ODYSSEY_MOBILE_ISLAND_CARD_H}`,
-									boxShadow: ODYSSEY_MOBILE_ISLAND_GLOW[mobileIslandKey],
+									aspectRatio: `${mobileIslandFrame.w} / ${mobileIslandFrame.h}`,
 								}}
 							>
 								<Image
@@ -341,10 +355,29 @@ export function PlanetsRail({
 									alt=""
 									fill
 									className="object-contain object-center"
+									style={{ filter: `drop-shadow(${mobileIslandFrame.shadow})` }}
 									priority={mobileIndex < 2}
-									sizes="(max-width: 768px) 326px, 326px"
+									sizes="(max-width: 768px) 346px, 346px"
 									draggable={false}
 								/>
+								<video
+									className="pointer-events-none absolute object-contain"
+									style={{
+										left: `${mobileIslandFrame.bear.xPct * 100}%`,
+										top: `${mobileIslandFrame.bear.yPct * 100}%`,
+										width: mobileIslandFrame.bear.w,
+										height: mobileIslandFrame.bear.h,
+										transform: 'translate(-50%, -50%)',
+									}}
+									autoPlay
+									muted
+									loop
+									playsInline
+									preload="auto"
+									aria-hidden
+								>
+									<source src="/assets/bear.webm" type="video/webm" />
+								</video>
 							</div>
 							<div className="pointer-events-none absolute inset-0 flex items-center justify-center">
 								<div className="pointer-events-auto">
