@@ -1,8 +1,9 @@
 'use client';
 
 import { PlanetNode } from './PlanetNode';
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import { useAccount } from 'wagmi';
 import { PLANETS, type Planet } from '@/lib/planets';
@@ -16,7 +17,6 @@ import {
 	ODYSSEY_MOBILE_BUTTON_H,
 	ODYSSEY_MOBILE_BUTTON_W,
 	ODYSSEY_MOBILE_CAROUSEL_H,
-	ODYSSEY_MOBILE_ISLAND_CARD_H,
 	ODYSSEY_MOBILE_ISLAND_CARD_W,
 	ODYSSEY_MOBILE_ISLAND_SIDE_PAD,
 	ODYSSEY_MOBILE_SOCIAL_BOTTOM,
@@ -35,19 +35,121 @@ import { OdysseyQuills } from '@/components/Odyssey/OdysseyQuills';
 import { OdysseySocial } from '@/components/Odyssey/OdysseySocial';
 import { useReown } from '@/lib/reown';
 
+/** Figma groups 203:777, 1683, 1031, 1246, 1247, 1458, 1566, 1672 — размер Picsart + центр медведя 118×118. */
 const MOBILE_ISLAND_FRAME: Record<
 	OdysseyMobileIslandWeek,
-	{ w: number; h: number; shadow: string; bear: { xPct: number; yPct: number; w: number; h: number } }
+	{
+		w: number;
+		h: number;
+		shadow: string;
+		bear: { cxPct: number; cyPct: number; sizePctOfW: number };
+	}
 > = {
-	1: { w: 326, h: 251, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[1], bear: { xPct: 0.32, yPct: 0.36, w: 96, h: 96 } },
-	2: { w: 334, h: 196, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[2], bear: { xPct: 0.32, yPct: 0.4, w: 92, h: 92 } },
-	3: { w: 346, h: 241, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[3], bear: { xPct: 0.33, yPct: 0.37, w: 94, h: 94 } },
-	4: { w: 333, h: 232, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[4], bear: { xPct: 0.34, yPct: 0.38, w: 94, h: 94 } },
-	5: { w: 335, h: 234, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[5], bear: { xPct: 0.34, yPct: 0.38, w: 94, h: 94 } },
-	6: { w: 346, h: 241, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[6], bear: { xPct: 0.33, yPct: 0.37, w: 94, h: 94 } },
-	7: { w: 333, h: 232, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[7], bear: { xPct: 0.34, yPct: 0.38, w: 94, h: 94 } },
-	8: { w: 335, h: 234, shadow: ODYSSEY_MOBILE_ISLAND_GLOW[8], bear: { xPct: 0.34, yPct: 0.38, w: 94, h: 94 } },
+	1: {
+		w: 326,
+		h: 251,
+		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[1],
+		bear: { cxPct: (65 + 59) / 326, cyPct: (7 + 59) / 251, sizePctOfW: 118 / 326 },
+	},
+	2: {
+		w: 307,
+		h: 279,
+		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[2],
+		bear: { cxPct: (51 + 59) / 307, cyPct: (49 + 59) / 279, sizePctOfW: 118 / 307 },
+	},
+	3: {
+		w: 334,
+		h: 196,
+		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[3],
+		bear: { cxPct: (63 + 59) / 334, cyPct: (9 + 59) / 196, sizePctOfW: 118 / 334 },
+	},
+	4: {
+		w: 273,
+		h: 281,
+		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[4],
+		bear: { cxPct: (59 + 59) / 273, cyPct: (40 + 59) / 281, sizePctOfW: 118 / 273 },
+	},
+	5: {
+		w: 293,
+		h: 293,
+		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[5],
+		bear: { cxPct: (75 + 59) / 293, cyPct: (77 + 59) / 293, sizePctOfW: 118 / 293 },
+	},
+	6: {
+		w: 346,
+		h: 241,
+		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[6],
+		bear: { cxPct: (99 + 59) / 346, cyPct: (45 + 59) / 241, sizePctOfW: 118 / 346 },
+	},
+	7: {
+		w: 333,
+		h: 232,
+		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[7],
+		bear: { cxPct: (90 + 59) / 333, cyPct: (19 + 59) / 232, sizePctOfW: 118 / 333 },
+	},
+	8: {
+		w: 335,
+		h: 234,
+		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[8],
+		bear: { cxPct: (150 + 59) / 335, cyPct: (54 + 59) / 234, sizePctOfW: 118 / 335 },
+	},
 };
+
+const MOBILE_CAROUSEL_PEEK_PX = 26;
+const MOBILE_CAROUSEL_GAP_PX = 14;
+
+function MobileIslandCard({
+	weekId,
+	bearVisible,
+	priority,
+}: {
+	weekId: OdysseyMobileIslandWeek;
+	bearVisible: boolean;
+	priority: boolean;
+}) {
+	const frame = MOBILE_ISLAND_FRAME[weekId];
+	return (
+		<div className="relative w-full select-none" style={{ maxWidth: frame.w, margin: '0 auto' }}>
+			<div
+				className="relative w-full overflow-visible"
+				style={{ aspectRatio: `${frame.w} / ${frame.h}` }}
+			>
+				<Image
+					src={ODYSSEY_MOBILE_ISLAND_PATH[weekId]}
+					alt=""
+					fill
+					className="object-contain object-center"
+					style={{ filter: `drop-shadow(${frame.shadow})` }}
+					priority={priority}
+					loading={priority ? undefined : 'lazy'}
+					sizes="(max-width: 768px) 346px, 346px"
+					draggable={false}
+				/>
+				{bearVisible ? (
+					<video
+						className="pointer-events-none absolute object-contain"
+						style={{
+							left: `${frame.bear.cxPct * 100}%`,
+							top: `${frame.bear.cyPct * 100}%`,
+							width: `${frame.bear.sizePctOfW * 100}%`,
+							aspectRatio: '1',
+							height: 'auto',
+							transform: 'translate(-50%, -50%)',
+						}}
+						autoPlay
+						muted
+						loop
+						playsInline
+						preload="metadata"
+						aria-hidden
+					>
+						<source src="/assets/bear.webm" type="video/webm" />
+					</video>
+				) : null}
+			</div>
+		</div>
+	);
+}
 
 function islandCenterForWeek(weekId: number): { x: number; y: number } {
 	const k = WEEK_TO_ISLAND[weekId] ?? 1;
@@ -199,6 +301,8 @@ export function PlanetsRail({
 
 	const [mobileIndex, setMobileIndex] = useState(0);
 	const touchStartX = useRef<number | null>(null);
+	const carouselViewportRef = useRef<HTMLDivElement | null>(null);
+	const [carouselVw, setCarouselVw] = useState(326);
 
 	const onPlanetHoverChange = useCallback((id: number, hovering: boolean) => {
 		setHighlightedWeek((prev) => {
@@ -223,9 +327,6 @@ export function PlanetsRail({
 
 	const mobileWeekId = PLANETS[mobileIndex]?.id ?? 1;
 	const mobileWeekLocked = mobileWeekId > unlockedCount;
-	const mobilePlanet = PLANETS[mobileIndex];
-	const mobileIslandKey = mobileWeekId as OdysseyMobileIslandWeek;
-	const mobileIslandFrame = MOBILE_ISLAND_FRAME[mobileIslandKey];
 
 	useLayoutEffect(() => {
 		const el = containerRef.current;
@@ -241,6 +342,26 @@ export function PlanetsRail({
 		ro.observe(el);
 		return () => ro.disconnect();
 	}, []);
+
+	useLayoutEffect(() => {
+		const el = carouselViewportRef.current;
+		if (!el) return;
+		const measure = () => setCarouselVw(el.clientWidth || 326);
+		measure();
+		const ro = new ResizeObserver(measure);
+		ro.observe(el);
+		return () => ro.disconnect();
+	}, []);
+
+	const { slideW, trackX } = useMemo(() => {
+		const vw = Math.max(1, carouselVw);
+		const w = Math.min(
+			ODYSSEY_MOBILE_ISLAND_CARD_W,
+			Math.max(252, vw - 2 * MOBILE_CAROUSEL_PEEK_PX),
+		);
+		const x = vw / 2 - mobileIndex * (w + MOBILE_CAROUSEL_GAP_PX) - w / 2;
+		return { slideW: w, trackX: x };
+	}, [carouselVw, mobileIndex]);
 
 	const onTouchStart = (e: React.TouchEvent) => {
 		touchStartX.current = e.changedTouches[0]?.clientX ?? null;
@@ -336,63 +457,61 @@ export function PlanetsRail({
 					role="region"
 					aria-label="Week islands carousel"
 				>
-					{mobilePlanet ? (
-						<div
-							className="relative w-full"
+					<div
+						ref={carouselViewportRef}
+						className="relative flex min-h-0 w-full flex-1 items-center overflow-hidden"
+					>
+						<motion.div
+							className="flex flex-row items-center"
 							style={{
-								maxWidth: mobileIslandFrame.w,
-								margin: '0 auto',
+								gap: MOBILE_CAROUSEL_GAP_PX,
+								willChange: 'transform',
 							}}
+							animate={{ x: trackX }}
+							transition={{ type: 'spring', stiffness: 380, damping: 36, mass: 0.88 }}
 						>
-							<div
-								className="relative w-full overflow-visible"
-								style={{
-									aspectRatio: `${mobileIslandFrame.w} / ${mobileIslandFrame.h}`,
-								}}
-							>
-								<Image
-									src={ODYSSEY_MOBILE_ISLAND_PATH[mobileIslandKey]}
-									alt=""
-									fill
-									className="object-contain object-center"
-									style={{ filter: `drop-shadow(${mobileIslandFrame.shadow})` }}
-									priority={mobileIndex < 2}
-									sizes="(max-width: 768px) 346px, 346px"
-									draggable={false}
-								/>
-								<video
-									className="pointer-events-none absolute object-contain"
-									style={{
-										left: `${mobileIslandFrame.bear.xPct * 100}%`,
-										top: `${mobileIslandFrame.bear.yPct * 100}%`,
-										width: mobileIslandFrame.bear.w,
-										height: mobileIslandFrame.bear.h,
-										transform: 'translate(-50%, -50%)',
-									}}
-									autoPlay
-									muted
-									loop
-									playsInline
-									preload="auto"
-									aria-hidden
-								>
-									<source src="/assets/bear.webm" type="video/webm" />
-								</video>
-							</div>
-							<div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-								<div className="pointer-events-auto">
-									<MobilePlanetHit
-										p={mobilePlanet}
-										unlockedCount={unlockedCount}
-										mandatoryDoneByWeek={mandatoryDoneByWeek}
-										openTasks={openTasks}
-										onPlanetHoverChange={onPlanetHoverChange}
-										hideHud
-									/>
-								</div>
-							</div>
-						</div>
-					) : null}
+							{PLANETS.map((p, i) => {
+								const wk = p.id as OdysseyMobileIslandWeek;
+								const active = i === mobileIndex;
+								return (
+									<motion.div
+										key={p.id}
+										role="presentation"
+										className={`flex shrink-0 items-center justify-center ${active ? '' : 'cursor-pointer'}`}
+										style={{ width: slideW }}
+										animate={{
+											scale: active ? 1 : 0.94,
+											opacity: active ? 1 : 0.52,
+										}}
+										transition={{ type: 'spring', stiffness: 440, damping: 35 }}
+										onClick={() => {
+											if (!active) setMobileIndex(i);
+										}}
+									>
+										<div className="relative w-full max-w-full">
+											<MobileIslandCard
+												weekId={wk}
+												bearVisible={active}
+												priority={i < 2}
+											/>
+											<div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+												<div className={active ? 'pointer-events-auto' : 'pointer-events-none'}>
+													<MobilePlanetHit
+														p={p}
+														unlockedCount={unlockedCount}
+														mandatoryDoneByWeek={mandatoryDoneByWeek}
+														openTasks={openTasks}
+														onPlanetHoverChange={onPlanetHoverChange}
+														hideHud
+													/>
+												</div>
+											</div>
+										</div>
+									</motion.div>
+								);
+							})}
+						</motion.div>
+					</div>
 				</div>
 				<div
 					className="flex shrink-0 items-center justify-center px-4"

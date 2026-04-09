@@ -10,8 +10,9 @@ export const ODYSSEY_MOBILE_HEADER_ZONE_H = 125;
 /** Высота области карусели (Frame 12 h=450). */
 export const ODYSSEY_MOBILE_CAROUSEL_H = 450;
 
-/** Карточка острова в карусели (основной Picsart в группе). */
-export const ODYSSEY_MOBILE_ISLAND_CARD_W = 326;
+/** Макс. ширина карточки острова в карусели (Figma: неделя 6 — 346px). */
+export const ODYSSEY_MOBILE_ISLAND_CARD_W = 346;
+/** Референсная высота для первой недели (326×251). */
 export const ODYSSEY_MOBILE_ISLAND_CARD_H = 251;
 
 /** Горизонтальные поля у карточки: (390-326)/2 ≈ 32. */
