@@ -12,7 +12,7 @@ import { addVerifiedTask } from '@/lib/progress';
 
 export default function TaskDrawer({ weekId, onClose }: { weekId: number | null; onClose: () => void }){
 	const open = weekId != null;
-	const title = open ? `Week ${weekId} · Tasks` : undefined;
+	const title = open ? `Week ${weekId} - Tasks` : undefined;
 	const [tasks, setTasks] = useState<TTask[] | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -80,9 +80,10 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 				onClose={onClose}
 				size="xl"
 				panel="black"
+				tone="odyssey"
 				title={title}
 				headerAdornment={
-					<div className="min-w-[260px]">
+					<div className="min-w-0 md:min-w-[260px]">
 						<Progress
 							value={tasks ? Math.round((tasks.filter(t => t.status === 'done').length / (tasks.length || 1)) * 100) : 0}
 							label="Progress"
@@ -91,9 +92,9 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 					</div>
 				}
 			>
-				<div className="flex min-h-0 flex-1 flex-row">
+				<div className="flex min-h-0 flex-1 flex-col md:flex-row">
 					<aside
-						className="w-[38%] shrink-0 overflow-y-auto border-r border-white/10"
+						className="max-h-[38vh] w-full shrink-0 overflow-y-auto border-b border-white/10 md:max-h-none md:w-[38%] md:border-b-0 md:border-r"
 						role="listbox"
 						aria-label="Task list"
 					>
@@ -142,7 +143,7 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 							})}
 						</div>
 					</aside>
-					<section className="min-w-0 flex-1 overflow-y-auto px-5 py-5">
+					<section className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-4 md:px-5 md:py-5">
 						{!active && <div className="text-sm text-[color:var(--odyssey-task-muted)]">Choose a task from the list to see details.</div>}
 						{active && (
 							<TaskDetail

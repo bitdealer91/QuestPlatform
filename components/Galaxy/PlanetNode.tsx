@@ -20,6 +20,8 @@ export type PlanetNodeProps = {
 	onHoverChange?: (id: number, hovering: boolean) => void;
 	/** Сдвиг блока кнопок по Y от положения `calc(100% + 6px)` (отрицательное — выше экрана). */
 	hudNudgeYPx?: number;
+	/** Скрыть HUD «View Tasks / Claim» (мобильная карта — отдельные кнопки снизу). */
+	hideHud?: boolean;
 };
 
 /** Figma mobile `203:774` — кнопка Tasks при фокусе на карте ([Odyssey mobile](https://www.figma.com/design/mxf1NvhmBdHC85lg9M0AWD/Odyssey?node-id=146-3556&m=dev)). */
@@ -38,6 +40,7 @@ function PlanetNodeImpl({
 	hidePlanetArt = false,
 	onHoverChange,
 	hudNudgeYPx = 0,
+	hideHud = false,
 }: PlanetNodeProps) {
     const [hover, setHover] = useState(false);
     const canInteract = !locked;
@@ -97,6 +100,7 @@ function PlanetNodeImpl({
 			</div>
 
 			{/* HUD: positioned outside so it never shifts the center */}
+			{!hideHud && (
 			<div
 				className="absolute left-1/2 -translate-x-1/2 w-max z-50"
 				style={{ top: `calc(100% + 6px + ${hudNudgeYPx}px)` }}
@@ -152,6 +156,7 @@ function PlanetNodeImpl({
                 )}
 				{locked && hover && null}
 			</div>
+			)}
 		</div>
 	);
 }

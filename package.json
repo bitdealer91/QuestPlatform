@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "node verify-assets.mjs && next build",
+    "figma:mobile-islands": "node download-figma-mobile-islands.mjs",
     "start": "next start",
     "lint": "next lint",
     "hh:compile": "hardhat compile",

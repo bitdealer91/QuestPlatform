@@ -14,9 +14,11 @@ const HEADER_H = 73;
 
 type Props = {
 	onProfileClick: () => void;
+	/** e.g. `hidden md:block` to show only on desktop */
+	className?: string;
 };
 
-export function OdysseyHeader({ onProfileClick }: Props) {
+export function OdysseyHeader({ onProfileClick, className }: Props) {
 	const ctx = useReown();
 	const { address, isConnected, isConnecting } = useAccount();
 	const [mounted, setMounted] = useState(false);
@@ -36,7 +38,10 @@ export function OdysseyHeader({ onProfileClick }: Props) {
 
 	return (
 		<header
-			className="pointer-events-auto absolute left-0 top-0 z-50 w-full select-none"
+			className={clsx(
+				'pointer-events-auto absolute left-0 top-0 z-50 w-full select-none',
+				className,
+			)}
 			style={{ height: HEADER_H }}
 			data-node-id={showConnectedChrome ? '153:3809' : '68:161'}
 		>
