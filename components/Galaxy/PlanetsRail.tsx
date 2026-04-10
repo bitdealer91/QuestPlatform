@@ -18,7 +18,6 @@ import {
 	ODYSSEY_MOBILE_BUTTON_W,
 	ODYSSEY_MOBILE_CAROUSEL_H,
 	ODYSSEY_MOBILE_ISLAND_CARD_W,
-	ODYSSEY_MOBILE_ISLAND_SIDE_PAD,
 	ODYSSEY_MOBILE_SOCIAL_BOTTOM,
 } from '@/lib/odysseyMobileLayout';
 import {
@@ -95,8 +94,10 @@ const MOBILE_ISLAND_FRAME: Record<
 	},
 };
 
-const MOBILE_CAROUSEL_PEEK_PX = 26;
-const MOBILE_CAROUSEL_GAP_PX = 14;
+/** Видимая часть соседнего слайда (на сторону), близко к Figma mobile viewport. */
+const MOBILE_CAROUSEL_PEEK_PX = 22;
+/** Расстояние между слайдами в треке. */
+const MOBILE_CAROUSEL_GAP_PX = 8;
 
 function MobileIslandCard({
 	weekId,
@@ -353,14 +354,19 @@ export function PlanetsRail({
 		return () => ro.disconnect();
 	}, []);
 
-	const { slideW, trackX } = useMemo(() => {
+	const { slideWs, trackX } = useMemo(() => {
 		const vw = Math.max(1, carouselVw);
-		const w = Math.min(
-			ODYSSEY_MOBILE_ISLAND_CARD_W,
-			Math.max(252, vw - 2 * MOBILE_CAROUSEL_PEEK_PX),
+		const maxIslandW = Math.max(...PLANETS.map((p) => MOBILE_ISLAND_FRAME[p.id as OdysseyMobileIslandWeek].w));
+		// Keep consistent side "peek" after accounting for inter-slide gap.
+		const trackSafeWidth = Math.max(240, vw - 2 * (MOBILE_CAROUSEL_PEEK_PX + MOBILE_CAROUSEL_GAP_PX));
+		const scale = Math.min(1, trackSafeWidth / maxIslandW);
+		const widths = PLANETS.map((p) =>
+			Math.round(MOBILE_ISLAND_FRAME[p.id as OdysseyMobileIslandWeek].w * scale),
 		);
-		const x = vw / 2 - mobileIndex * (w + MOBILE_CAROUSEL_GAP_PX) - w / 2;
-		return { slideW: w, trackX: x };
+		const activeWidth = widths[mobileIndex] ?? widths[0] ?? Math.round(maxIslandW * scale);
+		const before = widths.slice(0, mobileIndex).reduce((sum, w) => sum + w, 0) + mobileIndex * MOBILE_CAROUSEL_GAP_PX;
+		const x = vw / 2 - before - activeWidth / 2;
+		return { slideWs: widths, trackX: x };
 	}, [carouselVw, mobileIndex]);
 
 	const onTouchStart = (e: React.TouchEvent) => {
@@ -449,8 +455,8 @@ export function PlanetsRail({
 					className="relative flex min-h-0 w-full flex-1 touch-pan-y flex-col items-center justify-center overflow-hidden px-0"
 					style={{
 						maxHeight: `min(${ODYSSEY_MOBILE_CAROUSEL_H}px, calc(100dvh - 248px))`,
-						paddingLeft: ODYSSEY_MOBILE_ISLAND_SIDE_PAD,
-						paddingRight: ODYSSEY_MOBILE_ISLAND_SIDE_PAD,
+						paddingLeft: 0,
+						paddingRight: 0,
 					}}
 					onTouchStart={onTouchStart}
 					onTouchEnd={onTouchEnd}
@@ -478,7 +484,7 @@ export function PlanetsRail({
 										key={p.id}
 										role="presentation"
 										className={`flex shrink-0 items-center justify-center ${active ? '' : 'cursor-pointer'}`}
-										style={{ width: slideW }}
+										style={{ width: slideWs[i] }}
 										animate={{
 											scale: active ? 1 : 0.94,
 											opacity: active ? 1 : 0.52,
