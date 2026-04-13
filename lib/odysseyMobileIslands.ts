@@ -1,6 +1,7 @@
 /**
  * Мобильные «материки» из Figma `146:3556` (карусель `203:1674`).
  * Файлы: `public/assets/odyssey/mobile-islands/week-1.png` … `week-8.png`.
+ * Экспорт слоёв (Picsart / остров): 203:111, 203:814, 203:920, 203:1033, 203:1140, 203:1352, 203:1459, 203:1565.
  * Опционально: `npm run figma:mobile-islands` (нужен FIGMA_ACCESS_TOKEN).
  */
 export const ODYSSEY_MOBILE_ISLAND_PATH = {

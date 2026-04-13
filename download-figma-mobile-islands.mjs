@@ -16,12 +16,16 @@ const root = resolve(__dirname, ".");
 const outDir = resolve(root, "public/assets/odyssey/mobile-islands");
 
 const FILE_KEY = "mxf1NvhmBdHC85lg9M0AWD";
+/** Слой острова (rounded-rectangle) по неделям — см. metadata групп 203:777, 1683, 1031, 1246, 1247, 1458, 1566, 1672. */
 const UNIQUE = [
 	["203:111", 1],
-	["203:920", 2],
-	["203:1352", 3],
-	["203:1459", 4],
-	["203:1565", 5],
+	["203:814", 2],
+	["203:920", 3],
+	["203:1033", 4],
+	["203:1140", 5],
+	["203:1352", 6],
+	["203:1459", 7],
+	["203:1565", 8],
 ];
 
 const token = process.env.FIGMA_ACCESS_TOKEN;
@@ -60,8 +64,3 @@ for (const [nodeId, week] of UNIQUE) {
 	await writeFile(dest, buf);
 	console.log("Wrote", dest);
 }
-
-await copyFile(resolve(outDir, "week-3.png"), resolve(outDir, "week-6.png"));
-await copyFile(resolve(outDir, "week-4.png"), resolve(outDir, "week-7.png"));
-await copyFile(resolve(outDir, "week-5.png"), resolve(outDir, "week-8.png"));
-console.log("Copied week-6..8 from week-3..5");

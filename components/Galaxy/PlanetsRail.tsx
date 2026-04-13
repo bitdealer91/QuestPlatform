@@ -99,6 +99,9 @@ const MOBILE_ISLAND_FRAME: Record<
 /** Расстояние между слайдами в горизонтальном треке. */
 const MOBILE_CAROUSEL_GAP_PX = 8;
 
+/** Медведь в мобильном макете — квадрат 118×118 (см. bear 1…8 в Figma). */
+const MOBILE_ISLAND_BEAR_FIGMA_PX = 118;
+
 function MobileIslandCard({
 	weekId,
 	bearVisible,
@@ -109,6 +112,8 @@ function MobileIslandCard({
 	priority: boolean;
 }) {
 	const frame = MOBILE_ISLAND_FRAME[weekId];
+	const islandSrc = ODYSSEY_MOBILE_ISLAND_PATH[weekId];
+	const bearSidePct = (MOBILE_ISLAND_BEAR_FIGMA_PX / frame.w) * 100;
 	return (
 		<div className="relative w-full select-none" style={{ maxWidth: frame.w, margin: '0 auto' }}>
 			<div
@@ -116,36 +121,41 @@ function MobileIslandCard({
 				style={{ aspectRatio: `${frame.w} / ${frame.h}` }}
 			>
 				<Image
-					src={ODYSSEY_MOBILE_ISLAND_PATH[weekId]}
+					key={islandSrc}
+					src={islandSrc}
 					alt=""
 					fill
+					unoptimized
+					priority={priority}
+					loading="eager"
 					className="object-contain object-center"
 					style={{ filter: `drop-shadow(${frame.shadow})` }}
-					priority={priority}
-					loading={priority ? undefined : 'lazy'}
-					sizes="(max-width: 768px) 346px, 346px"
+					sizes="(max-width: 768px) min(100vw, 390px), 400px"
 					draggable={false}
 				/>
 				{bearVisible ? (
-					<video
-						className="pointer-events-none absolute object-contain"
+					<div
+						className="pointer-events-none absolute"
 						style={{
 							left: `${frame.bear.cxPct * 100}%`,
 							top: `${frame.bear.cyPct * 100}%`,
-							width: `${frame.bear.sizePctOfW * 100}%`,
+							width: `${bearSidePct}%`,
 							aspectRatio: '1',
-							height: 'auto',
 							transform: 'translate(-50%, -50%)',
 						}}
-						autoPlay
-						muted
-						loop
-						playsInline
-						preload="metadata"
-						aria-hidden
 					>
-						<source src="/assets/bear.webm" type="video/webm" />
-					</video>
+						<video
+							className="h-full w-full object-cover"
+							autoPlay
+							muted
+							loop
+							playsInline
+							preload="auto"
+							aria-hidden
+						>
+							<source src="/assets/bear.webm" type="video/webm" />
+						</video>
+					</div>
 				) : null}
 			</div>
 		</div>
