@@ -100,7 +100,7 @@ const MOBILE_ISLAND_FRAME: Record<
 const MOBILE_ISLAND_BEAR_FIGMA_PX = 118;
 
 /** PNG островов с большим прозрачным полем: слегка увеличиваем арт внутри фрейма Figma. */
-const MOBILE_ISLAND_ART_SCALE = 1.22;
+const MOBILE_ISLAND_ART_SCALE = 1.5;
 
 function MobileIslandCard({
 	weekId,
@@ -500,7 +500,10 @@ export function PlanetsRail({
 				ref={mobileColumnRef}
 				className="relative z-10 mx-auto flex h-full w-full min-h-0 max-w-[390px] flex-col md:hidden"
 			>
-				<OdysseyMobileHeader onMenuPress={() => setMobileMenuOpen(true)} />
+				<OdysseyMobileHeader
+					menuOpen={mobileMenuOpen}
+					onMenuPress={() => setMobileMenuOpen((v) => !v)}
+				/>
 				<div
 					className="relative flex min-h-0 w-full min-w-0 flex-1 touch-pan-y flex-col items-stretch justify-center overflow-hidden"
 					onTouchStart={onTouchStart}

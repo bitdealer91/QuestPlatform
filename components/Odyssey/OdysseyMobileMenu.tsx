@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import { X } from 'lucide-react';
 import clsx from 'clsx';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { OdysseySocial } from '@/components/Odyssey/OdysseySocial';
 import { ODYSSEY_MOBILE_BUTTON_H, ODYSSEY_MOBILE_BUTTON_W, ODYSSEY_MOBILE_SOCIAL_BOTTOM } from '@/lib/odysseyMobileLayout';
 
@@ -29,6 +30,12 @@ export function OdysseyMobileMenu({
 	isConnected = false,
 	address,
 }: Props) {
+	const [mounted, setMounted] = useState(false);
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
 	useEffect(() => {
 		if (!open) return;
 		const prev = document.body.style.overflow;
@@ -47,14 +54,14 @@ export function OdysseyMobileMenu({
 		return () => window.removeEventListener('keydown', onKey);
 	}, [open, onClose]);
 
-	if (!open) return null;
+	if (!open || !mounted) return null;
 
 	const walletLabel =
 		isConnecting ? '…' : isConnected && address ? shortAddr(address) : 'Sign in';
 
-	return (
+	const content = (
 		<div
-			className="pointer-events-auto fixed inset-0 z-[200] flex flex-col bg-black md:hidden"
+			className="pointer-events-auto fixed inset-0 z-[999] flex flex-col bg-black md:hidden"
 			role="dialog"
 			aria-modal="true"
 			aria-label="Menu"
@@ -138,4 +145,6 @@ export function OdysseyMobileMenu({
 			</div>
 		</div>
 	);
+
+	return createPortal(content, document.body);
 }

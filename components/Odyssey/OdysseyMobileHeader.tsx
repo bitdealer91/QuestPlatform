@@ -1,14 +1,16 @@
 'use client';
 
 import Image from 'next/image';
-import { Menu } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import clsx from 'clsx';
 /** Figma `146:3556` / `173:39` — компактная строка: лого, двухстрочный заголовок, меню 45×45. */
 export function OdysseyMobileHeader({
 	onMenuPress,
+	menuOpen = false,
 	className,
 }: {
 	onMenuPress: () => void;
+	menuOpen?: boolean;
 	className?: string;
 }) {
 	return (
@@ -40,9 +42,13 @@ export function OdysseyMobileHeader({
 				type="button"
 				onClick={onMenuPress}
 				className="inline-flex h-[45px] w-[45px] shrink-0 items-center justify-center rounded-full bg-[#78a3c8] text-black shadow-[0_0_20px_rgba(120,163,200,0.35)] transition-all duration-200 hover:brightness-105 active:scale-[0.97]"
-				aria-label="Open menu"
+				aria-label={menuOpen ? 'Close menu' : 'Open menu'}
 			>
-				<Menu className="h-[22px] w-[22px]" strokeWidth={2.25} />
+				{menuOpen ? (
+					<X className="h-[22px] w-[22px]" strokeWidth={2.25} />
+				) : (
+					<Menu className="h-[22px] w-[22px]" strokeWidth={2.25} />
+				)}
 			</button>
 		</header>
 	);
