@@ -20,7 +20,6 @@ import {
 	ODYSSEY_MOBILE_CAROUSEL_INNER_W,
 	ODYSSEY_MOBILE_FRAME_W,
 	ODYSSEY_MOBILE_ISLAND_CARD_W,
-	ODYSSEY_MOBILE_ISLAND_SIDE_PAD,
 	ODYSSEY_MOBILE_SOCIAL_BOTTOM,
 } from '@/lib/odysseyMobileLayout';
 import {
@@ -99,6 +98,9 @@ const MOBILE_ISLAND_FRAME: Record<
 
 /** Расстояние между слайдами в горизонтальном треке. */
 const MOBILE_CAROUSEL_GAP_PX = 8;
+
+/** Минимум пустого поля по бокам клипа (если экран уже контентной ширины Figma). */
+const MOBILE_CAROUSEL_MIN_SIDE_GUTTER_PX = 8;
 
 /** Медведь в мобильном макете — квадрат 118×118 (см. bear 1…8 в Figma). */
 const MOBILE_ISLAND_BEAR_FIGMA_PX = 118;
@@ -313,8 +315,9 @@ export function PlanetsRail({
 
 	const [mobileIndex, setMobileIndex] = useState(0);
 	const touchStartX = useRef<number | null>(null);
-	/** Ширина колонки под остров: min(390, viewport) − 2×32. Не меряем вложенный flex — там clientWidth иногда схлопывается (~30% экрана). */
-	const [carouselInnerW, setCarouselInnerW] = useState(ODYSSEY_MOBILE_CAROUSEL_INNER_W);
+	const mobileColumnRef = useRef<HTMLDivElement | null>(null);
+	/** Ширина всей мобильной колонки (max-w 390): клип карусели без сужающего padding — иначе нет peek соседей. */
+	const [carouselClipW, setCarouselClipW] = useState(ODYSSEY_MOBILE_FRAME_W);
 
 	const onPlanetHoverChange = useCallback((id: number, hovering: boolean) => {
 		setHighlightedWeek((prev) => {
@@ -356,38 +359,44 @@ export function PlanetsRail({
 	}, []);
 
 	useLayoutEffect(() => {
+		const el = mobileColumnRef.current;
+		if (!el) return;
 		const measure = () => {
-			const vw = Math.min(
-				ODYSSEY_MOBILE_FRAME_W,
-				window.visualViewport?.width ?? window.innerWidth,
-			);
-			setCarouselInnerW(
-				Math.max(200, Math.round(vw - 2 * ODYSSEY_MOBILE_ISLAND_SIDE_PAD)),
-			);
+			const w = el.getBoundingClientRect().width;
+			// md:hidden: на десктопе ширина 0 — не затираем значение
+			if (w < 64) return;
+			setCarouselClipW(Math.max(260, Math.round(w)));
 		};
 		measure();
-		window.addEventListener('resize', measure);
+		const ro = new ResizeObserver(measure);
+		ro.observe(el);
 		window.visualViewport?.addEventListener('resize', measure);
 		window.addEventListener('orientationchange', measure);
 		return () => {
-			window.removeEventListener('resize', measure);
+			ro.disconnect();
 			window.visualViewport?.removeEventListener('resize', measure);
 			window.removeEventListener('orientationchange', measure);
 		};
 	}, []);
 
 	const { slideWs, trackX } = useMemo(() => {
-		// Figma Frame 12 (333:33): контент 326px при ширине 390 и полях 32 — не масштабируем все острова от max(346).
-		const usableW = Math.max(200, carouselInnerW);
+		// Figma: рамка 390, остров до 326 — поля ~32 слева/справа. Клип = полная колонка, слайд уже — тогда виден край соседа.
+		const clipW = Math.max(260, carouselClipW);
+		const figInner = ODYSSEY_MOBILE_CAROUSEL_INNER_W;
+		const gutter = Math.max(
+			MOBILE_CAROUSEL_MIN_SIDE_GUTTER_PX,
+			Math.floor((clipW - figInner) / 2),
+		);
+		const maxSlideW = Math.max(200, clipW - 2 * gutter);
 		const widths = PLANETS.map((p) => {
 			const fw = MOBILE_ISLAND_FRAME[p.id as OdysseyMobileIslandWeek].w;
-			return Math.round(Math.min(fw, usableW));
+			return Math.round(Math.min(fw, maxSlideW));
 		});
-		const activeWidth = widths[mobileIndex] ?? widths[0] ?? usableW;
+		const activeWidth = widths[mobileIndex] ?? widths[0] ?? maxSlideW;
 		const before = widths.slice(0, mobileIndex).reduce((sum, w) => sum + w, 0) + mobileIndex * MOBILE_CAROUSEL_GAP_PX;
-		const x = usableW / 2 - before - activeWidth / 2;
+		const x = clipW / 2 - before - activeWidth / 2;
 		return { slideWs: widths, trackX: x };
-	}, [carouselInnerW, mobileIndex]);
+	}, [carouselClipW, mobileIndex]);
 
 	const onTouchStart = (e: React.TouchEvent) => {
 		touchStartX.current = e.changedTouches[0]?.clientX ?? null;
@@ -469,14 +478,15 @@ export function PlanetsRail({
 				</div>
 			</div>
 
-			<div className="relative z-10 mx-auto flex h-full w-full min-h-0 max-w-[390px] flex-col md:hidden">
+			<div
+				ref={mobileColumnRef}
+				className="relative z-10 mx-auto flex h-full w-full min-h-0 max-w-[390px] flex-col md:hidden"
+			>
 				<OdysseyMobileHeader onMenuPress={handleWallet} />
 				<div
-					className="relative flex min-h-0 w-full flex-1 touch-pan-y flex-col items-stretch justify-center overflow-hidden px-0"
+					className="relative flex min-h-0 w-full min-w-0 flex-1 touch-pan-y flex-col items-stretch justify-center overflow-hidden"
 					style={{
 						maxHeight: `min(${ODYSSEY_MOBILE_CAROUSEL_H}px, calc(100dvh - 248px))`,
-						paddingLeft: ODYSSEY_MOBILE_ISLAND_SIDE_PAD,
-						paddingRight: ODYSSEY_MOBILE_ISLAND_SIDE_PAD,
 					}}
 					onTouchStart={onTouchStart}
 					onTouchEnd={onTouchEnd}
