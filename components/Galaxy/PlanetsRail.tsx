@@ -17,7 +17,9 @@ import {
 	ODYSSEY_MOBILE_BUTTON_H,
 	ODYSSEY_MOBILE_BUTTON_W,
 	ODYSSEY_MOBILE_CAROUSEL_H,
+	ODYSSEY_MOBILE_CAROUSEL_INNER_W,
 	ODYSSEY_MOBILE_ISLAND_CARD_W,
+	ODYSSEY_MOBILE_ISLAND_SIDE_PAD,
 	ODYSSEY_MOBILE_SOCIAL_BOTTOM,
 } from '@/lib/odysseyMobileLayout';
 import {
@@ -94,9 +96,7 @@ const MOBILE_ISLAND_FRAME: Record<
 	},
 };
 
-/** Видимая часть соседнего слайда (на сторону), близко к Figma mobile viewport. */
-const MOBILE_CAROUSEL_PEEK_PX = 22;
-/** Расстояние между слайдами в треке. */
+/** Расстояние между слайдами в горизонтальном треке. */
 const MOBILE_CAROUSEL_GAP_PX = 8;
 
 function MobileIslandCard({
@@ -303,7 +303,7 @@ export function PlanetsRail({
 	const [mobileIndex, setMobileIndex] = useState(0);
 	const touchStartX = useRef<number | null>(null);
 	const carouselViewportRef = useRef<HTMLDivElement | null>(null);
-	const [carouselVw, setCarouselVw] = useState(326);
+	const [carouselVw, setCarouselVw] = useState(ODYSSEY_MOBILE_CAROUSEL_INNER_W);
 
 	const onPlanetHoverChange = useCallback((id: number, hovering: boolean) => {
 		setHighlightedWeek((prev) => {
@@ -347,7 +347,8 @@ export function PlanetsRail({
 	useLayoutEffect(() => {
 		const el = carouselViewportRef.current;
 		if (!el) return;
-		const measure = () => setCarouselVw(el.clientWidth || 326);
+		const measure = () =>
+			setCarouselVw(el.clientWidth || ODYSSEY_MOBILE_CAROUSEL_INNER_W);
 		measure();
 		const ro = new ResizeObserver(measure);
 		ro.observe(el);
@@ -355,17 +356,15 @@ export function PlanetsRail({
 	}, []);
 
 	const { slideWs, trackX } = useMemo(() => {
-		const vw = Math.max(1, carouselVw);
-		const maxIslandW = Math.max(...PLANETS.map((p) => MOBILE_ISLAND_FRAME[p.id as OdysseyMobileIslandWeek].w));
-		// Keep consistent side "peek" after accounting for inter-slide gap.
-		const trackSafeWidth = Math.max(240, vw - 2 * (MOBILE_CAROUSEL_PEEK_PX + MOBILE_CAROUSEL_GAP_PX));
-		const scale = Math.min(1, trackSafeWidth / maxIslandW);
-		const widths = PLANETS.map((p) =>
-			Math.round(MOBILE_ISLAND_FRAME[p.id as OdysseyMobileIslandWeek].w * scale),
-		);
-		const activeWidth = widths[mobileIndex] ?? widths[0] ?? Math.round(maxIslandW * scale);
+		// Figma Frame 12 (333:33): контент 326px при ширине 390 и полях 32 — не масштабируем все острова от max(346).
+		const usableW = Math.max(200, carouselVw);
+		const widths = PLANETS.map((p) => {
+			const fw = MOBILE_ISLAND_FRAME[p.id as OdysseyMobileIslandWeek].w;
+			return Math.round(Math.min(fw, usableW));
+		});
+		const activeWidth = widths[mobileIndex] ?? widths[0] ?? usableW;
 		const before = widths.slice(0, mobileIndex).reduce((sum, w) => sum + w, 0) + mobileIndex * MOBILE_CAROUSEL_GAP_PX;
-		const x = vw / 2 - before - activeWidth / 2;
+		const x = usableW / 2 - before - activeWidth / 2;
 		return { slideWs: widths, trackX: x };
 	}, [carouselVw, mobileIndex]);
 
@@ -452,11 +451,11 @@ export function PlanetsRail({
 			<div className="relative z-10 mx-auto flex h-full w-full min-h-0 max-w-[390px] flex-col md:hidden">
 				<OdysseyMobileHeader onMenuPress={handleWallet} />
 				<div
-					className="relative flex min-h-0 w-full flex-1 touch-pan-y flex-col items-center justify-center overflow-hidden px-0"
+					className="relative flex min-h-0 w-full flex-1 touch-pan-y flex-col items-stretch justify-center overflow-hidden px-0"
 					style={{
 						maxHeight: `min(${ODYSSEY_MOBILE_CAROUSEL_H}px, calc(100dvh - 248px))`,
-						paddingLeft: 0,
-						paddingRight: 0,
+						paddingLeft: ODYSSEY_MOBILE_ISLAND_SIDE_PAD,
+						paddingRight: ODYSSEY_MOBILE_ISLAND_SIDE_PAD,
 					}}
 					onTouchStart={onTouchStart}
 					onTouchEnd={onTouchEnd}
@@ -465,7 +464,7 @@ export function PlanetsRail({
 				>
 					<div
 						ref={carouselViewportRef}
-						className="relative flex min-h-0 w-full flex-1 items-center overflow-hidden"
+						className="relative flex min-h-0 w-full min-w-0 flex-1 self-stretch items-center overflow-hidden"
 					>
 						<motion.div
 							className="flex flex-row items-center"
