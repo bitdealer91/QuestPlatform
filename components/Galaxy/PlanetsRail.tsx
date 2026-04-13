@@ -17,9 +17,9 @@ import {
 	ODYSSEY_MOBILE_BUTTON_H,
 	ODYSSEY_MOBILE_BUTTON_W,
 	ODYSSEY_MOBILE_CAROUSEL_H,
-	ODYSSEY_MOBILE_CAROUSEL_INNER_W,
 	ODYSSEY_MOBILE_FRAME_W,
 	ODYSSEY_MOBILE_ISLAND_CARD_W,
+	ODYSSEY_MOBILE_ISLAND_STRIP_X,
 	ODYSSEY_MOBILE_SOCIAL_BOTTOM,
 } from '@/lib/odysseyMobileLayout';
 import {
@@ -96,12 +96,6 @@ const MOBILE_ISLAND_FRAME: Record<
 	},
 };
 
-/** Расстояние между слайдами в горизонтальном треке. */
-const MOBILE_CAROUSEL_GAP_PX = 8;
-
-/** Минимум пустого поля по бокам клипа (если экран уже контентной ширины Figma). */
-const MOBILE_CAROUSEL_MIN_SIDE_GUTTER_PX = 8;
-
 /** Медведь в мобильном макете — квадрат 118×118 (см. bear 1…8 в Figma). */
 const MOBILE_ISLAND_BEAR_FIGMA_PX = 118;
 
@@ -118,7 +112,7 @@ function MobileIslandCard({
 	const islandSrc = ODYSSEY_MOBILE_ISLAND_PATH[weekId];
 	const bearSidePct = (MOBILE_ISLAND_BEAR_FIGMA_PX / frame.w) * 100;
 	return (
-		<div className="relative w-full select-none" style={{ maxWidth: frame.w, margin: '0 auto' }}>
+		<div className="relative w-full select-none">
 			<div
 				className="relative w-full overflow-visible"
 				style={{ aspectRatio: `${frame.w} / ${frame.h}` }}
@@ -379,23 +373,35 @@ export function PlanetsRail({
 		};
 	}, []);
 
-	const { slideWs, trackX } = useMemo(() => {
-		// Figma: рамка 390, остров до 326 — поля ~32 слева/справа. Клип = полная колонка, слайд уже — тогда виден край соседа.
+	const { slideLayout, trackX, trackWidthPx } = useMemo(() => {
 		const clipW = Math.max(260, carouselClipW);
-		const figInner = ODYSSEY_MOBILE_CAROUSEL_INNER_W;
-		const gutter = Math.max(
-			MOBILE_CAROUSEL_MIN_SIDE_GUTTER_PX,
-			Math.floor((clipW - figInner) / 2),
-		);
-		const maxSlideW = Math.max(200, clipW - 2 * gutter);
-		const widths = PLANETS.map((p) => {
-			const fw = MOBILE_ISLAND_FRAME[p.id as OdysseyMobileIslandWeek].w;
-			return Math.round(Math.min(fw, maxSlideW));
+		const scale = clipW / ODYSSEY_MOBILE_FRAME_W;
+		const originX = ODYSSEY_MOBILE_ISLAND_STRIP_X[1];
+
+		const slideLayout = PLANETS.map((p) => {
+			const wk = p.id as OdysseyMobileIslandWeek;
+			const fw = MOBILE_ISLAND_FRAME[wk].w;
+			const xFig = ODYSSEY_MOBILE_ISLAND_STRIP_X[wk];
+			return {
+				leftPx: (xFig - originX) * scale,
+				widthPx: fw * scale,
+			};
 		});
-		const activeWidth = widths[mobileIndex] ?? widths[0] ?? maxSlideW;
-		const before = widths.slice(0, mobileIndex).reduce((sum, w) => sum + w, 0) + mobileIndex * MOBILE_CAROUSEL_GAP_PX;
-		const x = clipW / 2 - before - activeWidth / 2;
-		return { slideWs: widths, trackX: x };
+
+		const activePlanet = PLANETS[mobileIndex] ?? PLANETS[0]!;
+		const activeWk = activePlanet.id as OdysseyMobileIslandWeek;
+		const ax = ODYSSEY_MOBILE_ISLAND_STRIP_X[activeWk];
+		const aw = MOBILE_ISLAND_FRAME[activeWk].w;
+		const centerFig = ax + aw / 2;
+		const trackX = clipW / 2 - scale * (centerFig - originX);
+
+		const last = PLANETS[PLANETS.length - 1]!;
+		const lastWk = last.id as OdysseyMobileIslandWeek;
+		const trackWidthPx =
+			scale *
+			(ODYSSEY_MOBILE_ISLAND_STRIP_X[lastWk] + MOBILE_ISLAND_FRAME[lastWk].w - originX);
+
+		return { slideLayout, trackX, trackWidthPx };
 	}, [carouselClipW, mobileIndex]);
 
 	const onTouchStart = (e: React.TouchEvent) => {
@@ -495,9 +501,9 @@ export function PlanetsRail({
 				>
 					<div className="relative flex min-h-0 w-full min-w-0 flex-1 self-stretch items-center overflow-hidden">
 						<motion.div
-							className="flex flex-row items-center"
+							className="relative h-full shrink-0"
 							style={{
-								gap: MOBILE_CAROUSEL_GAP_PX,
+								width: trackWidthPx,
 								willChange: 'transform',
 							}}
 							animate={{ x: trackX }}
@@ -506,12 +512,13 @@ export function PlanetsRail({
 							{PLANETS.map((p, i) => {
 								const wk = p.id as OdysseyMobileIslandWeek;
 								const active = i === mobileIndex;
+								const { leftPx, widthPx } = slideLayout[i] ?? { leftPx: 0, widthPx: 0 };
 								return (
 									<motion.div
 										key={p.id}
 										role="presentation"
-										className={`flex shrink-0 items-center justify-center ${active ? '' : 'cursor-pointer'}`}
-										style={{ width: slideWs[i] }}
+										className={`absolute top-1/2 flex -translate-y-1/2 items-center justify-center ${active ? '' : 'cursor-pointer'}`}
+										style={{ left: leftPx, width: widthPx }}
 										animate={{
 											scale: active ? 1 : 0.94,
 											opacity: active ? 1 : 0.52,

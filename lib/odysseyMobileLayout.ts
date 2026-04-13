@@ -19,6 +19,21 @@ export const ODYSSEY_MOBILE_ISLAND_CARD_H = 251;
 /** Горизонтальные поля у карточки: (390-326)/2 ≈ 32 (Frame 12 / 333:33). */
 export const ODYSSEY_MOBILE_ISLAND_SIDE_PAD = 32;
 
+/**
+ * Левый край группы острова в Frame 12 (`333:33`) — как в макете карусели, не равномерный ряд.
+ * Между 1→2 перекрытие ~18px, из‑за этого виден больший «peek» соседа, чем при flex+gap.
+ */
+export const ODYSSEY_MOBILE_ISLAND_STRIP_X = {
+	1: 32,
+	2: 340,
+	3: 614,
+	4: 924,
+	5: 1165,
+	6: 1379,
+	7: 1662,
+	8: 1931,
+} as const;
+
 /** Внутренняя ширина под остров в Frame 12: 390 − 2×32 = 326. */
 export const ODYSSEY_MOBILE_CAROUSEL_INNER_W =
 	ODYSSEY_MOBILE_FRAME_W - 2 * ODYSSEY_MOBILE_ISLAND_SIDE_PAD;
