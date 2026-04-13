@@ -16,7 +16,6 @@ import {
 	ODYSSEY_MOBILE_BUTTON_GAP,
 	ODYSSEY_MOBILE_BUTTON_H,
 	ODYSSEY_MOBILE_BUTTON_W,
-	ODYSSEY_MOBILE_CAROUSEL_H,
 	ODYSSEY_MOBILE_FRAME_W,
 	ODYSSEY_MOBILE_ISLAND_CARD_W,
 	ODYSSEY_MOBILE_ISLAND_STRIP_X,
@@ -32,6 +31,7 @@ import {
 import { OdysseyScenery } from '@/components/Odyssey/OdysseyScenery';
 import { OdysseyHeader } from '@/components/Odyssey/OdysseyHeader';
 import { OdysseyMobileHeader } from '@/components/Odyssey/OdysseyMobileHeader';
+import { OdysseyMobileMenu } from '@/components/Odyssey/OdysseyMobileMenu';
 import { OdysseyQuills } from '@/components/Odyssey/OdysseyQuills';
 import { OdysseySocial } from '@/components/Odyssey/OdysseySocial';
 import { useReown } from '@/lib/reown';
@@ -99,6 +99,9 @@ const MOBILE_ISLAND_FRAME: Record<
 /** Медведь в мобильном макете — квадрат 118×118 (см. bear 1…8 в Figma). */
 const MOBILE_ISLAND_BEAR_FIGMA_PX = 118;
 
+/** PNG островов с большим прозрачным полем: слегка увеличиваем арт внутри фрейма Figma. */
+const MOBILE_ISLAND_ART_SCALE = 1.22;
+
 function MobileIslandCard({
 	weekId,
 	bearVisible,
@@ -117,43 +120,51 @@ function MobileIslandCard({
 				className="relative w-full overflow-visible"
 				style={{ aspectRatio: `${frame.w} / ${frame.h}` }}
 			>
-				<Image
-					key={islandSrc}
-					src={islandSrc}
-					alt=""
-					fill
-					unoptimized
-					priority={priority}
-					loading="eager"
-					className="object-contain object-center"
-					style={{ filter: `drop-shadow(${frame.shadow})` }}
-					sizes="(max-width: 768px) min(100vw, 390px), 400px"
-					draggable={false}
-				/>
-				{bearVisible ? (
-					<div
-						className="pointer-events-none absolute"
-						style={{
-							left: `${frame.bear.cxPct * 100}%`,
-							top: `${frame.bear.cyPct * 100}%`,
-							width: `${bearSidePct}%`,
-							aspectRatio: '1',
-							transform: 'translate(-50%, -50%)',
-						}}
-					>
-						<video
-							className="h-full w-full object-cover"
-							autoPlay
-							muted
-							loop
-							playsInline
-							preload="auto"
-							aria-hidden
+				<div
+					className="absolute inset-0 overflow-visible"
+					style={{
+						transform: `scale(${MOBILE_ISLAND_ART_SCALE})`,
+						transformOrigin: 'center center',
+					}}
+				>
+					<Image
+						key={islandSrc}
+						src={islandSrc}
+						alt=""
+						fill
+						unoptimized
+						priority={priority}
+						loading="eager"
+						className="object-contain object-center"
+						style={{ filter: `drop-shadow(${frame.shadow})` }}
+						sizes="(max-width: 768px) min(100vw, 390px), 400px"
+						draggable={false}
+					/>
+					{bearVisible ? (
+						<div
+							className="pointer-events-none absolute"
+							style={{
+								left: `${frame.bear.cxPct * 100}%`,
+								top: `${frame.bear.cyPct * 100}%`,
+								width: `${bearSidePct}%`,
+								aspectRatio: '1',
+								transform: 'translate(-50%, -50%)',
+							}}
 						>
-							<source src="/assets/bear.webm" type="video/webm" />
-						</video>
-					</div>
-				) : null}
+							<video
+								className="h-full w-full object-cover"
+								autoPlay
+								muted
+								loop
+								playsInline
+								preload="auto"
+								aria-hidden
+							>
+								<source src="/assets/bear.webm" type="video/webm" />
+							</video>
+						</div>
+					) : null}
+				</div>
 			</div>
 		</div>
 	);
@@ -303,10 +314,11 @@ export function PlanetsRail({
 	const [scale, setScale] = useState(1);
 	const [profileOpen, setProfileOpen] = useState(false);
 	const [highlightedWeek, setHighlightedWeek] = useState<number | null>(null);
-	const { address } = useAccount();
+	const { address, isConnected, isConnecting } = useAccount();
 	const quillsWeek = parseQuillsWeek();
 	const ctx = useReown();
 
+	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [mobileIndex, setMobileIndex] = useState(0);
 	const touchStartX = useRef<number | null>(null);
 	const mobileColumnRef = useRef<HTMLDivElement | null>(null);
@@ -488,12 +500,9 @@ export function PlanetsRail({
 				ref={mobileColumnRef}
 				className="relative z-10 mx-auto flex h-full w-full min-h-0 max-w-[390px] flex-col md:hidden"
 			>
-				<OdysseyMobileHeader onMenuPress={handleWallet} />
+				<OdysseyMobileHeader onMenuPress={() => setMobileMenuOpen(true)} />
 				<div
 					className="relative flex min-h-0 w-full min-w-0 flex-1 touch-pan-y flex-col items-stretch justify-center overflow-hidden"
-					style={{
-						maxHeight: `min(${ODYSSEY_MOBILE_CAROUSEL_H}px, calc(100dvh - 248px))`,
-					}}
 					onTouchStart={onTouchStart}
 					onTouchEnd={onTouchEnd}
 					role="region"
@@ -520,8 +529,8 @@ export function PlanetsRail({
 										className={`absolute top-1/2 flex -translate-y-1/2 items-center justify-center ${active ? '' : 'cursor-pointer'}`}
 										style={{ left: leftPx, width: widthPx }}
 										animate={{
-											scale: active ? 1 : 0.94,
-											opacity: active ? 1 : 0.52,
+											scale: active ? 1 : 0.97,
+											opacity: active ? 1 : 0.58,
 										}}
 										transition={{ type: 'spring', stiffness: 440, damping: 35 }}
 										onClick={() => {
@@ -617,6 +626,15 @@ export function PlanetsRail({
 			<OdysseySocial className="hidden md:flex" />
 
 			<ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} address={address || undefined} />
+
+			<OdysseyMobileMenu
+				open={mobileMenuOpen}
+				onClose={() => setMobileMenuOpen(false)}
+				onSignIn={handleWallet}
+				isConnecting={isConnecting}
+				isConnected={isConnected}
+				address={address || undefined}
+			/>
 		</div>
 	);
 }
