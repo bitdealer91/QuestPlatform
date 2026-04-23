@@ -23,8 +23,8 @@ export const ODYSSEY_MOBILE_ISLAND_CARD_H = 251;
 export const ODYSSEY_MOBILE_ISLAND_SIDE_PAD = 32;
 
 /**
- * Левый край группы острова в Frame 12 (`333:33`) — как в макете карусели, не равномерный ряд.
- * Между 1→2 перекрытие ~18px, из‑за этого виден больший «peek» соседа, чем при flex+gap.
+ * Левый край группы острова в Frame 12 (`333:33`) — карусель со смещением и перекрытием соседей.
+ * См. `ODYSSEY_MOBILE_FRAME12_ISLAND` в `odysseyMobileFrame12.ts`.
  */
 export const ODYSSEY_MOBILE_ISLAND_STRIP_X = {
 	1: 32,
@@ -48,3 +48,9 @@ export const ODYSSEY_MOBILE_BUTTON_GAP = 8;
 
 /** Нижний ряд соц-иконок (203:742): от низа экрана ~16px в макете. */
 export const ODYSSEY_MOBILE_SOCIAL_BOTTOM = 16;
+
+/**
+ * Визуальный зум только PNG острова.
+ * Для текущих ассетов `week-1..8` (2x от размеров групп Frame 12) держим 1:1 без дополнительного масштаба.
+ */
+export const ODYSSEY_MOBILE_ISLAND_VISUAL_SCALE = 1;

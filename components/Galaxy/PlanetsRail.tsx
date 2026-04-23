@@ -7,11 +7,8 @@ import { motion } from 'framer-motion';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import { useAccount } from 'wagmi';
 import { PLANETS, type Planet } from '@/lib/planets';
-import {
-	ODYSSEY_MOBILE_ISLAND_GLOW,
-	ODYSSEY_MOBILE_ISLAND_PATH,
-	type OdysseyMobileIslandWeek,
-} from '@/lib/odysseyMobileIslands';
+import { ODYSSEY_MOBILE_ISLAND_PATH, type OdysseyMobileIslandWeek } from '@/lib/odysseyMobileIslands';
+import { ODYSSEY_MOBILE_FRAME12_ISLAND } from '@/lib/odysseyMobileFrame12';
 import {
 	ODYSSEY_MOBILE_BUTTON_GAP,
 	ODYSSEY_MOBILE_BUTTON_H,
@@ -19,6 +16,7 @@ import {
 	ODYSSEY_MOBILE_FRAME_W,
 	ODYSSEY_MOBILE_ISLAND_CARD_W,
 	ODYSSEY_MOBILE_ISLAND_STRIP_X,
+	ODYSSEY_MOBILE_ISLAND_VISUAL_SCALE,
 	ODYSSEY_MOBILE_SOCIAL_BOTTOM,
 } from '@/lib/odysseyMobileLayout';
 import {
@@ -36,72 +34,10 @@ import { OdysseyQuills } from '@/components/Odyssey/OdysseyQuills';
 import { OdysseySocial } from '@/components/Odyssey/OdysseySocial';
 import { useReown } from '@/lib/reown';
 
-/** Figma groups 203:777, 1683, 1031, 1246, 1247, 1458, 1566, 1672 — размер Picsart + центр медведя 118×118. */
-const MOBILE_ISLAND_FRAME: Record<
-	OdysseyMobileIslandWeek,
-	{
-		w: number;
-		h: number;
-		shadow: string;
-		bear: { cxPct: number; cyPct: number; sizePctOfW: number };
-	}
-> = {
-	1: {
-		w: 326,
-		h: 251,
-		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[1],
-		bear: { cxPct: (65 + 59) / 326, cyPct: (7 + 59) / 251, sizePctOfW: 118 / 326 },
-	},
-	2: {
-		w: 307,
-		h: 279,
-		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[2],
-		bear: { cxPct: (51 + 59) / 307, cyPct: (49 + 59) / 279, sizePctOfW: 118 / 307 },
-	},
-	3: {
-		w: 334,
-		h: 196,
-		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[3],
-		bear: { cxPct: (63 + 59) / 334, cyPct: (9 + 59) / 196, sizePctOfW: 118 / 334 },
-	},
-	4: {
-		w: 273,
-		h: 281,
-		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[4],
-		bear: { cxPct: (59 + 59) / 273, cyPct: (40 + 59) / 281, sizePctOfW: 118 / 273 },
-	},
-	5: {
-		w: 293,
-		h: 293,
-		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[5],
-		bear: { cxPct: (75 + 59) / 293, cyPct: (77 + 59) / 293, sizePctOfW: 118 / 293 },
-	},
-	6: {
-		w: 346,
-		h: 241,
-		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[6],
-		bear: { cxPct: (99 + 59) / 346, cyPct: (45 + 59) / 241, sizePctOfW: 118 / 346 },
-	},
-	7: {
-		w: 333,
-		h: 232,
-		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[7],
-		bear: { cxPct: (90 + 59) / 333, cyPct: (19 + 59) / 232, sizePctOfW: 118 / 333 },
-	},
-	8: {
-		w: 335,
-		h: 234,
-		shadow: ODYSSEY_MOBILE_ISLAND_GLOW[8],
-		bear: { cxPct: (150 + 59) / 335, cyPct: (54 + 59) / 234, sizePctOfW: 118 / 335 },
-	},
-};
-
-/** Медведь в мобильном макете — квадрат 118×118 (см. bear 1…8 в Figma). */
-const MOBILE_ISLAND_BEAR_FIGMA_PX = 118;
-
-/** PNG островов с большим прозрачным полем: слегка увеличиваем арт внутри фрейма Figma. */
-const MOBILE_ISLAND_ART_SCALE = 1.5;
-
+/**
+ * Остров (PNG) + медведь (видео) по Frame 12 `333:33`: размеры группы и центр bear из Figma,
+ * см. `odysseyMobileFrame12.ts`.
+ */
 function MobileIslandCard({
 	weekId,
 	bearVisible,
@@ -111,19 +47,19 @@ function MobileIslandCard({
 	bearVisible: boolean;
 	priority: boolean;
 }) {
-	const frame = MOBILE_ISLAND_FRAME[weekId];
+	const fig = ODYSSEY_MOBILE_FRAME12_ISLAND[weekId];
 	const islandSrc = ODYSSEY_MOBILE_ISLAND_PATH[weekId];
-	const bearSidePct = (MOBILE_ISLAND_BEAR_FIGMA_PX / frame.w) * 100;
 	return (
-		<div className="relative w-full select-none">
+		<div className="relative w-full select-none bg-transparent">
 			<div
-				className="relative w-full overflow-visible"
-				style={{ aspectRatio: `${frame.w} / ${frame.h}` }}
+				className="relative w-full overflow-visible bg-transparent"
+				style={{ aspectRatio: `${fig.islandW} / ${fig.islandH}` }}
 			>
 				<div
-					className="absolute inset-0 overflow-visible"
+					className="absolute inset-0 overflow-visible bg-transparent [backface-visibility:hidden]"
 					style={{
-						transform: `scale(${MOBILE_ISLAND_ART_SCALE})`,
+						/* translateZ(0): меньше «серой рамки» у scaled слоя в WebKit/GPU */
+						transform: `scale(${ODYSSEY_MOBILE_ISLAND_VISUAL_SCALE}) translateZ(0)`,
 						transformOrigin: 'center center',
 					}}
 				>
@@ -135,36 +71,37 @@ function MobileIslandCard({
 						unoptimized
 						priority={priority}
 						loading="eager"
-						className="object-contain object-center"
-						style={{ filter: `drop-shadow(${frame.shadow})` }}
+						className="bg-transparent object-contain object-center"
+						style={{ backgroundColor: 'transparent' }}
 						sizes="(max-width: 768px) min(100vw, 390px), 400px"
 						draggable={false}
 					/>
-					{bearVisible ? (
-						<div
-							className="pointer-events-none absolute"
-							style={{
-								left: `${frame.bear.cxPct * 100}%`,
-								top: `${frame.bear.cyPct * 100}%`,
-								width: `${bearSidePct}%`,
-								aspectRatio: '1',
-								transform: 'translate(-50%, -50%)',
-							}}
-						>
-							<video
-								className="h-full w-full object-cover"
-								autoPlay
-								muted
-								loop
-								playsInline
-								preload="auto"
-								aria-hidden
-							>
-								<source src="/assets/bear.webm" type="video/webm" />
-							</video>
-						</div>
-					) : null}
 				</div>
+				{bearVisible ? (
+					<div
+						className="pointer-events-none absolute z-[1]"
+						style={{
+							left: `${fig.bearCxPct * 100}%`,
+							top: `${fig.bearCyPct * 100}%`,
+							/* 118×118 в px макета → доля от ширины группы острова (без VISUAL_SCALE). */
+							width: `${fig.bearSidePct}%`,
+							aspectRatio: '1',
+							transform: 'translate(-50%, -50%)',
+						}}
+					>
+						<video
+							className="h-full w-full object-cover"
+							autoPlay
+							muted
+							loop
+							playsInline
+							preload="auto"
+							aria-hidden
+						>
+							<source src="/assets/bear.webm" type="video/webm" />
+						</video>
+					</div>
+				) : null}
 			</div>
 		</div>
 	);
@@ -265,6 +202,7 @@ function MobilePlanetHit({
 	openTasks,
 	onPlanetHoverChange,
 	hideHud,
+	hitSizePx,
 }: {
 	p: Planet;
 	unlockedCount: number;
@@ -272,12 +210,15 @@ function MobilePlanetHit({
 	openTasks: (id: number) => void;
 	onPlanetHoverChange: (id: number, hovering: boolean) => void;
 	hideHud?: boolean;
+	/** Зона тапа под ширину слайда карусели. */
+	hitSizePx?: number;
 }) {
 	const locked = p.id > unlockedCount;
 	const mandatoryDone = mandatoryDoneByWeek?.[p.id] === true;
 	const claimEnabled = p.id >= 1 && p.id <= 8 && !locked && mandatoryDone;
 	const claimUrl = 'https://claims.somnia.network/';
-	const hitPx = Math.min(280, Math.round(ODYSSEY_MOBILE_ISLAND_CARD_W * 0.82));
+	const hitPx =
+		hitSizePx ?? Math.min(280, Math.round(ODYSSEY_MOBILE_ISLAND_CARD_W * 0.82));
 	return (
 		<PlanetNode
 			id={p.id}
@@ -392,7 +333,7 @@ export function PlanetsRail({
 
 		const slideLayout = PLANETS.map((p) => {
 			const wk = p.id as OdysseyMobileIslandWeek;
-			const fw = MOBILE_ISLAND_FRAME[wk].w;
+			const fw = ODYSSEY_MOBILE_FRAME12_ISLAND[wk].islandW;
 			const xFig = ODYSSEY_MOBILE_ISLAND_STRIP_X[wk];
 			return {
 				leftPx: (xFig - originX) * scale,
@@ -403,7 +344,7 @@ export function PlanetsRail({
 		const activePlanet = PLANETS[mobileIndex] ?? PLANETS[0]!;
 		const activeWk = activePlanet.id as OdysseyMobileIslandWeek;
 		const ax = ODYSSEY_MOBILE_ISLAND_STRIP_X[activeWk];
-		const aw = MOBILE_ISLAND_FRAME[activeWk].w;
+		const aw = ODYSSEY_MOBILE_FRAME12_ISLAND[activeWk].islandW;
 		const centerFig = ax + aw / 2;
 		const trackX = clipW / 2 - scale * (centerFig - originX);
 
@@ -411,7 +352,9 @@ export function PlanetsRail({
 		const lastWk = last.id as OdysseyMobileIslandWeek;
 		const trackWidthPx =
 			scale *
-			(ODYSSEY_MOBILE_ISLAND_STRIP_X[lastWk] + MOBILE_ISLAND_FRAME[lastWk].w - originX);
+			(ODYSSEY_MOBILE_ISLAND_STRIP_X[lastWk] +
+				ODYSSEY_MOBILE_FRAME12_ISLAND[lastWk].islandW -
+				originX);
 
 		return { slideLayout, trackX, trackWidthPx };
 	}, [carouselClipW, mobileIndex]);
@@ -555,6 +498,7 @@ export function PlanetsRail({
 														openTasks={openTasks}
 														onPlanetHoverChange={onPlanetHoverChange}
 														hideHud
+														hitSizePx={Math.min(360, Math.round(widthPx * 0.72))}
 													/>
 												</div>
 											</div>
