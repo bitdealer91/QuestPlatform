@@ -16,7 +16,7 @@ export function OdysseyMobileHeader({
 	return (
 		<header
 			className={clsx(
-				'pointer-events-auto z-50 flex shrink-0 select-none items-center justify-between border-b border-white/10',
+				'pointer-events-auto z-50 flex shrink-0 select-none items-center justify-between border-b border-white/10 bg-[#03040c]',
 				className,
 			)}
 			style={{
