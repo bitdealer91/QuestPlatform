@@ -59,13 +59,14 @@ export function OdysseyMobileMenu({
 
 	const content = (
 		<div
-			className="pointer-events-auto fixed inset-0 z-[60] flex flex-col bg-[#03040c] md:hidden"
+			className="pointer-events-auto fixed inset-0 z-[100] flex flex-col bg-[#03040c] md:hidden"
 			role="dialog"
 			aria-modal="true"
 			aria-label="Menu"
 		>
-			<OdysseyMobileHeader menuOpen onMenuPress={onClose} className="shrink-0" />
-			<div className="flex min-h-0 flex-1 flex-col items-center px-6 pt-6">
+			<div className="mx-auto flex h-full min-h-0 w-full max-w-[390px] flex-col">
+				<OdysseyMobileHeader menuOpen onMenuPress={onClose} className="shrink-0" />
+				<div className="flex min-h-0 flex-1 flex-col items-center px-6 pt-6">
 					<div className="flex min-h-0 flex-1 flex-col items-center justify-center">
 						<div
 							className="relative shrink-0 overflow-hidden rounded-[var(--radius-lg)]"
@@ -90,7 +91,7 @@ export function OdysseyMobileMenu({
 								onClose();
 							}}
 							disabled={isConnecting}
-							className="mt-10 inline-flex shrink-0 items-center justify-center rounded-[19px] bg-[#78a3c8] text-[15px] font-normal leading-none tracking-[-0.345px] text-black transition-all duration-200 hover:brightness-105 hover:shadow-[0_0_16px_rgba(120,163,200,0.42)] active:scale-[0.985] active:translate-y-px disabled:opacity-60"
+							className="mt-10 inline-flex shrink-0 items-center justify-center rounded-[19px] bg-[#78a3c8] text-[15px] font-normal leading-none tracking-[-0.345px] text-black transition-colors duration-200 hover:brightness-105 hover:shadow-[0_0_16px_rgba(120,163,200,0.42)] disabled:opacity-60"
 							style={{
 								fontFamily: 'var(--font-mooli), system-ui, sans-serif',
 								width: ODYSSEY_MOBILE_BUTTON_W,
@@ -108,6 +109,7 @@ export function OdysseyMobileMenu({
 					>
 						<OdysseySocial variant="inline" />
 					</div>
+				</div>
 			</div>
 		</div>
 	);

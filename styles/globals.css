@@ -5,6 +5,7 @@
 @tailwind utilities;
 
 html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; overscroll-behavior: none; background: var(--bg, #0b0a14); }
+html { scrollbar-gutter: stable; }
 
 :root {
 	--app-vh: 1vh;

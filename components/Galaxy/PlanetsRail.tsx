@@ -34,8 +34,10 @@ import { OdysseyQuills } from '@/components/Odyssey/OdysseyQuills';
 import { OdysseySocial } from '@/components/Odyssey/OdysseySocial';
 import { useReown } from '@/lib/reown';
 
-/** Поднимаем мобильный остров выше относительно блока кнопок, как в референсном скрине. */
-const MOBILE_ISLAND_VERTICAL_LIFT_PX = 34;
+/**
+ * Микросдвиг вверх всего блока (остров + кнопки + точки), если нужен добор к макету.
+ */
+const MOBILE_ISLAND_BLOCK_LIFT_PX = 0;
 
 /**
  * Остров (PNG) + медведь (видео) по Frame 12 `333:33`: размеры группы и центр bear из Figma,
@@ -329,7 +331,7 @@ export function PlanetsRail({
 		};
 	}, []);
 
-	const { slideLayout, trackX, trackWidthPx } = useMemo(() => {
+	const { slideLayout, trackX, trackWidthPx, trackMinHPx } = useMemo(() => {
 		const clipW = Math.max(260, carouselClipW);
 		const scale = clipW / ODYSSEY_MOBILE_FRAME_W;
 		const originX = ODYSSEY_MOBILE_ISLAND_STRIP_X[1];
@@ -359,7 +361,17 @@ export function PlanetsRail({
 				ODYSSEY_MOBILE_FRAME12_ISLAND[lastWk].islandW -
 				originX);
 
-		return { slideLayout, trackX, trackWidthPx };
+		const trackMinHPx = Math.max(
+			200,
+			...PLANETS.map((p, i) => {
+				const wk = p.id as OdysseyMobileIslandWeek;
+				const fig = ODYSSEY_MOBILE_FRAME12_ISLAND[wk];
+				const w = slideLayout[i]?.widthPx ?? 0;
+				return w > 0 ? (fig.islandH / fig.islandW) * w : 0;
+			}),
+		);
+
+		return { slideLayout, trackX, trackWidthPx, trackMinHPx };
 	}, [carouselClipW, mobileIndex]);
 
 	const onTouchStart = (e: React.TouchEvent) => {
@@ -446,128 +458,140 @@ export function PlanetsRail({
 				/>
 				{!mobileMenuOpen ? (
 					<>
-						<div
-							className="relative flex min-h-0 w-full min-w-0 flex-1 touch-pan-y flex-col items-stretch justify-center overflow-hidden"
-							onTouchStart={onTouchStart}
-							onTouchEnd={onTouchEnd}
-							role="region"
-							aria-label="Week islands carousel"
-						>
-							<div
-								className="relative flex min-h-0 w-full min-w-0 flex-1 self-stretch items-center overflow-hidden"
-								style={{ transform: `translateY(-${MOBILE_ISLAND_VERTICAL_LIFT_PX}px)` }}
-							>
-								<motion.div
-									className="relative h-full shrink-0"
+						<div className="flex min-h-0 min-w-0 flex-1 flex-col">
+							<div className="flex min-h-0 min-w-0 flex-1 flex-col justify-center">
+								<div
+									className="flex w-full shrink-0 flex-col"
 									style={{
-										width: trackWidthPx,
-										willChange: 'transform',
+										transform:
+											MOBILE_ISLAND_BLOCK_LIFT_PX !== 0
+												? `translateY(-${MOBILE_ISLAND_BLOCK_LIFT_PX}px)`
+												: undefined,
 									}}
-									animate={{ x: trackX }}
-									transition={{ type: 'spring', stiffness: 380, damping: 36, mass: 0.88 }}
 								>
-									{PLANETS.map((p, i) => {
-										const wk = p.id as OdysseyMobileIslandWeek;
-										const active = i === mobileIndex;
-										const { leftPx, widthPx } = slideLayout[i] ?? { leftPx: 0, widthPx: 0 };
-										return (
+									<div
+										className="relative w-full shrink-0 touch-pan-y overflow-hidden"
+										onTouchStart={onTouchStart}
+										onTouchEnd={onTouchEnd}
+										role="region"
+										aria-label="Week islands carousel"
+									>
+										<div className="relative w-full overflow-hidden" style={{ minHeight: trackMinHPx }}>
 											<motion.div
-												key={p.id}
-												role="presentation"
-												className={`absolute top-1/2 flex -translate-y-1/2 items-center justify-center ${active ? '' : 'cursor-pointer'}`}
-												style={{ left: leftPx, width: widthPx }}
-												animate={{
-													scale: active ? 1 : 0.97,
-													opacity: active ? 1 : 0.58,
+												className="relative shrink-0"
+												style={{
+													width: trackWidthPx,
+													minHeight: trackMinHPx,
+													willChange: 'transform',
 												}}
-												transition={{ type: 'spring', stiffness: 440, damping: 35 }}
-												onClick={() => {
-													if (!active) setMobileIndex(i);
-												}}
+												animate={{ x: trackX }}
+												transition={{ type: 'spring', stiffness: 380, damping: 36, mass: 0.88 }}
 											>
-												<div className="relative w-full max-w-full">
-													<MobileIslandCard
-														weekId={wk}
-														bearVisible={active}
-														priority={i < 2}
-													/>
-													<div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-														<div className={active ? 'pointer-events-auto' : 'pointer-events-none'}>
-															<MobilePlanetHit
-																p={p}
-																unlockedCount={unlockedCount}
-																mandatoryDoneByWeek={mandatoryDoneByWeek}
-																openTasks={openTasks}
-																onPlanetHoverChange={onPlanetHoverChange}
-																hideHud
-																hitSizePx={Math.min(360, Math.round(widthPx * 0.72))}
-															/>
-														</div>
-													</div>
-												</div>
+												{PLANETS.map((p, i) => {
+													const wk = p.id as OdysseyMobileIslandWeek;
+													const active = i === mobileIndex;
+													const { leftPx, widthPx } = slideLayout[i] ?? { leftPx: 0, widthPx: 0 };
+													return (
+														<motion.div
+															key={p.id}
+															role="presentation"
+															className={`absolute top-0 flex items-start justify-center ${active ? '' : 'cursor-pointer'}`}
+															style={{ left: leftPx, width: widthPx }}
+															animate={{
+																scale: active ? 1 : 0.97,
+																opacity: active ? 1 : 0.58,
+															}}
+															transition={{ type: 'spring', stiffness: 440, damping: 35 }}
+															onClick={() => {
+																if (!active) setMobileIndex(i);
+															}}
+														>
+															<div className="relative w-full max-w-full">
+																<MobileIslandCard
+																	weekId={wk}
+																	bearVisible={active}
+																	priority={i < 2}
+																/>
+																<div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+																	<div className={active ? 'pointer-events-auto' : 'pointer-events-none'}>
+																		<MobilePlanetHit
+																			p={p}
+																			unlockedCount={unlockedCount}
+																			mandatoryDoneByWeek={mandatoryDoneByWeek}
+																			openTasks={openTasks}
+																			onPlanetHoverChange={onPlanetHoverChange}
+																			hideHud
+																			hitSizePx={Math.min(360, Math.round(widthPx * 0.72))}
+																		/>
+																	</div>
+																</div>
+															</div>
+														</motion.div>
+													);
+												})}
 											</motion.div>
-										);
-									})}
-								</motion.div>
+										</div>
+									</div>
+									<div
+										className="flex shrink-0 items-center justify-center px-4"
+										style={{
+											gap: ODYSSEY_MOBILE_BUTTON_GAP,
+											paddingTop: 4,
+											paddingBottom: 10,
+										}}
+									>
+										<button
+											type="button"
+											onClick={() => openTasks(mobileWeekId)}
+											disabled={mobileWeekLocked}
+											className="inline-flex shrink-0 items-center justify-center rounded-[19px] bg-[#78a3c8] text-[15px] font-normal leading-none tracking-[-0.345px] text-black transition-all duration-200 hover:brightness-105 hover:shadow-[0_0_16px_rgba(120,163,200,0.42)] active:scale-[0.985] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:shadow-none"
+											style={{
+												fontFamily: 'var(--font-mooli), system-ui, sans-serif',
+												width: ODYSSEY_MOBILE_BUTTON_W,
+												height: ODYSSEY_MOBILE_BUTTON_H,
+											}}
+										>
+											Tasks
+										</button>
+										<button
+											type="button"
+											onClick={() => setProfileOpen(true)}
+											className="inline-flex shrink-0 items-center justify-center rounded-[19px] border border-[#78a3c8] bg-transparent text-[15px] font-normal leading-none tracking-[-0.345px] text-[#78a3c8] transition-all duration-200 hover:bg-white/5 active:scale-[0.985] active:translate-y-px"
+											style={{
+												fontFamily: 'var(--font-mooli), system-ui, sans-serif',
+												width: ODYSSEY_MOBILE_BUTTON_W,
+												height: ODYSSEY_MOBILE_BUTTON_H,
+											}}
+										>
+											Profile
+										</button>
+									</div>
+									<div
+										className="flex shrink-0 justify-center gap-1.5 pt-1"
+										style={{ paddingBottom: 10 }}
+										aria-hidden
+									>
+										{PLANETS.map((_, i) => (
+											<button
+												key={i}
+												type="button"
+												onClick={() => setMobileIndex(i)}
+												className={`h-1.5 rounded-full transition-all ${i === mobileIndex ? 'w-6 bg-[#78a3c8]' : 'w-1.5 bg-white/25'}`}
+												aria-label={`Week ${i + 1}`}
+												aria-current={i === mobileIndex}
+											/>
+										))}
+									</div>
+								</div>
 							</div>
-						</div>
-						<div
-							className="flex shrink-0 items-center justify-center px-4"
-							style={{
-								gap: ODYSSEY_MOBILE_BUTTON_GAP,
-								paddingTop: 9,
-								paddingBottom: 10,
-							}}
-						>
-							<button
-								type="button"
-								onClick={() => openTasks(mobileWeekId)}
-								disabled={mobileWeekLocked}
-								className="inline-flex shrink-0 items-center justify-center rounded-[19px] bg-[#78a3c8] text-[15px] font-normal leading-none tracking-[-0.345px] text-black transition-all duration-200 hover:brightness-105 hover:shadow-[0_0_16px_rgba(120,163,200,0.42)] active:scale-[0.985] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:shadow-none"
+							<div
+								className="flex shrink-0 justify-center"
 								style={{
-									fontFamily: 'var(--font-mooli), system-ui, sans-serif',
-									width: ODYSSEY_MOBILE_BUTTON_W,
-									height: ODYSSEY_MOBILE_BUTTON_H,
+									paddingBottom: `max(${ODYSSEY_MOBILE_SOCIAL_BOTTOM}px, env(safe-area-inset-bottom, 0px))`,
 								}}
 							>
-								Tasks
-							</button>
-							<button
-								type="button"
-								onClick={() => setProfileOpen(true)}
-								className="inline-flex shrink-0 items-center justify-center rounded-[19px] border border-[#78a3c8] bg-transparent text-[15px] font-normal leading-none tracking-[-0.345px] text-[#78a3c8] transition-all duration-200 hover:bg-white/5 active:scale-[0.985] active:translate-y-px"
-								style={{
-									fontFamily: 'var(--font-mooli), system-ui, sans-serif',
-									width: ODYSSEY_MOBILE_BUTTON_W,
-									height: ODYSSEY_MOBILE_BUTTON_H,
-								}}
-							>
-								Profile
-							</button>
-						</div>
-						<div
-							className="flex shrink-0 justify-center gap-1.5 pt-1"
-							style={{ paddingBottom: 10 }}
-							aria-hidden
-						>
-							{PLANETS.map((_, i) => (
-								<button
-									key={i}
-									type="button"
-									onClick={() => setMobileIndex(i)}
-									className={`h-1.5 rounded-full transition-all ${i === mobileIndex ? 'w-6 bg-[#78a3c8]' : 'w-1.5 bg-white/25'}`}
-									aria-label={`Week ${i + 1}`}
-									aria-current={i === mobileIndex}
-								/>
-							))}
-						</div>
-						<div
-							className="flex shrink-0 justify-center"
-							style={{
-								paddingBottom: `max(${ODYSSEY_MOBILE_SOCIAL_BOTTOM}px, env(safe-area-inset-bottom, 0px))`,
-							}}
-						>
-							<OdysseySocial variant="inline" />
+								<OdysseySocial variant="inline" />
+							</div>
 						</div>
 					</>
 				) : null}

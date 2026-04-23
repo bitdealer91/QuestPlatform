@@ -41,7 +41,7 @@ export function OdysseyMobileHeader({
 			<button
 				type="button"
 				onClick={onMenuPress}
-				className="inline-flex h-[45px] w-[45px] shrink-0 items-center justify-center rounded-full bg-[#78a3c8] text-black shadow-[0_0_20px_rgba(120,163,200,0.35)] transition-all duration-200 hover:brightness-105 active:scale-[0.97]"
+				className="inline-flex h-[45px] w-[45px] shrink-0 items-center justify-center rounded-full bg-[#78a3c8] text-black shadow-[0_0_20px_rgba(120,163,200,0.35)] transition-colors duration-200 hover:brightness-105"
 				aria-label={menuOpen ? 'Close menu' : 'Open menu'}
 			>
 				{menuOpen ? (
