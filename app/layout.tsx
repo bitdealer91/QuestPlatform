@@ -20,7 +20,11 @@ const mooli = Mooli({ subsets: ["latin"], weight: "400", variable: "--font-mooli
 export const metadata: Metadata = {
   title: "The Somnia Odyssey",
   description: "Flagship quests for Somnia Mainnet",
-  icons: { icon: "/assets/somnia-logo.svg" },
+  icons: {
+    icon: "/assets/somnia-logo.png",
+    shortcut: "/assets/somnia-logo.png",
+    apple: "/assets/somnia-logo.png",
+  },
 };
 
 export default function RootLayout({

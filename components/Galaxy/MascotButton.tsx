@@ -60,7 +60,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
 					<div className="rounded-xl p-3 bg-black/25 border border-[color:var(--outline)]">
 						<div className="text-sm text-[color:var(--muted)]">Claimable</div>
 						<div className="flex items-center gap-2 text-lg font-semibold">
-							<Image src="/assets/somnia-logo.svg" alt="STT" width={18} height={18} />
+							<Image src="/assets/somnia-logo.png" alt="STT" width={18} height={18} />
 							<span>{claimable} STT</span>
 						</div>
 					</div>
@@ -68,7 +68,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
 				<div className="flex items-center justify-between gap-3">
 					<div className="text-sm text-[color:var(--muted)]">Total to receive</div>
 					<div className="flex items-center gap-2 text-xl font-semibold">
-						<Image src="/assets/somnia-logo.svg" alt="STT" width={18} height={18} />
+						<Image src="/assets/somnia-logo.png" alt="STT" width={18} height={18} />
 						<span>{claimable} STT</span>
 					</div>
 				</div>

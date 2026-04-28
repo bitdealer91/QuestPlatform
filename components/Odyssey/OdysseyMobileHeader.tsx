@@ -28,7 +28,7 @@ export function OdysseyMobileHeader({
 		>
 			<div className="flex min-w-0 items-center gap-3">
 				<div className="relative h-[24.285px] w-[25.297px] shrink-0">
-					<Image src="/assets/odyssey/header-logo-fill.svg" alt="" fill className="object-contain" priority />
+					<Image src="/assets/somnia-logo.png" alt="Somnia logo" fill className="object-contain" priority />
 				</div>
 				<div
 					className="min-w-0 text-[15px] font-normal leading-[1.5] tracking-[-0.345px] text-white"

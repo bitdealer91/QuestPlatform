@@ -1,7 +1,7 @@
 'use client';
 
 import { PlanetNode } from './PlanetNode';
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import ProfileDrawer from '@/components/ProfileDrawer';
@@ -52,8 +52,18 @@ function MobileIslandCard({
 	bearVisible: boolean;
 	priority: boolean;
 }) {
+	const [preferStaticBear, setPreferStaticBear] = useState(true);
 	const fig = ODYSSEY_MOBILE_FRAME12_ISLAND[weekId];
 	const islandSrc = ODYSSEY_MOBILE_ISLAND_PATH[weekId];
+
+	useEffect(() => {
+		const ua = navigator.userAgent ?? '';
+		const isIOS =
+			/iPad|iPhone|iPod/i.test(ua) ||
+			(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+		setPreferStaticBear(isIOS);
+	}, []);
+
 	return (
 		<div className="relative w-full select-none bg-transparent">
 			<div
@@ -94,17 +104,28 @@ function MobileIslandCard({
 							transform: 'translate(-50%, -50%)',
 						}}
 					>
-						<video
-							className="h-full w-full object-cover"
-							autoPlay
-							muted
-							loop
-							playsInline
-							preload="auto"
-							aria-hidden
-						>
-							<source src="/assets/bear.webm" type="video/webm" />
-						</video>
+						{preferStaticBear ? (
+							<Image
+								src="/assets/mascot.png"
+								alt=""
+								fill
+								className="object-contain"
+								sizes="(max-width: 768px) 30vw, 120px"
+								draggable={false}
+							/>
+						) : (
+							<video
+								className="h-full w-full object-cover"
+								autoPlay
+								muted
+								loop
+								playsInline
+								preload="auto"
+								aria-hidden
+							>
+								<source src="/assets/bear.webm" type="video/webm" />
+							</video>
+						)}
 					</div>
 				) : null}
 			</div>

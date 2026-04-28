@@ -43,7 +43,7 @@ export function AppKitProvider({ children }: { children: React.ReactNode }){
         name: "Somnia Quests",
         description: "Flagship quests for Somnia Mainnet",
         url: typeof window !== "undefined" ? window.location.origin : "https://quests.somnia.network",
-        icons: ["/assets/somnia-logo.svg"],
+        icons: ["/assets/somnia-logo.png"],
       },
       themeMode: "dark",
     });

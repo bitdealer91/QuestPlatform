@@ -58,8 +58,8 @@ export function OdysseyHeader({ onProfileClick, className }: Props) {
 				{/* Logo — Figma clip group ~13.83,24.3 25.3×24.28 */}
 				<div className="absolute" style={{ left: 13.83, top: 24.3, width: 25.3, height: 24.28 }}>
 					<Image
-						src={showConnectedChrome ? '/assets/odyssey/header-connected-logo.svg' : '/assets/odyssey/header-logo-fill.svg'}
-						alt=""
+						src="/assets/somnia-logo.png"
+						alt="Somnia logo"
 						width={26}
 						height={25}
 						className="block max-h-full max-w-full object-contain"

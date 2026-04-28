@@ -37,7 +37,7 @@ export default function Header(){
 			<div className="mx-auto w-full px-4">
 				<div className="h-[72px] w-full rounded-[var(--radius-lg)] border border-[color:var(--outline)] bg-[color:var(--card)]/70 backdrop-blur-xl shadow-elevated flex items-center justify-between">
 					<div className="flex items-center gap-3 pl-3">
-						<Image src="/assets/somnia-logo.svg" alt="Somnia" width={24} height={24} />
+						<Image src="/assets/somnia-logo.png" alt="Somnia" width={24} height={24} />
 						<span className="font-semibold tracking-tight">The Somnia Odyssey</span>
 					</div>
 					<div className="flex flex-1 items-center justify-center" aria-label="Main navigation">
@@ -46,7 +46,7 @@ export default function Header(){
 					<div className="flex items-center gap-3 pr-3">
 						{formattedBal && (
 							<span className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[color:var(--outline)] bg-[color:var(--card)] text-xs">
-								<Image src="/assets/somnia-logo.svg" alt="SOMI" width={14} height={14} />
+								<Image src="/assets/somnia-logo.png" alt="SOMI" width={14} height={14} />
 								{formattedBal}
 							</span>
 						)}

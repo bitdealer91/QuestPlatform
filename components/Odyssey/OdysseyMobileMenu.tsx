@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Image from 'next/image';
 import { OdysseySocial } from '@/components/Odyssey/OdysseySocial';
 import { OdysseyMobileHeader } from '@/components/Odyssey/OdysseyMobileHeader';
 import { ODYSSEY_MOBILE_BUTTON_H, ODYSSEY_MOBILE_BUTTON_W, ODYSSEY_MOBILE_SOCIAL_BOTTOM } from '@/lib/odysseyMobileLayout';
@@ -29,9 +30,18 @@ export function OdysseyMobileMenu({
 	address,
 }: Props) {
 	const [mounted, setMounted] = useState(false);
+	const [preferStaticBear, setPreferStaticBear] = useState(true);
 
 	useEffect(() => {
 		setMounted(true);
+	}, []);
+
+	useEffect(() => {
+		const ua = navigator.userAgent ?? '';
+		const isIOS =
+			/iPad|iPhone|iPod/i.test(ua) ||
+			(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+		setPreferStaticBear(isIOS);
 	}, []);
 
 	useEffect(() => {
@@ -72,17 +82,28 @@ export function OdysseyMobileMenu({
 							className="relative shrink-0 overflow-hidden rounded-[var(--radius-lg)]"
 							style={{ width: 179, height: 179 }}
 						>
-							<video
-								className="h-full w-full object-cover object-center"
-								autoPlay
-								muted
-								loop
-								playsInline
-								preload="metadata"
-								aria-hidden
-							>
-								<source src="/assets/bear.webm" type="video/webm" />
-							</video>
+							{preferStaticBear ? (
+								<Image
+									src="/assets/mascot.png"
+									alt=""
+									fill
+									className="object-contain object-center"
+									sizes="179px"
+									draggable={false}
+								/>
+							) : (
+								<video
+									className="h-full w-full object-cover object-center"
+									autoPlay
+									muted
+									loop
+									playsInline
+									preload="metadata"
+									aria-hidden
+								>
+									<source src="/assets/bear.webm" type="video/webm" />
+								</video>
+							)}
 						</div>
 						<button
 							type="button"
