@@ -7,7 +7,11 @@ import { motion } from 'framer-motion';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import { useAccount } from 'wagmi';
 import { PLANETS, type Planet } from '@/lib/planets';
-import { ODYSSEY_MOBILE_ISLAND_PATH, type OdysseyMobileIslandWeek } from '@/lib/odysseyMobileIslands';
+import {
+	ODYSSEY_MOBILE_ISLAND_LAYERS,
+	type OdysseyMobileIslandLayer,
+	type OdysseyMobileIslandWeek,
+} from '@/lib/odysseyMobileIslands';
 import { ODYSSEY_MOBILE_FRAME12_ISLAND } from '@/lib/odysseyMobileFrame12';
 import {
 	ODYSSEY_MOBILE_BUTTON_GAP,
@@ -16,15 +20,18 @@ import {
 	ODYSSEY_MOBILE_FRAME_W,
 	ODYSSEY_MOBILE_ISLAND_CARD_W,
 	ODYSSEY_MOBILE_ISLAND_STRIP_X,
+	ODYSSEY_MOBILE_ISLAND_STRIP_Y,
 	ODYSSEY_MOBILE_ISLAND_VISUAL_SCALE,
 	ODYSSEY_MOBILE_SOCIAL_BOTTOM,
+	ODYSSEY_MOBILE_WEEK_GLOW,
 } from '@/lib/odysseyMobileLayout';
 import {
-	ISLAND1_ART_NUDGE_Y,
+	getOdysseyDesktopStageScale,
 	ODYSSEY_STAGE_H,
 	ODYSSEY_STAGE_W,
+	ODYSSEY_WEEK_COUNT,
 	WEEK_TO_ISLAND,
-	ODYSSEY_ISLANDS,
+	ODYSSEY_WEEK_ISLANDS,
 } from '@/lib/odysseyLayout';
 import { OdysseyScenery } from '@/components/Odyssey/OdysseyScenery';
 import { OdysseyHeader } from '@/components/Odyssey/OdysseyHeader';
@@ -39,8 +46,69 @@ import { useReown } from '@/lib/reown';
  */
 const MOBILE_ISLAND_BLOCK_LIFT_PX = 0;
 
+/** Мобилка: лёгкий drop-shadow на `<img>` (@2x PNG из Figma). */
+function MobileIslandLayerImage({
+	layer,
+	glow,
+	priority,
+}: {
+	layer: OdysseyMobileIslandLayer;
+	glow?: string;
+	priority: boolean;
+}) {
+	const boxStyle = {
+		position: 'absolute' as const,
+		left: layer.left,
+		top: layer.top,
+		width: layer.width,
+		height: layer.height,
+		transform: layer.transform,
+		transformOrigin: layer.transform ? 'center center' : undefined,
+	};
+
+	const imgStyle = {
+		objectFit: layer.objectFit ?? 'fill',
+		objectPosition: layer.objectPosition ?? 'center',
+		filter: glow,
+	};
+
+	if (layer.imageClip) {
+		return (
+			<div className="pointer-events-none overflow-hidden" style={boxStyle}>
+				{/* eslint-disable-next-line @next/next/no-img-element */}
+				<img
+					src={layer.src}
+					alt=""
+					draggable={false}
+					fetchPriority={priority ? 'high' : 'auto'}
+					className="absolute max-w-none"
+					style={{
+						height: layer.imageClip.height,
+						width: layer.imageClip.width,
+						top: layer.imageClip.top,
+						left: layer.imageClip.left,
+						...imgStyle,
+					}}
+				/>
+			</div>
+		);
+	}
+
+	return (
+		// eslint-disable-next-line @next/next/no-img-element
+		<img
+			src={layer.src}
+			alt=""
+			draggable={false}
+			fetchPriority={priority ? 'high' : 'auto'}
+			className="pointer-events-none max-w-none"
+			style={{ ...boxStyle, ...imgStyle }}
+		/>
+	);
+}
+
 /**
- * Остров (PNG) + медведь (видео) по Frame 12 `333:33`: размеры группы и центр bear из Figma,
+ * Остров (PNG) + медведь (видео) по Frame 13 `482:1055`: размеры группы и центр bear из Figma,
  * см. `odysseyMobileFrame12.ts`.
  */
 function MobileIslandCard({
@@ -54,7 +122,8 @@ function MobileIslandCard({
 }) {
 	const [preferStaticBear, setPreferStaticBear] = useState(true);
 	const fig = ODYSSEY_MOBILE_FRAME12_ISLAND[weekId];
-	const islandSrc = ODYSSEY_MOBILE_ISLAND_PATH[weekId];
+	const layers = ODYSSEY_MOBILE_ISLAND_LAYERS[weekId];
+	const weekGlow = ODYSSEY_MOBILE_WEEK_GLOW[weekId];
 
 	useEffect(() => {
 		const ua = navigator.userAgent ?? '';
@@ -78,19 +147,14 @@ function MobileIslandCard({
 						transformOrigin: 'center center',
 					}}
 				>
-					<Image
-						key={islandSrc}
-						src={islandSrc}
-						alt=""
-						fill
-						unoptimized
-						priority={priority}
-						loading="eager"
-						className="bg-transparent object-contain object-center"
-						style={{ backgroundColor: 'transparent' }}
-						sizes="(max-width: 768px) min(100vw, 390px), 400px"
-						draggable={false}
-					/>
+					{layers.map((layer) => (
+						<MobileIslandLayerImage
+							key={`${weekId}-${layer.src}`}
+							layer={layer}
+							glow={layer.glow !== false ? weekGlow : undefined}
+							priority={priority}
+						/>
+					))}
 				</div>
 				{bearVisible ? (
 					<div
@@ -135,11 +199,8 @@ function MobileIslandCard({
 
 function islandCenterForWeek(weekId: number): { x: number; y: number } {
 	const k = WEEK_TO_ISLAND[weekId] ?? 1;
-	const r = ODYSSEY_ISLANDS[k];
-	const cx = r.x + r.w / 2;
-	const cy = r.y + r.h / 2;
-	if (weekId === 1) return { x: cx, y: cy + ISLAND1_ART_NUDGE_Y };
-	return { x: cx, y: cy };
+	const r = ODYSSEY_WEEK_ISLANDS[k];
+	return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
 }
 
 function parseQuillsWeek(): number {
@@ -147,7 +208,7 @@ function parseQuillsWeek(): number {
 	if (raw === undefined || raw === '') return 1;
 	const n = Number(raw);
 	if (!Number.isFinite(n)) return 1;
-	return Math.min(8, Math.max(1, Math.floor(n)));
+	return Math.min(ODYSSEY_WEEK_COUNT, Math.max(1, Math.floor(n)));
 }
 
 type StagePlanetsProps = {
@@ -177,11 +238,11 @@ function StagePlanets({
 			{PLANETS.map((p) => {
 				const locked = p.id > unlockedCount;
 				const mandatoryDone = mandatoryDoneByWeek?.[p.id] === true;
-				const claimEnabled = p.id >= 1 && p.id <= 8 && !locked && mandatoryDone;
+				const claimEnabled = p.id >= 1 && p.id <= ODYSSEY_WEEK_COUNT && !locked && mandatoryDone;
 				const claimUrl = 'https://claims.somnia.network/';
 				const c = islandCenterForWeek(p.id);
 				const islandKey = WEEK_TO_ISLAND[p.id] ?? 1;
-				const island = ODYSSEY_ISLANDS[islandKey];
+				const island = ODYSSEY_WEEK_ISLANDS[islandKey];
 				const hitPx = Math.min(340, Math.round(Math.min(island.w, island.h) * 0.9));
 				return (
 					<div
@@ -241,7 +302,7 @@ function MobilePlanetHit({
 }) {
 	const locked = p.id > unlockedCount;
 	const mandatoryDone = mandatoryDoneByWeek?.[p.id] === true;
-	const claimEnabled = p.id >= 1 && p.id <= 8 && !locked && mandatoryDone;
+	const claimEnabled = p.id >= 1 && p.id <= ODYSSEY_WEEK_COUNT && !locked && mandatoryDone;
 	const claimUrl = 'https://claims.somnia.network/';
 	const hitPx =
 		hitSizePx ?? Math.min(280, Math.round(ODYSSEY_MOBILE_ISLAND_CARD_W * 0.82));
@@ -303,7 +364,7 @@ export function PlanetsRail({
 	const unlockedCountFromEnv = Number.isFinite(UNLOCK_ENV)
 		? Math.max(1, Math.min(PLANETS.length, Math.floor(UNLOCK_ENV)))
 		: 1;
-	const unlockedCount = Math.max(8, unlockedCountFromEnv);
+	const unlockedCount = Math.max(ODYSSEY_WEEK_COUNT, unlockedCountFromEnv);
 
 	const handleWallet = useCallback(() => {
 		if (!ctx?.appKit) {
@@ -322,8 +383,7 @@ export function PlanetsRail({
 		const measure = () => {
 			const rw = el.clientWidth;
 			const rh = el.clientHeight;
-			const s = Math.min(1, rw / ODYSSEY_STAGE_W, rh / ODYSSEY_STAGE_H);
-			setScale(s || 1);
+			setScale(getOdysseyDesktopStageScale(rw, rh));
 		};
 		measure();
 		const ro = new ResizeObserver(measure);
@@ -356,14 +416,17 @@ export function PlanetsRail({
 		const clipW = Math.max(260, carouselClipW);
 		const scale = clipW / ODYSSEY_MOBILE_FRAME_W;
 		const originX = ODYSSEY_MOBILE_ISLAND_STRIP_X[1];
+		const minStripY = Math.min(...Object.values(ODYSSEY_MOBILE_ISLAND_STRIP_Y));
 
 		const slideLayout = PLANETS.map((p) => {
 			const wk = p.id as OdysseyMobileIslandWeek;
 			const fw = ODYSSEY_MOBILE_FRAME12_ISLAND[wk].islandW;
 			const xFig = ODYSSEY_MOBILE_ISLAND_STRIP_X[wk];
+			const yFig = ODYSSEY_MOBILE_ISLAND_STRIP_Y[wk];
 			return {
 				leftPx: (xFig - originX) * scale,
 				widthPx: fw * scale,
+				topPx: (yFig - minStripY) * scale,
 			};
 		});
 
@@ -388,7 +451,9 @@ export function PlanetsRail({
 				const wk = p.id as OdysseyMobileIslandWeek;
 				const fig = ODYSSEY_MOBILE_FRAME12_ISLAND[wk];
 				const w = slideLayout[i]?.widthPx ?? 0;
-				return w > 0 ? (fig.islandH / fig.islandW) * w : 0;
+				const topPx = slideLayout[i]?.topPx ?? 0;
+				const h = w > 0 ? (fig.islandH / fig.islandW) * w : 0;
+				return topPx + h;
 			}),
 		);
 
@@ -437,35 +502,29 @@ export function PlanetsRail({
 					sizes="100vw"
 				/>
 			</div>
+			{/* Десктоп: сцена 1280×832 по центру; scale ≤ 1 только если не влезает; фон — отдельный cover-слой */}
 			<div
 				ref={containerRef}
-				className="relative z-10 hidden h-full w-full min-h-0 items-end justify-center md:flex"
+				className="relative z-10 hidden h-full w-full min-h-0 items-center justify-center overflow-visible md:flex"
 			>
 				<div
-					className="relative overflow-visible"
+					className="relative shrink-0 overflow-visible"
 					style={{
-						width: ODYSSEY_STAGE_W * scale,
-						height: ODYSSEY_STAGE_H * scale,
+						width: ODYSSEY_STAGE_W,
+						height: ODYSSEY_STAGE_H,
+						transform: `scale(${scale})`,
+						transformOrigin: 'center center',
 					}}
+					data-figma-node="12:18"
 				>
-					<div
-						className="absolute left-0 top-0 origin-top-left"
-						style={{
-							width: ODYSSEY_STAGE_W,
-							height: ODYSSEY_STAGE_H,
-							transform: `scale(${scale})`,
-						}}
-						data-figma-node="12:18"
-					>
-						<StagePlanets
-							highlightedWeek={highlightedWeek}
-							unlockedCount={unlockedCount}
-							mandatoryDoneByWeek={mandatoryDoneByWeek}
-							openTasks={openTasks}
-							onPlanetHoverChange={onPlanetHoverChange}
-							quillsWeek={quillsWeek}
-						/>
-					</div>
+					<StagePlanets
+						highlightedWeek={highlightedWeek}
+						unlockedCount={unlockedCount}
+						mandatoryDoneByWeek={mandatoryDoneByWeek}
+						openTasks={openTasks}
+						onPlanetHoverChange={onPlanetHoverChange}
+						quillsWeek={quillsWeek}
+					/>
 				</div>
 			</div>
 
@@ -511,13 +570,17 @@ export function PlanetsRail({
 												{PLANETS.map((p, i) => {
 													const wk = p.id as OdysseyMobileIslandWeek;
 													const active = i === mobileIndex;
-													const { leftPx, widthPx } = slideLayout[i] ?? { leftPx: 0, widthPx: 0 };
+													const { leftPx, widthPx, topPx } = slideLayout[i] ?? {
+														leftPx: 0,
+														widthPx: 0,
+														topPx: 0,
+													};
 													return (
 														<motion.div
 															key={p.id}
 															role="presentation"
-															className={`absolute top-0 flex items-start justify-center ${active ? '' : 'cursor-pointer'}`}
-															style={{ left: leftPx, width: widthPx }}
+															className={`absolute flex items-start justify-center ${active ? '' : 'cursor-pointer'}`}
+															style={{ left: leftPx, top: topPx, width: widthPx }}
 															animate={{
 																scale: active ? 1 : 0.97,
 																opacity: active ? 1 : 0.58,

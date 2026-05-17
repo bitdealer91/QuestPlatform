@@ -3,12 +3,12 @@
 import { ODYSSEY_BEAR_FRAME, QUILLS_ANCHORS } from '@/lib/odysseyLayout';
 
 type Props = {
-	/** 1–8 — Figma week 1 anchor matches node `106:142`. */
+	/** 1–4 — bear anchor week 1 matches Figma `441:192`. */
 	week: number;
 };
 
 export function OdysseyQuills({ week }: Props) {
-	const w = Math.min(8, Math.max(1, Math.floor(week)));
+	const w = Math.min(4, Math.max(1, Math.floor(week)));
 	const a = QUILLS_ANCHORS[w] ?? QUILLS_ANCHORS[1]!;
 
 	return (

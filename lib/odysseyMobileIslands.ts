@@ -1,21 +1,78 @@
 /**
- * Мобильные острова (только арт карты / Picsart), без медведя — медведь накладывается в коде
- * по координатам Frame 12 (`lib/odysseyMobileFrame12.ts`).
- * Файлы: `public/assets/odyssey/mobile-islands/week-1.png` … `week-8.png`.
- * Желательно экспорт 1:1 к размеру группы в Figma, чтобы не было лишних полей при `object-contain`.
- * Опционально: `npm run figma:mobile-islands` (нужен FIGMA_ACCESS_TOKEN).
+ * Мобильные острова — PNG @2x из Frame 13, без bear.
+ * `npm run figma:odyssey-mobile`
  */
-export const ODYSSEY_MOBILE_ISLAND_PATH = {
-	1: '/assets/odyssey/mobile-islands/week-1.png',
-	2: '/assets/odyssey/mobile-islands/week-2.png',
-	3: '/assets/odyssey/mobile-islands/week-3.png',
-	4: '/assets/odyssey/mobile-islands/week-4.png',
-	5: '/assets/odyssey/mobile-islands/week-5.png',
-	6: '/assets/odyssey/mobile-islands/week-6.png',
-	7: '/assets/odyssey/mobile-islands/week-7.png',
-	8: '/assets/odyssey/mobile-islands/week-8.png',
-} as const;
+export type OdysseyMobileIslandWeek = 1 | 2 | 3 | 4;
 
-export type OdysseyMobileIslandWeek = keyof typeof ODYSSEY_MOBILE_ISLAND_PATH;
+export type OdysseyMobileIslandLayer = {
+	src: string;
+	left: string;
+	top: string;
+	width: string;
+	height: string;
+	objectFit?: 'fill' | 'cover';
+	objectPosition?: string;
+	transform?: string;
+	/** CSS glow на слое (только остров, не декор). */
+	glow?: boolean;
+};
 
-export const ODYSSEY_MOBILE_ISLAND_WEEKS: OdysseyMobileIslandWeek[] = [1, 2, 3, 4, 5, 6, 7, 8];
+export const ODYSSEY_MOBILE_ISLAND_LAYERS: Record<OdysseyMobileIslandWeek, OdysseyMobileIslandLayer[]> = {
+	1: [
+		{
+			src: '/assets/odyssey/mobile-islands/week-1.png',
+			left: '0',
+			top: '0',
+			width: '100%',
+			height: '100%',
+			objectFit: 'fill',
+			glow: true,
+		},
+	],
+	2: [
+		{
+			src: '/assets/odyssey/mobile-islands/week-2.png',
+			left: '0',
+			top: '0',
+			width: '100%',
+			height: '100%',
+			objectFit: 'fill',
+			glow: true,
+		},
+	],
+	3: [
+		{
+			src: '/assets/odyssey/mobile-islands/week-3-base.png',
+			left: '0',
+			top: '0',
+			width: '100%',
+			height: '100%',
+			objectFit: 'fill',
+			objectPosition: 'bottom',
+			glow: true,
+		},
+		{
+			src: '/assets/odyssey/mobile-islands/week-3-rocks.png',
+			left: '28.92%',
+			top: '36.15%',
+			width: '36.42%',
+			height: '39.05%',
+			objectFit: 'fill',
+			glow: false,
+		},
+	],
+	4: [
+		{
+			src: '/assets/odyssey/mobile-islands/week-4.png',
+			left: '0',
+			top: '0',
+			width: '100%',
+			height: '100%',
+			objectFit: 'fill',
+			objectPosition: 'bottom',
+			glow: true,
+		},
+	],
+};
+
+export const ODYSSEY_MOBILE_ISLAND_WEEKS: OdysseyMobileIslandWeek[] = [1, 2, 3, 4];

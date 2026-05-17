@@ -8,7 +8,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "node verify-assets.mjs && next build",
-    "figma:mobile-islands": "node download-figma-mobile-islands.mjs",
+    "figma:mobile-islands": "node scripts/download-odyssey-mobile-figma.mjs",
+    "figma:odyssey-mobile": "node scripts/download-odyssey-mobile-figma.mjs",
+    "figma:odyssey-desktop": "node scripts/download-odyssey-desktop-figma.mjs",
     "start": "next start",
     "lint": "next lint",
     "hh:compile": "hardhat compile",
