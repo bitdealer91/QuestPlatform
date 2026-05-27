@@ -3,8 +3,9 @@ import { loadTasks } from '@/lib/store';
 import { pipeline } from '@/lib/redis';
 import { keccak256, toHex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { somniaMainnet } from '@/lib/chains';
+import { ELIGIBILITY_UNLOCK_CAP_PER_WEEK } from '@/lib/eligibilityPercent';
 import { KEYS_1155_ADDRESS } from '@/lib/contracts';
+import { somniaMainnet } from '@/lib/chains';
 
 export const runtime = 'nodejs';
 
@@ -41,7 +42,7 @@ export async function POST(req: Request){
         const weeks = Array.isArray(j?.weeks) ? j.weeks : [];
         const slot = weeks[week - 1] || { unlockedPercentage: 0 };
         pct = Number(slot?.unlockedPercentage || 0);
-        eligible = pct >= 10;
+        eligible = pct >= ELIGIBILITY_UNLOCK_CAP_PER_WEEK;
       } catch { /* ignore and fallback */ }
     }
     // Fallback to local mandatory+redis if prod is unavailable

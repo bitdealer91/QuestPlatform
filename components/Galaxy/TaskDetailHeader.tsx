@@ -10,7 +10,6 @@ export type TaskDetailHeaderProps = {
 		type: 'action' | 'social' | 'info';
 		href?: string;
 		xp: number;
-		star?: boolean;
 		tags?: string[];
 		brand?: string;
 		logo?: string;

@@ -136,7 +136,9 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 										</div>
 										<div className="mt-2 flex items-center gap-2 text-xs">
 											<Badge className="border-white/25 bg-transparent text-white" variant="outline">+{t.reward.xp} XP</Badge>
-											{t.reward.star && <Badge className="border-white/25 bg-transparent text-white" variant="outline">+★ Star</Badge>}
+											{t.type === 'social' && (
+												<Badge className="border-[#78a3c8]/50 bg-transparent text-[#78a3c8]" variant="outline">Social</Badge>
+											)}
 										</div>
 									</button>
 								);
@@ -154,7 +156,8 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 									type: active.type,
 									href: active.href,
 									xp: active.reward.xp,
-									star: active.reward.star,
+									verify_method: active.verify_method,
+									verify_params: active.verify_params,
 									week: weekId || undefined,
 									brand: active.brand,
 									logo: active.logo,

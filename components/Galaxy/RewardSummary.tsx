@@ -3,28 +3,25 @@ import Progress from '@/components/ui/Progress';
 
 export type RewardSummaryProps = {
 	xp: number;
-	star?: boolean;
 	status?: 'idle' | 'pending' | 'verified' | 'error';
 	/** Стили карточки награды как в Figma `136:1451`. */
 	odysseyStyle?: boolean;
 };
 
-export default function RewardSummary({ xp, star, status = 'idle', odysseyStyle = false }: RewardSummaryProps) {
-	// Вычисляем прогресс на основе статуса
+export default function RewardSummary({ xp, status = 'idle', odysseyStyle = false }: RewardSummaryProps) {
 	const getProgressValue = () => {
 		switch (status) {
 			case 'verified':
-				return 100; // Таск выполнен
+				return 100;
 			case 'pending':
-				return 50; // В процессе верификации
+				return 50;
 			case 'error':
-				return 25; // Ошибка верификации
+				return 25;
 			default:
-				return 0; // Не начат
+				return 0;
 		}
 	};
 
-	// Получаем текст статуса
 	const getStatusText = () => {
 		switch (status) {
 			case 'verified':
@@ -38,7 +35,6 @@ export default function RewardSummary({ xp, star, status = 'idle', odysseyStyle 
 		}
 	};
 
-	// Получаем цвет статуса
 	const getStatusColor = () => {
 		switch (status) {
 			case 'verified':
@@ -60,9 +56,7 @@ export default function RewardSummary({ xp, star, status = 'idle', odysseyStyle 
 		<div className={shell}>
 			<div className={`flex items-center justify-between mb-2 ${odysseyStyle ? 'text-[12px] tracking-[-0.276px]' : 'text-sm'}`}>
 				<span className={odysseyStyle ? 'text-[color:var(--odyssey-task-muted)]' : 'text-[color:var(--muted)]'}>Reward</span>
-				<span className={odysseyStyle ? 'text-[12px] text-white' : 'font-medium'}>
-					+{xp} XP{star ? ' · Core Star' : ''}
-				</span>
+				<span className={odysseyStyle ? 'text-[12px] text-white' : 'font-medium'}>+{xp} XP</span>
 			</div>
 			<Progress
 				value={getProgressValue()}
@@ -77,13 +71,3 @@ export default function RewardSummary({ xp, star, status = 'idle', odysseyStyle 
 		</div>
 	);
 }
-
-
-
-
-
-
-
-
-
-

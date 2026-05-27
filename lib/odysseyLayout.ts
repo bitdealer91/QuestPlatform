@@ -1,5 +1,7 @@
 /** Figma: frame `Odyssey 6` node `432:2` — 1280×832. */
 
+import { PROGRAM_WEEKS } from '@/lib/weeks';
+
 export const ODYSSEY_STAGE_W = 1280;
 export const ODYSSEY_STAGE_H = 832;
 
@@ -198,4 +200,18 @@ export const WEEK_TO_ISLAND: Record<number, OdysseyWeekKey> = {
 	4: 4,
 };
 
-export const ODYSSEY_WEEK_COUNT = 4;
+/**
+ * HUD «View Tasks / Claim» — доля высоты hit-зоны от верха (не 100%, иначе кнопки уезжают под остров).
+ * Доп. сдвиг по неделям в `ODYSSEY_WEEK_HUD_NUDGE_Y` (px, отрицательный — ещё выше).
+ */
+export const ODYSSEY_HUD_TOP_PCT = 68;
+
+/** px, от `ODYSSEY_HUD_TOP_PCT`; подогнано под форму каждого материка. */
+export const ODYSSEY_WEEK_HUD_NUDGE_Y: Record<OdysseyWeekKey, number> = {
+	1: -8,
+	2: -24,
+	3: -4,
+	4: -12,
+};
+
+export const ODYSSEY_WEEK_COUNT = PROGRAM_WEEKS;

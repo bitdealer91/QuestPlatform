@@ -18,7 +18,9 @@ export type PlanetNodeProps = {
 	hidePlanetArt?: boolean;
 	/** Сообщает родителю о hover по зоне недели (для подсветки материка на карте). */
 	onHoverChange?: (id: number, hovering: boolean) => void;
-	/** Сдвиг блока кнопок по Y от положения `calc(100% + 6px)` (отрицательное — выше экрана). */
+	/** Доля высоты hit-зоны для верха HUD (по умолчанию из `odysseyLayout`). */
+	hudTopPct?: number;
+	/** Доп. сдвиг HUD по Y в px (отрицательный — выше). */
 	hudNudgeYPx?: number;
 	/** Скрыть HUD «View Tasks / Claim» (мобильная карта — отдельные кнопки снизу). */
 	hideHud?: boolean;
@@ -39,6 +41,7 @@ function PlanetNodeImpl({
 	mandatoryDone = false,
 	hidePlanetArt = false,
 	onHoverChange,
+	hudTopPct,
 	hudNudgeYPx = 0,
 	hideHud = false,
 }: PlanetNodeProps) {
@@ -103,7 +106,9 @@ function PlanetNodeImpl({
 			{!hideHud && (
 			<div
 				className="absolute left-1/2 -translate-x-1/2 w-max z-50"
-				style={{ top: `calc(100% + 6px + ${hudNudgeYPx}px)` }}
+				style={{
+					top: `calc(${hudTopPct ?? 68}% + ${hudNudgeYPx}px)`,
+				}}
 			>
                 {canInteract && (
                     <div className={clsx('pointer-events-none w-[292px] z-50', 'transition-all duration-200', hover ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2')}>

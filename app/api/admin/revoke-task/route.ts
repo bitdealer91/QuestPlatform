@@ -93,7 +93,7 @@ export async function POST(req: Request){
       return NextResponse.json({ taskId, checkedOld, revoked: 0, kept: 0, sample: { revoked: [], kept: [] }, cursor });
     }
 
-    const task = await findTask(taskId) as unknown as { verify_params?: Record<string, unknown>; xp?: number; week?: number; star?: boolean } | null;
+    const task = await findTask(taskId) as unknown as { verify_params?: Record<string, unknown>; xp?: number } | null;
     const vp = (task?.verify_params || {}) as Record<string, unknown>;
     const contract = String(vp['contract'] || '').trim();
     const fnSig = String(vp['functionSignature'] || 'function isSomniacMinted(address) view returns (bool)');
@@ -104,8 +104,6 @@ export async function POST(req: Request){
 
     const addresses = candidateKeys.map(k => k.replace('user:verified:', '').toLowerCase());
     const xpPerTask = typeof task?.xp === 'number' ? task!.xp : 0;
-    const starWeek = task?.star === true && typeof task?.week === 'number' ? task!.week as number : undefined;
-
     let revoked = 0;
     let kept = 0;
     const sampleRevoked: string[] = [];
@@ -152,7 +150,6 @@ export async function POST(req: Request){
         const cmds: (string|number)[][] = [];
         cmds.push(["SREM", `user:verified:${addr}`, taskId]);
         cmds.push(["SET", `user:xp:${addr}`, String(newXp)]);
-        if (typeof starWeek === 'number' && starWeek > 0) cmds.push(["SREM", `user:stars:${addr}:${starWeek}`, taskId]);
         // best-effort ledger mark
         try { writeFailure(addr, taskId, 'admin_revoke').catch(() => {}); } catch {}
         await pipeline(cmds);

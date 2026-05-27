@@ -2,6 +2,10 @@ export type VerifyResult = {
   wallet?: string;
   score?: number;
   completed?: boolean;
+  message?: string;
+  attempt?: number;
+  platform?: string;
+  socialAction?: string;
   // error fields
   error?: string;
   status?: number;
@@ -19,17 +23,18 @@ export async function verifyExternal(address: string, taskId: string, txHash?: s
   let json: unknown = null;
   try { json = await res.json(); } catch { json = null; }
 
+  const j = (json as VerifyResult | null) || null;
   if (!res.ok) {
-    const j = (json as { error?: string; detail?: unknown; retryAfter?: unknown } | null) || null;
     return {
       error: j?.error || 'verify_failed',
       status: res.status,
       detail: j?.detail,
       retryAfter: typeof j?.retryAfter === 'number' ? j.retryAfter : undefined,
+      message: j?.message,
     };
   }
 
-  return json as VerifyResult;
+  return j ?? { completed: false };
 }
 
 

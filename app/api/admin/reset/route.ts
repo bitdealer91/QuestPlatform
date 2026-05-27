@@ -24,10 +24,6 @@ export async function POST(req: Request){
     cmds.push(["DEL", `user:verified:${addr}`]);
     cmds.push(["DEL", `ledger:${addr}:events`]);
     cmds.push(["DEL", `ledger:${addr}:counts`]);
-    // Stars by week (1..8)
-    for (let w = 1; w <= 8; w++){
-      cmds.push(["DEL", `user:stars:${addr}:${w}`]);
-    }
     const res = await pipeline(cmds);
     return NextResponse.json({ ok: true, result: res });
   } catch {

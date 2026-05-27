@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getProgramStart, getWeekTasks } from "@/lib/store";
+import { isValidProgramWeek } from "@/lib/weeks";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const idNum = parseInt(params.id);
-  if (isNaN(idNum) || idNum < 1 || idNum > 8) {
+  if (isNaN(idNum) || !isValidProgramWeek(idNum)) {
     return NextResponse.json({ error: "Invalid week ID" }, { status: 400 });
   }
 
@@ -51,7 +52,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       title: t.title,
       desc: t.description,
       href: t.href,
-      reward: { xp: t.xp, star: t.star },
+      reward: { xp: t.xp },
       status: "todo" as const,
       mandatory: (t as any).mandatory === true || (t as any)["mandatory task"] === true,
       brand: t.brand,

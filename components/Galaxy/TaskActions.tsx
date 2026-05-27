@@ -7,6 +7,9 @@ import { Loader2 } from 'lucide-react';
 export type TaskActionsProps = {
 	goHref?: string;
 	canVerify: boolean;
+	/** User opened the task link via Go (required before Verify when goHref is set). */
+	goClicked?: boolean;
+	onGoClick?: () => void;
 	loading: boolean;
 	onVerify: () => void;
 	taskId?: string;
@@ -21,6 +24,8 @@ const odysseyPill = 'h-[23px] min-h-[23px] rounded-[20px] text-[12px] font-norma
 export default function TaskActions({
 	goHref,
 	canVerify,
+	goClicked = false,
+	onGoClick,
 	loading,
 	onVerify,
 	taskId,
@@ -31,9 +36,27 @@ export default function TaskActions({
 	// Для новой фазы не используем жесткий дедлайн по дате.
 	// Оставляем только ручной флаг через env при необходимости.
 	const ended = process.env.NEXT_PUBLIC_FORCE_ENDED === '1';
+	const needsGo = Boolean(goHref);
+	const verifyReady = canVerify && (!needsGo || goClicked);
 	const label = typeof cooldownSec === 'number' && cooldownSec > 0
 		? `Verify in ${cooldownSec}s`
 		: 'Verify';
+
+	const verifyDisabledReason =
+		canVerify && needsGo && !goClicked
+			? 'Press Go to open the task, then verify'
+			: 'Connect wallet to verify';
+
+	const fireGoClick = () => {
+		onGoClick?.();
+		try {
+			window.dispatchEvent(
+				new CustomEvent('analytics:event', { detail: { name: 'task_go_click', taskId, href: goHref } }),
+			);
+		} catch {
+			/* noop */
+		}
+	};
 
 	if (odysseyStyle) {
 		const goClass = clsx(odysseyPill, 'min-w-[38px] bg-[color:var(--odyssey-go)] text-black px-2 hover:brightness-105 hover:shadow-[0_0_12px_rgba(120,163,200,0.45)]');
@@ -58,11 +81,7 @@ export default function TaskActions({
 							rel="noopener noreferrer"
 							aria-label="Go"
 							className={goClass}
-							onClick={() => {
-								try {
-									window.dispatchEvent(new CustomEvent('analytics:event', { detail: { name: 'task_go_click', taskId, href: goHref } }));
-								} catch {}
-							}}
+							onClick={fireGoClick}
 						>
 							Go
 						</a>
@@ -74,7 +93,7 @@ export default function TaskActions({
 							{isVerified ? 'Verified' : 'Verify'}
 						</button>
 					</Tooltip>
-				) : canVerify ? (
+				) : verifyReady ? (
 					<button
 						type="button"
 						onClick={onVerify}
@@ -90,7 +109,7 @@ export default function TaskActions({
 						Verified
 					</button>
 				) : (
-					<Tooltip content={<span aria-label="Connect wallet to verify">Connect wallet to verify</span>}>
+					<Tooltip content={<span>{verifyDisabledReason}</span>}>
 						<button type="button" disabled className={verifyOutline} aria-label="Verify disabled">
 							Verify
 						</button>
@@ -110,9 +129,7 @@ export default function TaskActions({
 						</span>
 					</Tooltip>
 				) : (
-					<a href={goHref} target="_blank" rel="noopener noreferrer" aria-label="Go" onClick={() => {
-						try { window.dispatchEvent(new CustomEvent('analytics:event', { detail: { name: 'task_go_click', taskId, href: goHref } })); } catch {}
-					}}>
+					<a href={goHref} target="_blank" rel="noopener noreferrer" aria-label="Go" onClick={fireGoClick}>
 						<Button variant="primary">Go</Button>
 					</a>
 				)
@@ -123,22 +140,18 @@ export default function TaskActions({
 						<Button variant="glass" disabled aria-label="Verify ended">{isVerified ? 'Verified' : 'Verify'}</Button>
 					</span>
 				</Tooltip>
+			) : verifyReady ? (
+				<Button variant="glass" onClick={onVerify} loading={loading} aria-label="Verify" disabled={typeof cooldownSec === 'number' && cooldownSec > 0}>{label}</Button>
+			) : isVerified ? (
+				<span>
+					<Button variant="glass" disabled aria-label="Task already verified">Verified</Button>
+				</span>
 			) : (
-				canVerify ? (
-					<Button variant="glass" onClick={onVerify} loading={loading} aria-label="Verify" disabled={typeof cooldownSec === 'number' && cooldownSec > 0}>{label}</Button>
-				) : (
-					isVerified ? (
-						<span>
-							<Button variant="glass" disabled aria-label="Task already verified">Verified</Button>
-						</span>
-					) : (
-						<Tooltip content={<span aria-label="Connect wallet to verify">Connect wallet to verify</span>}>
-							<span>
-								<Button variant="glass" disabled aria-label="Verify disabled">Verify</Button>
-							</span>
-						</Tooltip>
-					)
-				)
+				<Tooltip content={<span>{verifyDisabledReason}</span>}>
+					<span>
+						<Button variant="glass" disabled aria-label="Verify disabled">Verify</Button>
+					</span>
+				</Tooltip>
 			)}
 		</div>
 	);

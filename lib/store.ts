@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { TaskSpecZ, Task } from "./taskSpec";
+import { PROGRAM_WEEKS, resolveProgramWeeks } from "./weeks";
 
 const FILE = path.join(process.cwd(), "data", "tasks.json");
 let CACHE: { tasks: Task[]; programStart?: string; weeks?: number } | null = null;
@@ -16,7 +17,7 @@ async function readFileStore(){
     return JSON.parse(buf);
   } catch { 
     console.warn('⚠️ Failed to read tasks.json, using default');
-    return { tasks: [], programStart: undefined, weeks: 8 }; 
+    return { tasks: [], programStart: undefined, weeks: PROGRAM_WEEKS }; 
   }
 }
 
@@ -84,7 +85,7 @@ export async function loadTasks(){
 
 export async function saveTasks(spec: unknown){
   const parsed = TaskSpecZ.parse(spec);
-  const data = { tasks: parsed.tasks, programStart: parsed.programStart, weeks: parsed.weeks ?? 8 };
+  const data = { tasks: parsed.tasks, programStart: parsed.programStart, weeks: resolveProgramWeeks(parsed.weeks) };
   CACHE = data;
   LAST_MODIFIED = Date.now();
   CACHE_TIMESTAMP = Date.now();
@@ -93,7 +94,8 @@ export async function saveTasks(spec: unknown){
 }
 
 export async function getWeeksSummary(){
-  const { tasks, weeks = 8 } = await loadTasks();
+  const { tasks, weeks: specWeeks } = await loadTasks();
+  const weeks = resolveProgramWeeks(specWeeks);
   const result = Array.from({ length: weeks }, (_, i) => ({ 
     id: i+1, 
     title: `Week ${i+1}`, 

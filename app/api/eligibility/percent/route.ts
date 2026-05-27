@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { pipeline } from "@/lib/redis";
 import { loadTasks } from "@/lib/store";
 import { dotGet } from "@/lib/jsonPath";
+import {
+  ELIGIBILITY_UNLOCK_CAP_PER_WEEK,
+  maxProgramUnlockForWeeks,
+} from "@/lib/eligibilityPercent";
+import { resolveProgramWeeks } from "@/lib/weeks";
 
 export const runtime = "nodejs";
 
@@ -14,6 +19,7 @@ function isLowercaseHexAddress(a: string): boolean {
 export async function GET(req: Request){
   try {
     const url = new URL(req.url);
+    const describe = /^(1|true)$/i.test(String(url.searchParams.get("describe") || ""));
     const addressRaw = String(
       url.searchParams.get("address") || url.searchParams.get("walletAddress") || ""
     ).trim();
@@ -22,14 +28,27 @@ export async function GET(req: Request){
     const onlyWeekParam = url.searchParams.get("week");
     const onlyWeek = onlyWeekParam ? Number(onlyWeekParam) : NaN; // 1-based
     const unlockTest = /^(1|true)$/i.test(String(url.searchParams.get("unlock_test") || ""));
-    if (!isLowercaseHexAddress(address)){
-      return NextResponse.json({ error: { code: "INVALID_ADDRESS", message: "Invalid Ethereum address format" } }, { status: 400 });
-    }
 
     // Load spec (tasks + program timing)
     const spec = await loadTasks();
+    const totalWeeks = resolveProgramWeeks(spec.weeks);
+    const capPerWeek = ELIGIBILITY_UNLOCK_CAP_PER_WEEK;
+    const maxProgramUnlock = maxProgramUnlockForWeeks(totalWeeks);
+
+    if (describe) {
+      return NextResponse.json({
+        describe: true,
+        programWeeks: totalWeeks,
+        capPerWeek,
+        maxProgramUnlock,
+        hint: "GET with ?address=0x… for live progress from Redis; optional debug=1.",
+      });
+    }
+
+    if (!isLowercaseHexAddress(address)){
+      return NextResponse.json({ error: { code: "INVALID_ADDRESS", message: "Invalid Ethereum address format" } }, { status: 400 });
+    }
     const allTasks = spec.tasks || [];
-    const totalWeeks = Math.max(1, Number(spec.weeks || 8));
 
     // Compute quest timeline
     const startIso = spec.programStart;
@@ -92,16 +111,9 @@ export async function GET(req: Request){
     }
     const verifiedSet = new Set(verifiedFlat);
 
-    // Each week gives up to 10% proportionally to completed mandatory tasks
-    const capPerWeek = 10;
-    // In production, cap visible/progress week to 8 (idx 7)
-    const isProd = process.env.NODE_ENV === 'production';
-    const effectiveCurrentWeek = isProd ? Math.min(currentWeek, 7) : currentWeek;
-
-    // Week 7 mandatory override (prod): use exactly these two IDs to keep 0/5/10 mapping
-    if (isProd) { try { mandatoryByWeek[6] = ["somniameme-trade-2", "tokos-borrow"]; } catch { /* noop */ } }
-    // Week 8 mandatory override (prod): use exactly these two IDs
-    if (isProd) { try { mandatoryByWeek[7] = ["msquared-avatar", "elixfi"]; } catch { /* noop */ } }
+    // Each week gives up to capPerWeek% proportionally to completed mandatory tasks
+    const lastWeekIdx = totalWeeks - 1;
+    const effectiveCurrentWeek = Math.min(currentWeek, lastWeekIdx);
 
     const weeks = mandatoryByWeek.map((ids, idx) => {
       // Do not unlock for future weeks relative to effective current week
@@ -180,215 +192,18 @@ export async function GET(req: Request){
       } catch { /* ignore */ }
     }
 
-    // Optionally compute Week 6 via external APIs (no persistence), for local testing
-    if (unlockTest) {
-      try {
-        const tasksById = Object.create(null) as Record<string, Record<string, unknown>>;
-        for (const t of allTasks){
-          const id = (t as { id?: string }).id || "";
-          if (id) tasksById[id] = t as unknown as Record<string, unknown>;
-        }
-        const week6Idx = 5; // zero-based index for week 6
-        const ids = mandatoryByWeek[week6Idx] || [];
-        let extCompleted = 0;
-        for (const id of ids){
-          if (verifiedSet.has(id)) { extCompleted += 1; continue; }
-          const task = tasksById[id];
-          const vp = (task?.["verify_params"] as Record<string, unknown>) || {};
-          const cfg = (vp["verify_api"] as Record<string, unknown>) || {};
-          const rawUrl = String(cfg["url"] || "").trim();
-          const method = String(cfg["method"] || "GET").toUpperCase();
-          const success = (cfg["success"] || {}) as { path?: string; equals?: unknown; length_gt?: number };
-          if (!rawUrl) continue;
-          const urlFinal = rawUrl
-            .replace(":userAddress", addressRaw || address)
-            .replace(":walletAddress", addressRaw || address)
-            .replace(":address", addressRaw || address)
-            .replace(":timestamp", String(Math.floor(Date.now()/1000)));
-          const init: RequestInit = { headers: { "Accept": "application/json", "User-Agent": "Somnia-Odyssey/1.0", "Origin": "https://odyssey.somnia.network" } };
-          if (method === "POST") init.method = "POST"; else init.method = "GET";
-          const headersCfg = cfg["headers"] as Record<string, unknown> | undefined;
-          if (headersCfg && typeof headersCfg === "object"){
-            for (const [k, v] of Object.entries(headersCfg)){
-              (init.headers as Record<string, string>)[k] = String(v);
-            }
-          }
-          try {
-            const res = await fetch(urlFinal, init);
-            if (!res.ok) continue;
-            const dataUnknown: unknown = await res.json().catch(() => ({}));
-            const obj = (dataUnknown ?? {}) as Record<string, unknown>;
-            let ok = false;
-            if (success && typeof success === "object"){
-              if (success.path){
-                const val = dotGet(obj, String(success.path));
-                if (success.length_gt != null && Array.isArray(val)){
-                  ok = val.length > Number(success.length_gt);
-                } else if (success.equals !== undefined) {
-                  ok = val === success.equals;
-                } else {
-                  ok = Boolean(val);
-                }
-              } else {
-                ok = Boolean(obj["completed"] === true || obj["ok"] === true || obj["verified"] === true);
-              }
-            } else {
-              ok = Boolean(obj["completed"] === true || obj["ok"] === true || obj["verified"] === true);
-            }
-            if (ok) extCompleted += 1;
-          } catch { /* ignore */ }
-        }
-        const listLen = (mandatoryByWeek[week6Idx] || []).length;
-        if (listLen > 0){
-          const pct = Math.max(0, Math.min(capPerWeek, (extCompleted * capPerWeek) / listLen));
-          weeks[week6Idx] = { unlockedPercentage: pct };
-        }
-      } catch { /* ignore */ }
-    }
-
-    // Optionally compute Week 7 via external APIs (no persistence), for local testing
-    if (unlockTest) {
-      try {
-        const tasksById = Object.create(null) as Record<string, Record<string, unknown>>;
-        for (const t of allTasks){
-          const id = (t as { id?: string }).id || "";
-          if (id) tasksById[id] = t as unknown as Record<string, unknown>;
-        }
-        const week7Idx = 6; // zero-based index for week 7
-        // Dev-only override: use EXACTLY these two as mandatory for week 7 testing
-        // per spec: somniameme-trade-2 and tokos-borrow
-        const ids = ["somniameme-trade-2", "tokos-borrow"];
-        let extCompleted = 0;
-        for (const id of ids){
-          if (verifiedSet.has(id)) { extCompleted += 1; continue; }
-          const task = tasksById[id];
-          const vp = (task?.["verify_params"] as Record<string, unknown>) || {};
-          const cfg = (vp["verify_api"] as Record<string, unknown>) || {};
-          const rawUrl = String(cfg["url"] || "").trim();
-          const method = String(cfg["method"] || "GET").toUpperCase();
-          const success = (cfg["success"] || {}) as { path?: string; equals?: unknown; length_gt?: number };
-          if (!rawUrl) continue;
-          const urlFinal = rawUrl
-            .replace(":userAddress", addressRaw || address)
-            .replace(":walletAddress", addressRaw || address)
-            .replace(":address", addressRaw || address)
-            .replace(":timestamp", String(Math.floor(Date.now()/1000)));
-          const init: RequestInit = { headers: { "Accept": "application/json", "User-Agent": "Somnia-Odyssey/1.0", "Origin": "https://odyssey.somnia.network" } };
-          if (method === "POST") init.method = "POST"; else init.method = "GET";
-          const headersCfg = cfg["headers"] as Record<string, unknown> | undefined;
-          if (headersCfg && typeof headersCfg === "object"){
-            for (const [k, v] of Object.entries(headersCfg)){
-              (init.headers as Record<string, string>)[k] = String(v);
-            }
-          }
-          try {
-            const res = await fetch(urlFinal, init);
-            if (!res.ok) continue;
-            const dataUnknown: unknown = await res.json().catch(() => ({}));
-            const obj = (dataUnknown ?? {}) as Record<string, unknown>;
-            let ok = false;
-            if (success && typeof success === "object"){
-              if (success.path){
-                const val = dotGet(obj, String(success.path));
-                if (success.length_gt != null && Array.isArray(val)){
-                  ok = val.length > Number(success.length_gt);
-                } else if (success.equals !== undefined) {
-                  ok = val === success.equals;
-                } else {
-                  ok = Boolean(val);
-                }
-              } else {
-                ok = Boolean(obj["completed"] === true || obj["ok"] === true || obj["verified"] === true);
-              }
-            } else {
-              ok = Boolean(obj["completed"] === true || obj["ok"] === true || obj["verified"] === true);
-            }
-            if (ok) extCompleted += 1;
-          } catch { /* ignore */ }
-        }
-        const listLen = ids.length;
-        if (listLen > 0){
-          const pct = Math.max(0, Math.min(capPerWeek, (extCompleted * capPerWeek) / listLen));
-          weeks[week7Idx] = { unlockedPercentage: pct };
-        }
-      } catch { /* ignore */ }
-    }
-
-    // Optionally compute Week 8 via external APIs (no persistence), for local testing
-    if (unlockTest) {
-      try {
-        const tasksById = Object.create(null) as Record<string, Record<string, unknown>>;
-        for (const t of allTasks){
-          const id = (t as { id?: string }).id || "";
-          if (id) tasksById[id] = t as unknown as Record<string, unknown>;
-        }
-        const week8Idx = 7; // zero-based index for week 8
-        // Use EXACTLY these two as mandatory for week 8 testing: msquared-avatar and elixfi
-        const ids = ["msquared-avatar", "elixfi"];
-        let extCompleted = 0;
-        for (const id of ids){
-          if (verifiedSet.has(id)) { extCompleted += 1; continue; }
-          const task = tasksById[id];
-          const vp = (task?.["verify_params"] as Record<string, unknown>) || {};
-          const cfg = (vp["verify_api"] as Record<string, unknown>) || {};
-          const rawUrl = String(cfg["url"] || "").trim();
-          const method = String(cfg["method"] || "GET").toUpperCase();
-          const success = (cfg["success"] || {}) as { path?: string; equals?: unknown; length_gt?: number };
-          if (!rawUrl) continue;
-          const urlFinal = rawUrl
-            .replace(":userAddress", addressRaw || address)
-            .replace(":walletAddress", addressRaw || address)
-            .replace(":address", addressRaw || address)
-            .replace(":timestamp", String(Math.floor(Date.now()/1000)));
-          const init: RequestInit = { headers: { "Accept": "application/json", "User-Agent": "Somnia-Odyssey/1.0", "Origin": "https://odyssey.somnia.network" } };
-          if (method === "POST") init.method = "POST"; else init.method = "GET";
-          const headersCfg = cfg["headers"] as Record<string, unknown> | undefined;
-          if (headersCfg && typeof headersCfg === "object"){
-            for (const [k, v] of Object.entries(headersCfg)){
-              (init.headers as Record<string, string>)[k] = String(v);
-            }
-          }
-          try {
-            const res = await fetch(urlFinal, init);
-            if (!res.ok) continue;
-            const dataUnknown: unknown = await res.json().catch(() => ({}));
-            const obj = (dataUnknown ?? {}) as Record<string, unknown>;
-            let ok = false;
-            if (success && typeof success === "object"){
-              if (success.path){
-                const val = dotGet(obj, String(success.path));
-                if (success.length_gt != null && Array.isArray(val)){
-                  ok = val.length > Number(success.length_gt);
-                } else if (success.equals !== undefined) {
-                  ok = val === success.equals;
-                } else {
-                  ok = Boolean(val);
-                }
-              } else {
-                ok = Boolean(obj["completed"] === true || obj["ok"] === true || obj["verified"] === true);
-              }
-            } else {
-              ok = Boolean(obj["completed"] === true || obj["ok"] === true || obj["verified"] === true);
-            }
-            if (ok) extCompleted += 1;
-          } catch { /* ignore */ }
-        }
-        const listLen = ids.length;
-        if (listLen > 0){
-          const pct = Math.max(0, Math.min(capPerWeek, (extCompleted * capPerWeek) / listLen));
-          weeks[week8Idx] = { unlockedPercentage: pct };
-        }
-      } catch { /* ignore */ }
-    }
-
-    // Hard lock in production: allow Weeks 1–8; subsequent weeks must be 0
-    if (isProd) {
-      weeks.forEach((w, idx) => { if (idx > 7) w.unlockedPercentage = 0; });
-    }
     const totalUnlockedPercentage = weeks.reduce((s, w) => s + (w.unlockedPercentage || 0), 0);
 
     // Report currentWeek as 1-based in API response (capped in production above)
-    const payload: Record<string, unknown> = { totalUnlockedPercentage, currentWeek: effectiveCurrentWeek + 1, endAt, weeks };
+    const payload: Record<string, unknown> = {
+      totalUnlockedPercentage,
+      currentWeek: effectiveCurrentWeek + 1,
+      endAt,
+      weeks,
+      programWeeks: totalWeeks,
+      capPerWeek,
+      maxProgramUnlock,
+    };
     if (debug) {
       payload.debug = {
         mandatoryByWeek,

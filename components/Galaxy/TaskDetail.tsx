@@ -7,6 +7,13 @@ import TaskActions from './TaskActions';
 import { verifyExternal } from '@/lib/verify';
 import { toast } from '@/components/ui/Toast';
 import Tooltip from '@/components/ui/Tooltip';
+import SocialConnectPanel from '@/components/Galaxy/SocialConnectPanel';
+import {
+	type SocialAccounts,
+	type SocialPlatform,
+	parseSocialAction,
+	platformForAction,
+} from '@/lib/social';
 
 export type TaskDetailProps = {
 	task: {
@@ -16,7 +23,6 @@ export type TaskDetailProps = {
 		type: 'action' | 'social' | 'info';
 		href?: string;
 		xp: number;
-		star?: boolean;
 		week?: number;
 		tags?: string[];
 		brand?: string;
@@ -24,6 +30,8 @@ export type TaskDetailProps = {
 		brand_color?: string;
 		logo_variant?: 'light'|'dark';
 		category?: string;
+		verify_method?: 'onchain' | 'api' | 'social';
+		verify_params?: Record<string, unknown>;
 	};
 	walletAddress?: string;
 	onVerified: (taskId: string) => void;
@@ -37,12 +45,33 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 	const forceVerify = (walletAddress || '').toLowerCase() === '0x938ed0c13ab2df31c89ee187ca8726cb12ae01b0' && task.id === 'quills-migrate';
 	const canVerify = !!walletAddress && !loading && status !== 'verified' && (!alreadyVerified || forceVerify);
 	const liveRegionRef = useRef<HTMLDivElement | null>(null);
+	const isSocial = task.type === 'social' || task.verify_method === 'social';
+	const socialAction = parseSocialAction(task.verify_params);
+	const requiredPlatform: SocialPlatform | undefined = socialAction
+		? platformForAction(socialAction)
+		: undefined;
+	const [socialAccounts, setSocialAccounts] = useState<SocialAccounts>({});
+	const [goClicked, setGoClicked] = useState(false);
+	const hasGoLink = Boolean(String(task.href || '').trim());
+
+	useEffect(() => {
+		if (!walletAddress) {
+			setSocialAccounts({});
+			return;
+		}
+		const addr = walletAddress.toLowerCase();
+		fetch(`/api/social/accounts?address=${addr}`, { cache: 'no-store' })
+			.then((r) => r.json())
+			.then((j) => setSocialAccounts((j?.accounts as SocialAccounts) || {}))
+			.catch(() => setSocialAccounts({}));
+	}, [walletAddress, task.id]);
 
 	// Ensure per-task isolation: reset state when switching to another task
 	useEffect(() => {
 		setStatus(alreadyVerified ? 'verified' : 'idle');
 		setCooldownSec(null);
 		setLoading(false);
+		setGoClicked(false);
 	}, [task.id, alreadyVerified]);
 
 	useEffect(() => {
@@ -51,8 +80,12 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 		if (msg) liveRegionRef.current.textContent = msg;
 	}, [status]);
 
+	const handleGoClick = useCallback(() => {
+		setGoClicked(true);
+	}, []);
+
 	const handleVerify = useCallback(async () => {
-		if (!canVerify) return;
+		if (!canVerify || (hasGoLink && !goClicked)) return;
 		if (status === 'error') { setStatus('idle'); }
 		setCooldownSec(null);
 		setStatus('pending');
@@ -62,40 +95,18 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 			if (res?.completed) {
 				setStatus('verified');
 				onVerified?.(task.id);
-				// Если у таска есть звезда, запускаем эффект полёта звезды к планете недели
-				if (task.star) {
-					try {
-						const btn = document.querySelector('[aria-label="Verify"]') as HTMLElement | null;
-						const anchor = document.querySelector(`[data-week-anchor="${task.week ?? 1}"]`) as HTMLElement | null; // target planet by week
-						if (btn && anchor) {
-							const b = btn.getBoundingClientRect();
-							const a = anchor.getBoundingClientRect();
-							const dot = document.createElement('div');
-							dot.style.position = 'fixed';
-							dot.style.left = `${b.left + b.width / 2}px`;
-							dot.style.top = `${b.top + b.height / 2}px`;
-							dot.style.width = '10px';
-							dot.style.height = '10px';
-							dot.style.borderRadius = '9999px';
-							dot.style.background = 'gold';
-							dot.style.boxShadow = '0 0 12px 4px rgba(255,215,0,.7)';
-							dot.style.zIndex = '2147483646';
-							document.body.appendChild(dot);
-							const anim = dot.animate([
-								{ transform: 'translate(0,0)', offset: 0 },
-								{ transform: `translate(${a.left + a.width/2 - (b.left + b.width/2)}px, ${a.top + a.height/2 - (b.top + b.height/2)}px)` , offset: 1 }
-							], { duration: 900, easing: 'cubic-bezier(.22,.61,.36,1)' });
-							anim.onfinish = () => dot.remove();
-						}
-					} catch {}
-				}
 				try { (await import('canvas-confetti')).default({ particleCount: 40, spread: 48, startVelocity: 28, scalar: .6, origin: { y: .88, x: .85 } }); } catch {}
-				toast.success('Verified ✅', `+${task.xp} XP${task.star ? ' · Core Star' : ''}`);
+				toast.success('Verified ✅', `+${task.xp} XP`);
+			} else if (res?.error === 'social_not_linked') {
+				setStatus('error');
+				toast.info(
+					'Connect account',
+					res.message || 'Link your X or Discord account first.',
+				);
 			} else if (res?.error) {
 				setStatus('error');
 				if (typeof res.retryAfter === 'number' && res.retryAfter > 0){
 					setCooldownSec(res.retryAfter);
-					// простой таймер обратного отсчёта
 					const startedAt = Date.now();
 					const duration = res.retryAfter * 1000;
 					const tick = () => {
@@ -105,7 +116,10 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 					};
 					requestAnimationFrame(tick);
 				}
-				toast.info('Not verified yet', res.retryAfter ? `Try again in ${res.retryAfter}s.` : 'Complete the action and try again.');
+				toast.info(
+					'Not verified yet',
+					res.message || (res.retryAfter ? `Try again in ${res.retryAfter}s.` : 'Complete the action and try again.'),
+				);
 			} else {
 				setStatus('error');
 				toast.info('Not verified yet', 'Complete the action and try again.');
@@ -114,13 +128,22 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 			setStatus('error');
 			toast.error('Verification failed', 'Please try again.');
 		} finally { setLoading(false); }
-	}, [canVerify, onVerified, task.id, task.star, task.xp, walletAddress, status]);
+	}, [canVerify, goClicked, hasGoLink, onVerified, task.id, task.xp, walletAddress, status]);
 
-	const tips = useMemo(() => [
-		'Ensure you used the connected wallet.',
-		'Wait ~10–30s after completing on-chain actions.',
-		'Refresh and try Verify again.',
-	], []);
+	const tips = useMemo(() => {
+		if (isSocial) {
+			return [
+				'Press Go to open the task link.',
+				'Connect the required X or Discord account.',
+				'Complete the action on the platform, then use Verify.',
+			];
+		}
+		return [
+			'Press Go to open the task link first.',
+			'Ensure you used the connected wallet.',
+			'Wait ~10–30s after completing on-chain actions, then Verify.',
+		];
+	}, [isSocial]);
 
 	return (
 		<motion.section
@@ -135,7 +158,6 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 				type: task.type,
 				href: task.href,
 				xp: task.xp,
-				star: task.star,
 				tags: task.tags,
 				brand: task.brand,
 				logo: task.logo,
@@ -144,7 +166,17 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 				category: task.category,
 			}} />
 
-			<RewardSummary xp={task.xp} star={task.star} status={status} odysseyStyle />
+			<RewardSummary xp={task.xp} status={status} odysseyStyle />
+
+			{isSocial ? (
+				<SocialConnectPanel
+					address={walletAddress}
+					accounts={socialAccounts}
+					requiredPlatform={requiredPlatform}
+					onUpdated={setSocialAccounts}
+					compact
+				/>
+			) : null}
 
 			{task.description && (
 				<p className="max-w-[65ch] text-sm leading-relaxed text-[color:var(--odyssey-task-muted)]">
@@ -176,6 +208,8 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 				<TaskActions
 					goHref={task.href}
 					canVerify={canVerify}
+					goClicked={goClicked}
+					onGoClick={handleGoClick}
 					loading={loading}
 					onVerify={handleVerify}
 					taskId={task.id}

@@ -1,9 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { shouldSkipVideoLoader } from "@/lib/socialOAuthClient";
 
 export default function VideoLoader() {
-	const [done, setDone] = useState(false);
+	const [done, setDone] = useState(() =>
+		typeof window !== "undefined" && shouldSkipVideoLoader(),
+	);
 	const [progress, setProgress] = useState(0);
 	const [mounted, setMounted] = useState(false);
 	const [firstVisitMode, setFirstVisitMode] = useState<boolean | null>(null);
@@ -19,6 +22,9 @@ export default function VideoLoader() {
 	const FIRST_LOADER_KEY = "odyssey_loader_seen_v1";
 
 	useEffect(() => { setMounted(true); }, []);
+	useEffect(() => {
+		if (shouldSkipVideoLoader()) setDone(true);
+	}, [mounted]);
 	useEffect(() => {
 		if (!mounted) return;
 		try {

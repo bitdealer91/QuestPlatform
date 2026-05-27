@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readRecent } from "@/lib/ledger";
 import { pipeline } from "@/lib/redis";
+import { getSocialAccounts } from "@/lib/socialAccounts";
 
 export async function GET(req: Request) {
 	const url = new URL(req.url);
@@ -36,31 +37,8 @@ export async function GET(req: Request) {
 		}
 	} catch { /* noop */ }
 
-	// Stars by week (SCARD for user:stars:{address}:{week})
-	const starCmds = Array.from({ length: 8 }, (_, i) => ["SCARD", `user:stars:${address}:${i + 1}`] as (string|number)[]);
-	const starRes = await pipeline(starCmds);
-	const starsByWeek: Record<number, number> = {};
-	if (starRes) {
-		const raw = (starRes as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
-		if (Array.isArray(raw)) {
-			for (let i = 0; i < 8; i++) {
-				const v = raw[i]?.result as unknown;
-				const n = typeof v === 'number' ? v : Number(v || 0) || 0;
-				starsByWeek[i+1] = n;
-			}
-		} else if (raw && Array.isArray(raw.result)) {
-			const bucket = raw.result[0]?.result as unknown;
-			if (Array.isArray(bucket)) {
-				for (let i = 0; i < 8; i++) {
-					const v = bucket[i] as unknown;
-					const n = typeof v === 'number' ? v : Number(v || 0) || 0;
-					starsByWeek[i+1] = n;
-				}
-			}
-		}
-	}
-
 	const ledger = await readRecent(address, 50);
+	const socialAccounts = await getSocialAccounts(address);
 
-	return NextResponse.json({ address, totalXp, verified, starsByWeek, ledger });
+	return NextResponse.json({ address, totalXp, verified, ledger, socialAccounts });
 }

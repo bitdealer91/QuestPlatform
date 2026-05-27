@@ -29,7 +29,9 @@ import {
 	getOdysseyDesktopStageScale,
 	ODYSSEY_STAGE_H,
 	ODYSSEY_STAGE_W,
+	ODYSSEY_HUD_TOP_PCT,
 	ODYSSEY_WEEK_COUNT,
+	ODYSSEY_WEEK_HUD_NUDGE_Y,
 	WEEK_TO_ISLAND,
 	ODYSSEY_WEEK_ISLANDS,
 } from '@/lib/odysseyLayout';
@@ -71,28 +73,6 @@ function MobileIslandLayerImage({
 		objectPosition: layer.objectPosition ?? 'center',
 		filter: glow,
 	};
-
-	if (layer.imageClip) {
-		return (
-			<div className="pointer-events-none overflow-hidden" style={boxStyle}>
-				{/* eslint-disable-next-line @next/next/no-img-element */}
-				<img
-					src={layer.src}
-					alt=""
-					draggable={false}
-					fetchPriority={priority ? 'high' : 'auto'}
-					className="absolute max-w-none"
-					style={{
-						height: layer.imageClip.height,
-						width: layer.imageClip.width,
-						top: layer.imageClip.top,
-						left: layer.imageClip.left,
-						...imgStyle,
-					}}
-				/>
-			</div>
-		);
-	}
 
 	return (
 		// eslint-disable-next-line @next/next/no-img-element
@@ -261,7 +241,8 @@ function StagePlanets({
 							locked={locked}
 							hidePlanetArt
 							hideHud={hideHud}
-							hudNudgeYPx={p.id === 2 ? -40 : 0}
+							hudTopPct={ODYSSEY_HUD_TOP_PCT}
+							hudNudgeYPx={ODYSSEY_WEEK_HUD_NUDGE_Y[p.id as 1 | 2 | 3 | 4] ?? 0}
 							onView={locked ? undefined : (id) => openTasks(id)}
 							onClaim={
 								claimEnabled
@@ -314,7 +295,8 @@ function MobilePlanetHit({
 			locked={locked}
 			hidePlanetArt
 			hideHud={hideHud}
-			hudNudgeYPx={p.id === 2 ? -40 : 0}
+			hudTopPct={ODYSSEY_HUD_TOP_PCT}
+			hudNudgeYPx={ODYSSEY_WEEK_HUD_NUDGE_Y[p.id as 1 | 2 | 3 | 4] ?? 0}
 			onView={locked ? undefined : (id) => openTasks(id)}
 			onClaim={
 				claimEnabled
@@ -364,7 +346,7 @@ export function PlanetsRail({
 	const unlockedCountFromEnv = Number.isFinite(UNLOCK_ENV)
 		? Math.max(1, Math.min(PLANETS.length, Math.floor(UNLOCK_ENV)))
 		: 1;
-	const unlockedCount = Math.max(ODYSSEY_WEEK_COUNT, unlockedCountFromEnv);
+	const unlockedCount = Math.min(ODYSSEY_WEEK_COUNT, unlockedCountFromEnv);
 
 	const handleWallet = useCallback(() => {
 		if (!ctx?.appKit) {

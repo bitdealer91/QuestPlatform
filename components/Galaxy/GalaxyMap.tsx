@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { PlanetsRail } from '@/components/Galaxy/PlanetsRail';
 import TaskDrawer from '@/components/Galaxy/TaskDrawer';
+import { ELIGIBILITY_UNLOCK_CAP_PER_WEEK } from '@/lib/eligibilityPercent';
 import { useAccount } from 'wagmi';
 
 export default function GalaxyMap(){
@@ -21,7 +22,7 @@ export default function GalaxyMap(){
 			json.weeks.forEach((w, idx) => {
 				const pct = Number(w?.unlockedPercentage || 0);
 				if (Number.isFinite(pct)) {
-					map[idx + 1] = pct >= 10;
+					map[idx + 1] = pct >= ELIGIBILITY_UNLOCK_CAP_PER_WEEK;
 				}
 			});
 			setMandatoryDoneByWeek(map);

@@ -7,6 +7,7 @@ import { writeAttempt, writeFailure, writeSuccess } from "@/lib/ledger";
 import { pipeline } from "@/lib/redis";
 import { dotGet } from "@/lib/jsonPath";
 import { createPublicClient, http, parseAbi } from "viem";
+import { isSocialTask, verifySocialTask } from "@/lib/socialVerify";
 
 export const runtime = "nodejs";
 
@@ -65,7 +66,7 @@ async function fetchWithRetries(url: string, init: RequestInit = {}, retries = 2
 
 // (W3US path uses postJson with timeout)
 
-async function persistSuccess(address: string, taskId: string, xp: number, starWeek?: number){
+async function persistSuccess(address: string, taskId: string, xp: number){
   // Check if task already verified to avoid double XP
   let already = false;
   try {
@@ -87,9 +88,6 @@ async function persistSuccess(address: string, taskId: string, xp: number, starW
   // Only grant XP once
   if (!already && xp > 0) {
     cmds.push(["INCRBY", `user:xp:${address}`, String(xp)]);
-  }
-  if (typeof starWeek === 'number' && starWeek > 0 && starWeek <= 8){
-    cmds.push(["SADD", `user:stars:${address}:${starWeek}`, taskId]);
   }
   if (cmds.length > 0) await pipeline(cmds);
 }
@@ -153,6 +151,28 @@ export async function POST(req: Request){
         vp = (task as { verify_params?: Record<string, unknown> } | null)?.verify_params || {} as Record<string, unknown>;
       } catch {}
 
+      // Social tasks (onchain / API paths unchanged)
+      if (isSocialTask(task)) {
+        if (!addr || !taskId) {
+          return NextResponse.json({ error: 'bad_request' }, { status: 400 });
+        }
+        const social = await verifySocialTask({
+          address: addr,
+          taskId,
+          task: task as Record<string, unknown>,
+          persistSuccess,
+          wantDebug,
+        });
+        if (!social.completed) {
+          const status = social.error === 'social_not_linked' ? 400 : 429;
+          if (addr && taskId && social.error === 'not_completed') {
+            await setCache(cooldownKey(addr, taskId), true, 60);
+          }
+          return NextResponse.json(social, { status });
+        }
+        return NextResponse.json(social);
+      }
+
       // Decide verification path: explicit onchain or API/indexer
       const verifyMethod = String(((task as { verify_method?: unknown } | null)?.verify_method || '') as string).trim();
       const wantsOnchain = verifyMethod === 'onchain' || String((vp as Record<string, unknown>)['check'] || '').trim() === 'call';
@@ -211,11 +231,8 @@ export async function POST(req: Request){
             try {
               const xpValue = (task as { xp?: unknown } | null)?.xp;
               const xp = typeof xpValue === 'number' ? xpValue : 0;
-              const weekVal = (task as { week?: unknown } | null)?.week;
-              const starFlag = (task as { star?: unknown } | null)?.star;
-              const starWeek = starFlag === true && typeof weekVal === 'number' ? weekVal : undefined;
               writeSuccess(addr, taskId).catch(() => {});
-              persistSuccess(addr, taskId, xp, starWeek).catch(() => {});
+              persistSuccess(addr, taskId, xp).catch(() => {});
             } catch {}
           }
 
@@ -324,11 +341,8 @@ export async function POST(req: Request){
             try {
               const xpValue = (task as { xp?: unknown } | null)?.xp;
               const xp = typeof xpValue === 'number' ? xpValue : 0;
-              const weekVal = (task as { week?: unknown } | null)?.week;
-              const starFlag = (task as { star?: unknown } | null)?.star;
-              const starWeek = starFlag === true && typeof weekVal === 'number' ? weekVal : undefined;
               writeSuccess(addr, taskId).catch(() => {});
-              persistSuccess(addr, taskId, xp, starWeek).catch(() => {});
+              persistSuccess(addr, taskId, xp).catch(() => {});
             } catch {}
           }
           const payload = { ...obj, completed } as any;
@@ -416,11 +430,8 @@ export async function POST(req: Request){
             try {
               const xpValue = (task as { xp?: unknown } | null)?.xp;
               const xp = typeof xpValue === 'number' ? xpValue : 0;
-              const weekVal = (task as { week?: unknown } | null)?.week;
-              const starFlag = (task as { star?: unknown } | null)?.star;
-              const starWeek = starFlag === true && typeof weekVal === 'number' ? weekVal : undefined;
               writeSuccess(addr, taskId).catch(() => {});
-              persistSuccess(addr, taskId, xp, starWeek).catch(() => {});
+              persistSuccess(addr, taskId, xp).catch(() => {});
             } catch {}
           }
 
@@ -454,11 +465,8 @@ export async function POST(req: Request){
           const task = await findTask(taskId);
           const xpValue = (task as { xp?: unknown } | null)?.xp;
           const xp = typeof xpValue === 'number' ? xpValue : 0;
-          const weekVal = (task as { week?: unknown } | null)?.week;
-          const starFlag = (task as { star?: unknown } | null)?.star;
-          const starWeek = starFlag === true && typeof weekVal === 'number' ? weekVal : undefined;
           writeSuccess(addr, taskId).catch(() => {});
-          persistSuccess(addr, taskId, xp, starWeek).catch(() => {});
+          persistSuccess(addr, taskId, xp).catch(() => {});
         } catch {}
       }
 

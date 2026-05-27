@@ -1,6 +1,6 @@
 {
   "programStart": "2026-04-07T00:00:00Z",
-  "weeks": 8,
+  "weeks": 4,
   "tasks": [
     {
       "week": 1,
@@ -11,7 +11,6 @@
       "type": "action",
       "href": "https://playonjoy.com/game",
       "xp": 20,
-      "star": false,
       "mandatory": false,
       "brand": "JOY",
       "category": "Game",
@@ -24,6 +23,53 @@
       },
       "logo": "/brands/variance.png",
       "brand_color": "#78A3C8"
+    },
+    {
+      "week": 1,
+      "day": 2,
+      "id": "social-x-follow",
+      "title": "Follow Somnia on X",
+      "description": "Follow @Somnia_Network on X. Connect your X account, complete the follow, then verify.",
+      "type": "social",
+      "href": "https://x.com/Somnia_Network",
+      "xp": 15,
+      "mandatory": false,
+      "category": "Social",
+      "verify_method": "social",
+      "verify_params": {
+        "social_action": "twitter_follow",
+        "target_handle": "Somnia_Network"
+      }
+    },
+    {
+      "week": 1,
+      "day": 3,
+      "id": "social-x-like",
+      "title": "Like our post on X",
+      "description": "Like the pinned Somnia post on X, then verify.",
+      "type": "social",
+      "href": "https://x.com/Somnia_Network",
+      "xp": 10,
+      "category": "Social",
+      "verify_method": "social",
+      "verify_params": {
+        "social_action": "twitter_like"
+      }
+    },
+    {
+      "week": 1,
+      "day": 4,
+      "id": "social-discord-join",
+      "title": "Join Somnia Discord",
+      "description": "Join the Somnia Discord server and connect your Discord username.",
+      "type": "social",
+      "href": "https://discord.com/invite/somnia",
+      "xp": 15,
+      "category": "Social",
+      "verify_method": "social",
+      "verify_params": {
+        "social_action": "discord_join"
+      }
     }
   ]
 }

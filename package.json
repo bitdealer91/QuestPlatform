@@ -15,9 +15,6 @@
     "lint": "next lint",
     "hh:compile": "hardhat compile",
     "hh:deploy": "hardhat run scripts/deploy-keys.ts --network somnia",
-    "hh:deploy-stars": "hardhat run scripts/deploy-stars.ts --network somnia",
-    "hh:set-stars-signer": "hardhat run scripts/set-stars-signer.ts --network somnia",
-    "hh:deploy-odyssey-stars": "hardhat run scripts/deploy-odyssey-stars.ts --network somnia",
     "test": "vitest run",
     "test:ui": "vitest",
     "playwright": "playwright test"

@@ -1,6 +1,8 @@
 'use client';
 import Modal from '@/components/ui/Modal';
 import { useEffect, useState } from 'react';
+import SocialConnectPanel from '@/components/Galaxy/SocialConnectPanel';
+import type { SocialAccounts } from '@/lib/social';
 
 type LedgerEvent = { ts: number; type: 'attempt'|'success'|'failure'; taskId: string; detail?: string };
 
@@ -9,6 +11,7 @@ type ProfileDto = {
 	totalXp: number;
 	verified: string[];
 	ledger?: LedgerEvent[];
+	socialAccounts?: SocialAccounts;
 };
 
 /** Персонаж Odyssey из макета (тот же ролик, что на квестах) — замена старого статичного `mascot.png`. */
@@ -53,6 +56,14 @@ export default function ProfileDrawer({ open, onClose, address }: { open: boolea
 						<div className="mt-0.5 font-mono text-sm text-white/90">{short}</div>
 					</div>
 				</div>
+
+				<SocialConnectPanel
+					address={address}
+					accounts={profile?.socialAccounts ?? {}}
+					onUpdated={(accounts) =>
+						setProfile((p) => (p ? { ...p, socialAccounts: accounts } : p))
+					}
+				/>
 
 				<div className="grid grid-cols-2 gap-3">
 					<div className="rounded-[var(--radius-lg)] border border-white/10 bg-[color:var(--odyssey-task-surface)] p-3">

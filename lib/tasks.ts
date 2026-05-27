@@ -6,7 +6,7 @@ export type Task = {
 	title: string;
 	desc?: string;
 	href?: string;
-	reward: { xp: number; star?: boolean };
+	reward: { xp: number };
 	status: "todo" | "pending" | "done";
 	// Mandatory flag for UI highlighting
 	mandatory?: boolean;
@@ -20,15 +20,14 @@ export type Task = {
 	// Категория
 	category?: string;
 	// Верификация
-	verify_method?: "onchain" | "api";
+	verify_method?: "onchain" | "api" | "social";
 	verify_params?: Record<string, unknown>;
 };
 
 export type WeekSummary = {
-	id: number; // 1..8
+	id: number; // 1..4
 	title: string;
 	percent: number; // 0..100
-	stars: 0 | 1 | 2 | 3;
 	status: "locked" | "available" | "completed";
 };
 
@@ -38,7 +37,7 @@ export const TaskSchema = z.object({
 	title: z.string(),
 	desc: z.string().optional(),
 	href: z.string().url().optional(),
-	reward: z.object({ xp: z.number().int().min(0), star: z.boolean().optional() }),
+	reward: z.object({ xp: z.number().int().min(0) }),
 	status: z.union([z.literal('todo'), z.literal('pending'), z.literal('done')]),
 	mandatory: z.boolean().optional(),
 	// Брендинг
@@ -51,7 +50,7 @@ export const TaskSchema = z.object({
 	// Категория
 	category: z.string().optional(),
 	// Верификация
-	verify_method: z.union([z.literal('onchain'), z.literal('api')]).optional(),
+	verify_method: z.union([z.literal('onchain'), z.literal('api'), z.literal('social')]).optional(),
 	verify_params: z.record(z.unknown()).optional(),
 });
 

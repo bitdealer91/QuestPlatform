@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const TaskZ = z.object({
-  week: z.number().int().min(1).max(8),
+  week: z.number().int().min(1).max(4),
   day: z.number().int().min(1).max(7),
   id: z.string().min(2).max(40),
   title: z.string().min(3).max(120),
@@ -9,12 +9,11 @@ export const TaskZ = z.object({
   type: z.enum(["action","social","info"]),
   href: z.string().url().optional(),
   xp: z.number().int().min(0).default(10),
-  star: z.boolean().default(false),
   // support mandatory flag (and tolerate legacy key "mandatory task")
   mandatory: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
   category: z.string().optional(),
-  verify_method: z.union([z.literal('onchain'), z.literal('api')]).optional(),
+  verify_method: z.union([z.literal('onchain'), z.literal('api'), z.literal('social')]).optional(),
   verify_params: z.record(z.unknown()).optional(),
   brand: z.string().optional(),
   logo: z.string().optional(),
@@ -24,7 +23,7 @@ export const TaskZ = z.object({
 
 export const TaskSpecZ = z.object({
   programStart: z.string().datetime().optional(),
-  weeks: z.number().int().min(1).max(8).optional(),
+  weeks: z.number().int().min(1).max(4).optional(),
   tasks: z.array(TaskZ)
 });
 

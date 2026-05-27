@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { loadTasks } from '@/lib/store';
 import { pipeline } from '@/lib/redis';
+import { ELIGIBILITY_UNLOCK_CAP_PER_WEEK } from '@/lib/eligibilityPercent';
+import { isValidProgramWeek, resolveProgramWeeks } from '@/lib/weeks';
 
 export const runtime = 'nodejs';
 
@@ -13,7 +15,7 @@ export async function GET(req: Request){
     const address = addressRaw.toLowerCase();
     const week = Number(url.searchParams.get('week') || '0');
     const debug = /^(1|true)$/i.test(String(url.searchParams.get('debug') || ''));
-    if (!isLowercaseHexAddress(address) || !Number.isInteger(week) || week < 1) {
+    if (!isLowercaseHexAddress(address) || !isValidProgramWeek(week)) {
       return NextResponse.json({ eligible: false, minted: false, reason: 'Invalid params' }, { status: 400 });
     }
 
@@ -34,7 +36,7 @@ export async function GET(req: Request){
         const weeks = Array.isArray(j?.weeks) ? j.weeks : [];
         const slot = weeks[week - 1] || { unlockedPercentage: 0 };
         const pct = Number(slot?.unlockedPercentage || 0);
-        const eligible = pct >= 10; // 10% == all mandatory done for week
+        const eligible = pct >= ELIGIBILITY_UNLOCK_CAP_PER_WEEK; // full week unlock == all mandatory done
         const payload: Record<string, unknown> = { eligible, minted: false, reason: eligible ? undefined : 'Finish mandatory tasks' };
         if (debug) payload.debug = { source: 'prod', pct, weeksLen: weeks.length };
         return NextResponse.json(payload);
@@ -44,7 +46,7 @@ export async function GET(req: Request){
     }
 
     const spec = await loadTasks();
-    const totalWeeks = Math.max(1, Number(spec.weeks || 8));
+    const totalWeeks = resolveProgramWeeks(spec.weeks);
     const tasks = (spec.tasks || []).filter(t => (t as any).week === week);
     const mandatoryIds = tasks.filter(t => (t as any).mandatory === true || (t as any)["mandatory task"] === true).map(t => String((t as any).id));
 

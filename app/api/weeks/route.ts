@@ -7,7 +7,6 @@ export async function GET(){
         id: w.id,
         title: w.title,
         percent: 0,
-        stars: 0 as 0|1|2|3,
         status: w.id === 1 ? "available" : "locked",
     }));
     return NextResponse.json(transformed, { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=120" } });

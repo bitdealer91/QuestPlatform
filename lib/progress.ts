@@ -14,7 +14,6 @@ export interface UserProgress {
 
 export interface QuestReward {
   xp: number;
-  star?: boolean;
   stt?: number;
 }
 
