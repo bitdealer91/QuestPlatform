@@ -110,7 +110,7 @@ const MOCK_PARTNER_WALLETS: Array<{ address: string; note: string; profile: Mock
     profile: profile(makeWeeksFromExplicit([5, 15, 20, 5]), MOCK_DEFAULT_CURRENT_WEEK),
   },
   {
-    address: "0x8b3c2d1e4f5a678901234567890abcdef12345678",
+    address: "0x8b3c2d1e4f5a678901234567890abcdef1234567",
     note: "35% — weeks 20 + 15 + 0 + 0",
     profile: profile(splitByWeeks(35), MOCK_DEFAULT_CURRENT_WEEK),
   },

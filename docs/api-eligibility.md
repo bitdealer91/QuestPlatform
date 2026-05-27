@@ -58,11 +58,14 @@ Response includes:
 
 Use for partner demos / local QA without Redis. Always returns `"mock": true`.
 
+**Default `currentWeek` is `4`** so all four week slots can show progress over the full program. Optional **`?currentWeek=1..4`** simulates an earlier timeline (later slots zeroed, like production). The live percent API still uses `programStart` from `tasks.json`.
+
 | Query | Meaning |
 |--------|---------|
-| `describe=1` | Lists curated demo wallets + `programWeeks`, `capPerWeek`, `maxProgramUnlock`. |
-| `address=0x…` | Valid checksummable 0x address; resolves to fixture or pseudo random. |
-| `preset=<name>` | Overrides body (see presets below). |
+| `describe=1` | Lists demo wallets + `defaultCurrentWeek`, `capPerWeek`, `maxProgramUnlock`. |
+| `address=0x…` | Valid 0x address; fixture or pseudo-random total. |
+| `currentWeek=1..4` | Timeline override (default **4**). |
+| `preset=<name>` | Fixed scenario (see presets). |
 
 ### Describe
 
@@ -82,9 +85,9 @@ Replace `<BASE>` with your origin (e.g. `http://localhost:3000`).
 
 | Preset | `weeks` array | Total | Example |
 |--------|----------------|-------|---------|
-| `clique-225` **or** `sample-225` | `[5,15,20,5]` | **45%** | `<BASE>/api/mock/eligibility/percent?address=0x0000000000000000000000000000000000000001&preset=clique-225` |
-| `clique-0` | all `0` | **0%** | `…&preset=clique-0` |
-| `clique-50` | split fill | **50%** | `…&preset=clique-50` |
+| `clique-225` **or** `sample-225` | `[5,15,20,5]`, `currentWeek` **4** | **45%** | `<BASE>/api/mock/eligibility/percent?address=0x0000000000000000000000000000000000000001&preset=clique-225` |
+| `clique-0` | all `0`, `currentWeek` **4** | **0%** | `…&preset=clique-0` |
+| `clique-50` | split fill, `currentWeek` **4** | **50%** | `…&preset=clique-50` |
 | `clique-80` **or** `full` | `[20,20,20,20]` | **80%** | `…&preset=full` |
 
 `address` can be any valid hex when using `preset` (required by the route).
@@ -97,7 +100,7 @@ Replace `<BASE>` with your origin (e.g. `http://localhost:3000`).
 |---------|----------------|
 | `0x4a7f2e9b1c8d3f6a5e0b4c9d2e7f1a8b3c6d5e0` | 0% |
 | `0x7d3a9e2f1b4c8a5061728394fedcba9876543210` | 45% — `5/15/20/5` |
-| `0x8b3c2d1e4f5a678901234567890abcdef12345678` | 35% |
+| `0x8b3c2d1e4f5a678901234567890abcdef1234567` | 35% |
 | `0x6e1c4a2d9b705f831e2c5d8a7f903b4e1c6d2a8f` | 50% |
 | `0xc9e1f2a3b4d5061728394a5b6c7d8e9f0a1b2c3d` | 80% |
 | `0x51f0e9d8c7b6a594837261504132231415161718` | 80% (program max) |
