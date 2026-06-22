@@ -37,6 +37,19 @@ body{
 	color: var(--text);
 }
 
+/* Hide map/UI until VideoLoader finishes (class set by inline script + VideoLoader). */
+html.odyssey-loading .odyssey-app-shell {
+	visibility: hidden;
+}
+html.odyssey-loading::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	z-index: 2147483646;
+	background: #0b0a14;
+	pointer-events: none;
+}
+
 .bg-galaxy{
 	background-image: url('/assets/background.png');
 	background-size: cover;

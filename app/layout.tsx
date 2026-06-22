@@ -7,9 +7,9 @@ import VhFixer from "@/components/system/VhFixer";
 import { preloadCache } from '@/lib/store';
 import dynamic from 'next/dynamic';
 import NetworkGuard from '@/components/system/NetworkGuard';
+import VideoLoader from '@/components/VideoLoader';
 
 const AppKitProvider = dynamic(() => import('@/lib/reown').then(m => m.AppKitProvider), { ssr: false });
-const VideoLoader = dynamic(() => import('@/components/VideoLoader'), { ssr: false });
 
 // Предзагружаем кеш тасков
 preloadCache();
@@ -34,12 +34,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=location.pathname,s=sessionStorage.getItem('odyssey_oauth_popup_v1'),q=location.search;if(p.indexOf('/social/oauth-done')===0||s==='1'||q.indexOf('social_connected=')!==-1||q.indexOf('social_error=')!==-1)return;document.documentElement.classList.add('odyssey-loading');}catch(e){document.documentElement.classList.add('odyssey-loading');}})();`,
+          }}
+        />
+      </head>
       <body className={`${inter.className} ${mooli.variable}`}>
         <VhFixer />
         <AppKitProvider>
           <VideoLoader />
-          <NetworkGuard />
-          {children}
+          <div className="odyssey-app-shell">
+            <NetworkGuard />
+            {children}
+          </div>
           <ToastHost />
         </AppKitProvider>
       </body>
