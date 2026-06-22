@@ -8,6 +8,7 @@ import { preloadCache } from '@/lib/store';
 import dynamic from 'next/dynamic';
 import NetworkGuard from '@/components/system/NetworkGuard';
 import VideoLoader from '@/components/VideoLoader';
+import SocialOAuthBridge from '@/components/SocialOAuthBridge';
 import { LOADER_BOOT_SCRIPT } from '@/lib/loaderBootScript';
 
 const AppKitProvider = dynamic(() => import('@/lib/reown').then(m => m.AppKitProvider), { ssr: false });
@@ -79,6 +80,7 @@ export default function RootLayout({
         <VhFixer />
         <AppKitProvider>
           <VideoLoader />
+          <SocialOAuthBridge />
           <div className="odyssey-app-shell">
             <NetworkGuard />
             {children}

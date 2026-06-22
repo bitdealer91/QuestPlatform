@@ -16,6 +16,7 @@ import {
 	platformForAction,
 	platformLabel,
 } from '@/lib/social';
+import { ODYSSEY_SOCIAL_OAUTH_EVENT } from '@/lib/socialOAuthClient';
 
 export type TaskDetailProps = {
 	task: {
@@ -80,6 +81,24 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 			.then((j) => setSocialAccounts((j?.accounts as SocialAccounts) || {}))
 			.catch(() => setSocialAccounts({}));
 	}, [walletAddress, task.id]);
+
+	const reloadSocialAccounts = useCallback(() => {
+		if (!walletAddress) {
+			setSocialAccounts({});
+			return;
+		}
+		const addr = walletAddress.toLowerCase();
+		fetch(`/api/social/accounts?address=${addr}`, { cache: 'no-store' })
+			.then((r) => r.json())
+			.then((j) => setSocialAccounts((j?.accounts as SocialAccounts) || {}))
+			.catch(() => setSocialAccounts({}));
+	}, [walletAddress]);
+
+	useEffect(() => {
+		const onOAuthDone = () => reloadSocialAccounts();
+		window.addEventListener(ODYSSEY_SOCIAL_OAUTH_EVENT, onOAuthDone);
+		return () => window.removeEventListener(ODYSSEY_SOCIAL_OAUTH_EVENT, onOAuthDone);
+	}, [reloadSocialAccounts]);
 
 	useEffect(() => {
 		fetch('/api/social/config', { cache: 'no-store' })

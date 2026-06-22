@@ -6,8 +6,11 @@ import type { SocialAccounts, SocialPlatform } from '@/lib/social';
 import { toast } from '@/components/ui/Toast';
 import {
 	clearOAuthPopupFlag,
-	isSocialOAuthMessage,
+	ODYSSEY_SOCIAL_OAUTH_EVENT,
 	openSocialOAuthPopup,
+	openSocialOAuthTab,
+	usesOAuthTab,
+	type SocialOAuthMessage,
 } from '@/lib/socialOAuthClient';
 
 type Props = {
@@ -33,40 +36,49 @@ export default function SocialConnectPanel({
 }: Props) {
 	const [loading, setLoading] = useState(false);
 	const [oauth, setOauth] = useState<OAuthAvailability>({ twitter: false, discord: false });
-	const popupPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const childPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+	const normalizedAddress = address?.toLowerCase();
 
 	const refreshAccounts = useCallback(() => {
-		if (!address) return;
-		fetch(`/api/social/accounts?address=${address}`, { cache: 'no-store' })
+		if (!normalizedAddress) return;
+		fetch(`/api/social/accounts?address=${normalizedAddress}`, { cache: 'no-store' })
 			.then((r) => r.json())
 			.then((j) => onUpdated((j?.accounts as SocialAccounts) || {}))
 			.catch(() => {});
-	}, [address, onUpdated]);
+	}, [normalizedAddress, onUpdated]);
 
 	const handleOAuthSuccess = useCallback(
-		(platform: SocialPlatform) => {
+		(_platform: SocialPlatform) => {
 			clearOAuthPopupFlag();
-			toast.success('Account linked', `${platformLabel(platform)} connected.`);
 			refreshAccounts();
 		},
 		[refreshAccounts],
 	);
 
-	const handleOAuthError = useCallback((error: string) => {
+	const handleOAuthError = useCallback((_error: string) => {
 		clearOAuthPopupFlag();
-		const cancelled = error === 'access_denied' || error === 'consent_denied';
-		toast.error(
-			cancelled ? 'Authorization cancelled' : 'Could not connect',
-			cancelled ? 'You can try again when ready.' : 'Authorization failed. Please try again.',
-		);
 	}, []);
 
-	const clearPopupPoll = useCallback(() => {
-		if (popupPollRef.current) {
-			clearInterval(popupPollRef.current);
-			popupPollRef.current = null;
+	const clearChildPoll = useCallback(() => {
+		if (childPollRef.current) {
+			clearInterval(childPollRef.current);
+			childPollRef.current = null;
 		}
 	}, []);
+
+	const watchChildClose = useCallback(
+		(child: Window) => {
+			clearChildPoll();
+			childPollRef.current = setInterval(() => {
+				if (!child.closed) return;
+				clearChildPoll();
+				clearOAuthPopupFlag();
+				refreshAccounts();
+			}, 500);
+		},
+		[clearChildPoll, refreshAccounts],
+	);
 
 	useEffect(() => {
 		fetch('/api/social/config', { cache: 'no-store' })
@@ -75,7 +87,7 @@ export default function SocialConnectPanel({
 			.catch(() => setOauth({ twitter: false, discord: false }));
 	}, []);
 
-	// Full-page fallback when popup is blocked (redirect lands on /?social_connected=…)
+	// Full-page fallback when tab/popup blocked
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
 		const params = new URLSearchParams(window.location.search);
@@ -95,24 +107,23 @@ export default function SocialConnectPanel({
 		}
 	}, [handleOAuthSuccess, handleOAuthError]);
 
-	// Popup OAuth: opener receives result without reloading this page
 	useEffect(() => {
-		const onMessage = (ev: MessageEvent) => {
-			if (ev.origin !== window.location.origin) return;
-			if (!isSocialOAuthMessage(ev.data)) return;
-			clearPopupPoll();
-			if (ev.data.ok) handleOAuthSuccess(ev.data.platform);
-			else handleOAuthError(ev.data.error);
+		const onOAuthDone = (ev: Event) => {
+			const payload = (ev as CustomEvent<SocialOAuthMessage>).detail;
+			if (!payload) return;
+			clearChildPoll();
+			if (payload.ok) handleOAuthSuccess(payload.platform);
+			else handleOAuthError(payload.error);
 		};
-		window.addEventListener('message', onMessage);
-		return () => window.removeEventListener('message', onMessage);
-	}, [handleOAuthSuccess, handleOAuthError, clearPopupPoll]);
+		window.addEventListener(ODYSSEY_SOCIAL_OAUTH_EVENT, onOAuthDone);
+		return () => window.removeEventListener(ODYSSEY_SOCIAL_OAUTH_EVENT, onOAuthDone);
+	}, [handleOAuthSuccess, handleOAuthError, clearChildPoll]);
 
-	useEffect(() => () => clearPopupPoll(), [clearPopupPoll]);
+	useEffect(() => () => clearChildPoll(), [clearChildPoll]);
 
 	const startOAuth = useCallback(
 		(platform: SocialPlatform) => {
-			if (!address) {
+			if (!normalizedAddress) {
 				toast.info('Connect wallet', 'Link your wallet first.');
 				return;
 			}
@@ -120,32 +131,38 @@ export default function SocialConnectPanel({
 				toast.error('Unavailable', `${platformLabel(platform)} login is not configured on this environment.`);
 				return;
 			}
-			const url = `/api/social/oauth/${platform}?address=${encodeURIComponent(address)}`;
+			const url = `/api/social/oauth/${platform}?address=${encodeURIComponent(normalizedAddress)}`;
+
+			if (usesOAuthTab(platform)) {
+				const tab = openSocialOAuthTab(url);
+				if (!tab) {
+					window.location.href = url;
+					return;
+				}
+				watchChildClose(tab);
+				return;
+			}
+
 			const popup = openSocialOAuthPopup(url);
 			if (!popup) {
 				clearOAuthPopupFlag();
 				window.location.href = url;
 				return;
 			}
-			clearPopupPoll();
-			popupPollRef.current = setInterval(() => {
-				if (!popup.closed) return;
-				clearPopupPoll();
-				clearOAuthPopupFlag();
-			}, 400);
+			watchChildClose(popup);
 		},
-		[address, oauth, clearPopupPoll],
+		[normalizedAddress, oauth, watchChildClose],
 	);
 
 	const disconnect = useCallback(
 		async (platform: SocialPlatform) => {
-			if (!address) return;
+			if (!normalizedAddress) return;
 			setLoading(true);
 			try {
 				const res = await fetch('/api/social/connect', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ address, platform, disconnect: true }),
+					body: JSON.stringify({ address: normalizedAddress, platform, disconnect: true }),
 				});
 				const json = await res.json().catch(() => null);
 				if (!res.ok || !json?.accounts) {
@@ -158,7 +175,7 @@ export default function SocialConnectPanel({
 				setLoading(false);
 			}
 		},
-		[address, onUpdated],
+		[normalizedAddress, onUpdated],
 	);
 
 	const platforms: SocialPlatform[] =
@@ -204,7 +221,7 @@ export default function SocialConnectPanel({
 							) : (
 								<button
 									type="button"
-									disabled={loading || !address || !oauthReady}
+									disabled={loading || !normalizedAddress || !oauthReady}
 									onClick={() => startOAuth(platform)}
 									className="h-8 rounded-full border border-[#78a3c8] px-3 text-xs text-[#78a3c8] disabled:opacity-40"
 									title={oauthReady ? undefined : 'OAuth credentials not configured'}

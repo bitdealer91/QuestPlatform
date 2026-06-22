@@ -1,13 +1,20 @@
 import type { SocialPlatform } from '@/lib/social';
 
 export const SOCIAL_OAUTH_MESSAGE = 'somnia-social-oauth' as const;
+export const SOCIAL_OAUTH_CHANNEL = 'somnia-social-oauth-channel';
+export const ODYSSEY_SOCIAL_OAUTH_EVENT = 'odyssey:social-oauth-done';
 
-/** Set on opener before popup OAuth; VideoLoader skips while present. */
+/** OAuth child window/tab open; VideoLoader skips while present (popup only). */
 export const OAUTH_POPUP_FLAG = 'odyssey_oauth_popup_v1';
 
 export type SocialOAuthMessage =
 	| { type: typeof SOCIAL_OAUTH_MESSAGE; ok: true; platform: SocialPlatform }
 	| { type: typeof SOCIAL_OAUTH_MESSAGE; ok: false; error: string };
+
+/** X opens in a new tab (better UX than narrow popup). Discord keeps popup. */
+export function usesOAuthTab(platform: SocialPlatform): boolean {
+	return platform === 'twitter';
+}
 
 export function isSocialOAuthMessage(data: unknown): data is SocialOAuthMessage {
 	if (!data || typeof data !== 'object') return false;
@@ -37,6 +44,55 @@ export function openSocialOAuthPopup(url: string): Window | null {
 		/* noop */
 	}
 	return window.open(url, 'somnia_social_oauth', features);
+}
+
+/** New tab — keep opener for postMessage (no noopener). */
+export function openSocialOAuthTab(url: string): Window | null {
+	return window.open(url, '_blank');
+}
+
+export function broadcastOAuthResult(payload: SocialOAuthMessage): void {
+	try {
+		const ch = new BroadcastChannel(SOCIAL_OAUTH_CHANNEL);
+		ch.postMessage(payload);
+		ch.close();
+	} catch {
+		/* noop */
+	}
+}
+
+export function deliverOAuthResult(payload: SocialOAuthMessage): void {
+	broadcastOAuthResult(payload);
+	if (typeof window === 'undefined') return;
+	if (window.opener && !window.opener.closed) {
+		try {
+			window.opener.postMessage(payload, window.location.origin);
+		} catch {
+			/* noop */
+		}
+	}
+}
+
+export function subscribeOAuthResults(
+	onMessage: (payload: SocialOAuthMessage) => void,
+): () => void {
+	try {
+		const ch = new BroadcastChannel(SOCIAL_OAUTH_CHANNEL);
+		ch.onmessage = (ev: MessageEvent) => {
+			if (isSocialOAuthMessage(ev.data)) onMessage(ev.data);
+		};
+		return () => ch.close();
+	} catch {
+		return () => {};
+	}
+}
+
+export function dispatchOAuthDone(payload: SocialOAuthMessage): void {
+	try {
+		window.dispatchEvent(new CustomEvent(ODYSSEY_SOCIAL_OAUTH_EVENT, { detail: payload }));
+	} catch {
+		/* noop */
+	}
 }
 
 export function clearOAuthPopupFlag(): void {

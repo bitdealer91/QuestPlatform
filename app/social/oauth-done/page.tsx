@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import {
+	deliverOAuthResult,
 	SOCIAL_OAUTH_MESSAGE,
 	type SocialOAuthMessage,
 } from '@/lib/socialOAuthClient';
@@ -23,19 +24,27 @@ export default function SocialOAuthDonePage() {
 			: { type: SOCIAL_OAUTH_MESSAGE, ok: false, error: error || 'oauth_failed' };
 
 		if (window.opener && !window.opener.closed) {
+			deliverOAuthResult(payload);
 			try {
-				window.opener.postMessage(payload, window.location.origin);
+				window.close();
 			} catch {
 				/* noop */
 			}
-			window.close();
 			return;
 		}
 
-		const root = new URL('/', window.location.origin);
-		if (payload.ok) root.searchParams.set('social_connected', payload.platform);
-		else root.searchParams.set('social_error', payload.error);
-		window.location.replace(root.toString());
+		deliverOAuthResult(payload);
+		try {
+			window.close();
+		} catch {
+			/* noop */
+		}
+		if (!window.closed) {
+			const root = new URL('/', window.location.origin);
+			if (payload.ok) root.searchParams.set('social_connected', payload.platform);
+			else root.searchParams.set('social_error', payload.error);
+			window.location.replace(root.toString());
+		}
 	}, []);
 
 	return (
