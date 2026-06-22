@@ -44,7 +44,7 @@ function notify(payload: SocialOAuthMessage): void {
 	toast.error(title, body);
 }
 
-/** Relays oauth-done (tab/popup) → main page via BroadcastChannel + postMessage. */
+/** Relays oauth-done popup → main page via BroadcastChannel + postMessage. */
 export default function SocialOAuthBridge() {
 	const handledRef = useRef('');
 

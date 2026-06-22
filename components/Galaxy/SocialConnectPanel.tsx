@@ -8,8 +8,6 @@ import {
 	clearOAuthPopupFlag,
 	ODYSSEY_SOCIAL_OAUTH_EVENT,
 	openSocialOAuthPopup,
-	openSocialOAuthTab,
-	usesOAuthTab,
 	type SocialOAuthMessage,
 } from '@/lib/socialOAuthClient';
 
@@ -52,7 +50,7 @@ export default function SocialConnectPanel({
 		(_platform: SocialPlatform) => {
 			clearOAuthPopupFlag();
 			refreshAccounts();
-			// Redis write + wallet reconnect can lag slightly after OAuth tab closes.
+			// Redis write can lag slightly after OAuth popup closes.
 			let tries = 0;
 			const id = setInterval(() => {
 				tries += 1;
@@ -94,7 +92,7 @@ export default function SocialConnectPanel({
 			.catch(() => setOauth({ twitter: false, discord: false }));
 	}, []);
 
-	// Full-page fallback when tab/popup blocked
+	// Full-page fallback when popup blocked
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
 		const params = new URLSearchParams(window.location.search);
@@ -139,16 +137,6 @@ export default function SocialConnectPanel({
 				return;
 			}
 			const url = `/api/social/oauth/${platform}?address=${encodeURIComponent(normalizedAddress)}`;
-
-			if (usesOAuthTab(platform)) {
-				const tab = openSocialOAuthTab(url);
-				if (!tab) {
-					window.location.href = url;
-					return;
-				}
-				watchChildClose(tab);
-				return;
-			}
 
 			const popup = openSocialOAuthPopup(url);
 			if (!popup) {

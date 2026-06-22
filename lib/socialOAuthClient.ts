@@ -11,11 +11,6 @@ export type SocialOAuthMessage =
 	| { type: typeof SOCIAL_OAUTH_MESSAGE; ok: true; platform: SocialPlatform }
 	| { type: typeof SOCIAL_OAUTH_MESSAGE; ok: false; error: string };
 
-/** X opens in a new tab (better UX than narrow popup). Discord keeps popup. */
-export function usesOAuthTab(platform: SocialPlatform): boolean {
-	return platform === 'twitter';
-}
-
 export function isSocialOAuthMessage(data: unknown): data is SocialOAuthMessage {
 	if (!data || typeof data !== 'object') return false;
 	const d = data as { type?: string; ok?: boolean };
@@ -44,11 +39,6 @@ export function openSocialOAuthPopup(url: string): Window | null {
 		/* noop */
 	}
 	return window.open(url, 'somnia_social_oauth', features);
-}
-
-/** New tab — keep opener for postMessage (no noopener). */
-export function openSocialOAuthTab(url: string): Window | null {
-	return window.open(url, '_blank');
 }
 
 export function broadcastOAuthResult(payload: SocialOAuthMessage): void {
