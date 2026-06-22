@@ -33,7 +33,7 @@ export function buildTwitterAuthorizeUrl(opts: {
 		response_type: 'code',
 		client_id: opts.clientId,
 		redirect_uri: opts.redirectUri,
-		scope: 'users.read',
+		scope: 'users.read tweet.read',
 		state: opts.state,
 		code_challenge: opts.codeChallenge,
 		code_challenge_method: 'S256',
@@ -76,6 +76,9 @@ export async function exchangeDiscordCode(opts: {
 	return { id: user.id, username };
 }
 
+const X_TOKEN_URL = 'https://api.x.com/2/oauth2/token';
+const X_USERS_ME_URL = 'https://api.x.com/2/users/me?user.fields=username';
+
 export async function exchangeTwitterCode(opts: {
 	code: string;
 	clientId: string;
@@ -91,7 +94,7 @@ export async function exchangeTwitterCode(opts: {
 		redirect_uri: opts.redirectUri,
 		code_verifier: opts.codeVerifier,
 	});
-	const tokenRes = await fetch('https://api.twitter.com/2/oauth2/token', {
+	const tokenRes = await fetch(X_TOKEN_URL, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
@@ -102,14 +105,16 @@ export async function exchangeTwitterCode(opts: {
 	if (!tokenRes.ok) {
 		throw new Error(`twitter_token_${tokenRes.status}`);
 	}
-	const tokenJson = (await tokenRes.json()) as { access_token?: string };
+	const tokenJson = (await tokenRes.json()) as { access_token?: string; scope?: string };
 	const accessToken = tokenJson.access_token;
 	if (!accessToken) throw new Error('twitter_no_token');
 
-	const userRes = await fetch('https://api.twitter.com/2/users/me?user.fields=username', {
+	const userRes = await fetch(X_USERS_ME_URL, {
 		headers: { Authorization: `Bearer ${accessToken}` },
 	});
-	if (!userRes.ok) throw new Error(`twitter_user_${userRes.status}`);
+	if (!userRes.ok) {
+		throw new Error(`twitter_user_${userRes.status}`);
+	}
 	const userJson = (await userRes.json()) as { data?: { id?: string; username?: string } };
 	const id = userJson.data?.id;
 	const username = userJson.data?.username;

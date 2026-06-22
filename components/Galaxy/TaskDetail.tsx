@@ -95,7 +95,17 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 	}, [walletAddress]);
 
 	useEffect(() => {
-		const onOAuthDone = () => reloadSocialAccounts();
+		const onOAuthDone = (ev: Event) => {
+			const payload = (ev as CustomEvent<{ ok?: boolean }>).detail;
+			if (!payload?.ok) return;
+			reloadSocialAccounts();
+			let tries = 0;
+			const id = setInterval(() => {
+				tries += 1;
+				reloadSocialAccounts();
+				if (tries >= 8) clearInterval(id);
+			}, 500);
+		};
 		window.addEventListener(ODYSSEY_SOCIAL_OAUTH_EVENT, onOAuthDone);
 		return () => window.removeEventListener(ODYSSEY_SOCIAL_OAUTH_EVENT, onOAuthDone);
 	}, [reloadSocialAccounts]);

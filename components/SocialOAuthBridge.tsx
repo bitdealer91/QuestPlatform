@@ -15,21 +15,33 @@ function platformLabel(p: SocialPlatform): string {
 	return p === 'twitter' ? 'X' : 'Discord';
 }
 
+function oauthErrorMessage(error: string): { title: string; body: string } {
+	if (error === 'twitter_user_403') {
+		return {
+			title: 'X profile access denied',
+			body: 'X denied reading your profile (403). Re-connect after app has Read permission and users.read + tweet.read scopes.',
+		};
+	}
+	if (error === 'fetch failed' || error === 'twitter_api_unreachable') {
+		return {
+			title: 'X API unreachable',
+			body: 'Server could not reach X API. On local dev use VPN or test on Vercel.',
+		};
+	}
+	const cancelled = error === 'access_denied' || error === 'consent_denied';
+	if (cancelled) {
+		return { title: 'Authorization cancelled', body: 'You can try again when ready.' };
+	}
+	return { title: 'Could not connect', body: 'Authorization failed. Please try again.' };
+}
+
 function notify(payload: SocialOAuthMessage): void {
 	if (payload.ok) {
 		toast.success('Account linked', `${platformLabel(payload.platform)} connected.`);
 		return;
 	}
-	const cancelled = payload.error === 'access_denied' || payload.error === 'consent_denied';
-	const network = payload.error === 'fetch failed' || payload.error === 'twitter_api_unreachable';
-	toast.error(
-		network ? 'X API unreachable' : cancelled ? 'Authorization cancelled' : 'Could not connect',
-		network
-			? 'Server could not reach X API. On local dev use VPN or test on Vercel.'
-			: cancelled
-				? 'You can try again when ready.'
-				: 'Authorization failed. Please try again.',
-	);
+	const { title, body } = oauthErrorMessage(payload.error);
+	toast.error(title, body);
 }
 
 /** Relays oauth-done (tab/popup) → main page via BroadcastChannel + postMessage. */

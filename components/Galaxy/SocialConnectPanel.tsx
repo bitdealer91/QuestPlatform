@@ -52,6 +52,13 @@ export default function SocialConnectPanel({
 		(_platform: SocialPlatform) => {
 			clearOAuthPopupFlag();
 			refreshAccounts();
+			// Redis write + wallet reconnect can lag slightly after OAuth tab closes.
+			let tries = 0;
+			const id = setInterval(() => {
+				tries += 1;
+				refreshAccounts();
+				if (tries >= 8) clearInterval(id);
+			}, 500);
 		},
 		[refreshAccounts],
 	);
