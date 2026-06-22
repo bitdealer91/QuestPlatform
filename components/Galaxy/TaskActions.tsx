@@ -7,6 +7,8 @@ import { Loader2 } from 'lucide-react';
 export type TaskActionsProps = {
 	goHref?: string;
 	canVerify: boolean;
+	/** Shown when Verify is disabled (wallet, social link, Go step). */
+	verifyDisabledReason?: string;
 	/** User opened the task link via Go (required before Verify when goHref is set). */
 	goClicked?: boolean;
 	onGoClick?: () => void;
@@ -24,6 +26,7 @@ const odysseyPill = 'h-[23px] min-h-[23px] rounded-[20px] text-[12px] font-norma
 export default function TaskActions({
 	goHref,
 	canVerify,
+	verifyDisabledReason = 'Connect wallet to verify',
 	goClicked = false,
 	onGoClick,
 	loading,
@@ -41,11 +44,6 @@ export default function TaskActions({
 	const label = typeof cooldownSec === 'number' && cooldownSec > 0
 		? `Verify in ${cooldownSec}s`
 		: 'Verify';
-
-	const verifyDisabledReason =
-		canVerify && needsGo && !goClicked
-			? 'Press Go to open the task, then verify'
-			: 'Connect wallet to verify';
 
 	const fireGoClick = () => {
 		onGoClick?.();

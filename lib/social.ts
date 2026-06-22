@@ -49,6 +49,15 @@ export function platformForAction(action: SocialAction): SocialPlatform {
 	return ACTION_PLATFORM[action];
 }
 
+export function isPlatformConnected(accounts: SocialAccounts, platform: SocialPlatform): boolean {
+	if (platform === 'twitter') return Boolean(accounts.twitter);
+	return Boolean(accounts.discord);
+}
+
+export function platformLabel(platform: SocialPlatform): string {
+	return platform === 'twitter' ? 'X' : 'Discord';
+}
+
 export function normalizeSocialUsername(platform: SocialPlatform, raw: string): string | null {
 	const s = String(raw || '').trim().replace(/^@+/, '');
 	if (!s) return null;

@@ -11,8 +11,10 @@ import SocialConnectPanel from '@/components/Galaxy/SocialConnectPanel';
 import {
 	type SocialAccounts,
 	type SocialPlatform,
+	isPlatformConnected,
 	parseSocialAction,
 	platformForAction,
+	platformLabel,
 } from '@/lib/social';
 
 export type TaskDetailProps = {
@@ -43,7 +45,6 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 	const [loading, setLoading] = useState(false);
 	const [cooldownSec, setCooldownSec] = useState<number | null>(null);
 	const forceVerify = (walletAddress || '').toLowerCase() === '0x938ed0c13ab2df31c89ee187ca8726cb12ae01b0' && task.id === 'quills-migrate';
-	const canVerify = !!walletAddress && !loading && status !== 'verified' && (!alreadyVerified || forceVerify);
 	const liveRegionRef = useRef<HTMLDivElement | null>(null);
 	const isSocial = task.type === 'social' || task.verify_method === 'social';
 	const socialAction = parseSocialAction(task.verify_params);
@@ -51,8 +52,22 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 		? platformForAction(socialAction)
 		: undefined;
 	const [socialAccounts, setSocialAccounts] = useState<SocialAccounts>({});
+	const [oauth, setOauth] = useState<{ twitter: boolean; discord: boolean }>({
+		twitter: false,
+		discord: false,
+	});
 	const [goClicked, setGoClicked] = useState(false);
 	const hasGoLink = Boolean(String(task.href || '').trim());
+
+	const socialReady =
+		!isSocial ||
+		(requiredPlatform != null &&
+			oauth[requiredPlatform] &&
+			isPlatformConnected(socialAccounts, requiredPlatform));
+
+	const baseCanVerify =
+		!!walletAddress && !loading && status !== 'verified' && (!alreadyVerified || forceVerify);
+	const canVerify = baseCanVerify && socialReady;
 
 	useEffect(() => {
 		if (!walletAddress) {
@@ -65,6 +80,13 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 			.then((j) => setSocialAccounts((j?.accounts as SocialAccounts) || {}))
 			.catch(() => setSocialAccounts({}));
 	}, [walletAddress, task.id]);
+
+	useEffect(() => {
+		fetch('/api/social/config', { cache: 'no-store' })
+			.then((r) => r.json())
+			.then((j) => setOauth({ twitter: Boolean(j?.twitter), discord: Boolean(j?.discord) }))
+			.catch(() => setOauth({ twitter: false, discord: false }));
+	}, []);
 
 	// Ensure per-task isolation: reset state when switching to another task
 	useEffect(() => {
@@ -83,6 +105,20 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 	const handleGoClick = useCallback(() => {
 		setGoClicked(true);
 	}, []);
+
+	const verifyDisabledReason = useMemo(() => {
+		if (!walletAddress) return 'Connect wallet to verify';
+		if (isSocial && requiredPlatform) {
+			if (!oauth[requiredPlatform]) {
+				return `${platformLabel(requiredPlatform)} login is not configured on this environment`;
+			}
+			if (!isPlatformConnected(socialAccounts, requiredPlatform)) {
+				return `Connect your ${platformLabel(requiredPlatform)} account first`;
+			}
+		}
+		if (hasGoLink && !goClicked) return 'Press Go to open the task, then verify';
+		return 'Verify unavailable';
+	}, [walletAddress, isSocial, requiredPlatform, oauth, socialAccounts, hasGoLink, goClicked]);
 
 	const handleVerify = useCallback(async () => {
 		if (!canVerify || (hasGoLink && !goClicked)) return;
@@ -208,6 +244,7 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 				<TaskActions
 					goHref={task.href}
 					canVerify={canVerify}
+					verifyDisabledReason={verifyDisabledReason}
 					goClicked={goClicked}
 					onGoClick={handleGoClick}
 					loading={loading}

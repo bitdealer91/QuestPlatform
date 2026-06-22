@@ -2,9 +2,12 @@ import { pipeline } from '@/lib/redis';
 import {
 	type SocialAccounts,
 	type SocialPlatform,
+	isPlatformConnected,
 	normalizeSocialUsername,
 	socialAccountsRedisKey,
 } from '@/lib/social';
+
+export { isPlatformConnected };
 
 function parseAccountsJson(raw: unknown): SocialAccounts {
 	if (!raw) return {};
@@ -80,9 +83,4 @@ export async function disconnectSocialAccount(
 	const key = socialAccountsRedisKey(address);
 	await pipeline([['SET', key, JSON.stringify(next)]]);
 	return next;
-}
-
-export function isPlatformConnected(accounts: SocialAccounts, platform: SocialPlatform): boolean {
-	if (platform === 'twitter') return Boolean(accounts.twitter);
-	return Boolean(accounts.discord);
 }
