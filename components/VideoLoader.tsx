@@ -1,8 +1,8 @@
 "use client";
 import { useLayoutEffect, useRef } from "react";
+import { LOADER_MIN_SHOW_MS, preloadCriticalMapAssets } from "@/lib/loaderAssets";
 import { shouldSkipVideoLoader } from "@/lib/socialOAuthClient";
 
-const MIN_SHOW_MS = 1200;
 const GATE_ID = "odyssey-loader-gate";
 const VIDEO_ID = "odyssey-loader-video";
 const PROGRESS_BAR_ID = "odyssey-loader-progress-bar";
@@ -35,8 +35,9 @@ function setProgress(pct: number): void {
 export default function VideoLoader() {
 	const settledRef = useRef(false);
 	const startTsRef = useRef(Date.now());
-	const fullyReadyRef = useRef(false);
-	const videoEndedRef = useRef(false);
+	const assetsReadyRef = useRef(false);
+	const assetRatioRef = useRef(0);
+	const videoRatioRef = useRef(0);
 
 	useLayoutEffect(() => {
 		if (shouldSkipVideoLoader()) {
@@ -53,83 +54,75 @@ export default function VideoLoader() {
 		}
 
 		let rafId = 0;
-		let perfObs: PerformanceObserver | null = null;
 		let finishTimer = 0;
+		const isMobile = window.matchMedia("(max-width: 767px)").matches;
 
 		const finish = () => {
 			if (settledRef.current) return;
 			settledRef.current = true;
+			video.loop = false;
 			setProgress(100);
 			removeGate();
 			releaseLoaderShell();
 		};
 
+		const updateProgress = () => {
+			const elapsed = Date.now() - startTsRef.current;
+			const timeRatio = Math.min(1, elapsed / LOADER_MIN_SHOW_MS);
+			const blend = Math.max(timeRatio, assetRatioRef.current, videoRatioRef.current);
+			setProgress(Math.min(99, blend * 100));
+		};
+
 		const tryFinish = () => {
 			if (settledRef.current) return;
-			if (!videoEndedRef.current || !fullyReadyRef.current) return;
-			if (Date.now() - startTsRef.current < MIN_SHOW_MS) return;
+			const elapsed = Date.now() - startTsRef.current;
+			if (elapsed < LOADER_MIN_SHOW_MS) return;
+			if (!assetsReadyRef.current) return;
 			window.clearTimeout(finishTimer);
-			finishTimer = window.setTimeout(finish, 400);
+			finishTimer = window.setTimeout(finish, 300);
 		};
 
 		const onTimeUpdate = () => {
 			const d = Number(video.duration || 0);
 			const t = Number(video.currentTime || 0);
-			if (d > 0) setProgress((t / d) * 100);
+			if (d > 0) videoRatioRef.current = Math.min(1, t / d);
+			updateProgress();
 		};
 
 		const onEnded = () => {
-			videoEndedRef.current = true;
-			setProgress(100);
+			videoRatioRef.current = 1;
+			updateProgress();
 			tryFinish();
+			if (!settledRef.current) {
+				video.currentTime = 0;
+				video.play?.().catch(() => {});
+			}
 		};
 
 		const onErr = () => {
-			// If video fails, still wait for assets + minimum time.
-			videoEndedRef.current = true;
+			videoRatioRef.current = 1;
 			tryFinish();
 		};
 
-		const markReady = () => {
-			window.setTimeout(() => {
-				fullyReadyRef.current = true;
-				tryFinish();
-			}, 500);
-		};
+		video.loop = false;
 
-		let removeRS: (() => void) | undefined;
-		if (document.readyState === "complete") markReady();
-		else {
-			const onRS = () => {
-				if (document.readyState === "complete") markReady();
-			};
-			document.addEventListener("readystatechange", onRS);
-			removeRS = () => document.removeEventListener("readystatechange", onRS);
-		}
-
-		(document as unknown as { fonts?: { ready?: Promise<void> } }).fonts?.ready?.then(() => {
-			fullyReadyRef.current = true;
+		void preloadCriticalMapAssets(isMobile, (p) => {
+			assetRatioRef.current = p.ratio;
+			if (p.ratio >= 1) assetsReadyRef.current = true;
+			updateProgress();
+			tryFinish();
+		}).then(() => {
+			assetsReadyRef.current = true;
+			assetRatioRef.current = 1;
+			updateProgress();
 			tryFinish();
 		});
 
-		try {
-			perfObs = new PerformanceObserver(() => {
-				if (document.readyState === "complete") markReady();
-			});
-			perfObs.observe({ entryTypes: ["resource"] });
-		} catch {
-			/* noop */
-		}
+		(document as unknown as { fonts?: { ready?: Promise<void> } }).fonts?.ready?.catch(() => {});
 
 		video.addEventListener("timeupdate", onTimeUpdate);
 		video.addEventListener("ended", onEnded);
 		video.addEventListener("error", onErr);
-		video.addEventListener("stalled", onErr);
-
-		if (video.ended || (video.duration > 0 && video.currentTime >= video.duration - 0.05)) {
-			videoEndedRef.current = true;
-			setProgress(100);
-		}
 
 		const play = () => {
 			video.play?.().catch(() => {});
@@ -138,28 +131,21 @@ export default function VideoLoader() {
 		else video.addEventListener("loadeddata", play, { once: true });
 
 		const tick = () => {
+			updateProgress();
 			tryFinish();
 			rafId = requestAnimationFrame(tick);
 		};
 		rafId = requestAnimationFrame(tick);
 
-		// Safety: never block the app longer than 45s.
 		const safety = window.setTimeout(finish, 45_000);
 
 		return () => {
 			cancelAnimationFrame(rafId);
 			window.clearTimeout(finishTimer);
 			window.clearTimeout(safety);
-			removeRS?.();
-			try {
-				perfObs?.disconnect();
-			} catch {
-				/* noop */
-			}
 			video.removeEventListener("timeupdate", onTimeUpdate);
 			video.removeEventListener("ended", onEnded);
 			video.removeEventListener("error", onErr);
-			video.removeEventListener("stalled", onErr);
 		};
 	}, []);
 
