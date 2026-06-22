@@ -73,7 +73,3 @@ export function normalizeSocialUsername(platform: SocialPlatform, raw: string): 
 export function socialAccountsRedisKey(address: string): string {
 	return `user:social:${address.toLowerCase()}`;
 }
-
-export function socialAttemptRedisKey(address: string, taskId: string): string {
-	return `social_attempt:${address.toLowerCase()}:${taskId}`;
-}
