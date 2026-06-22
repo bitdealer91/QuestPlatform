@@ -37,17 +37,10 @@ body{
 	color: var(--text);
 }
 
-/* Hide map/UI until VideoLoader finishes (class set by inline script + VideoLoader). */
+/* Hide map/UI until VideoLoader finishes (class on <html> from SSR). */
 html.odyssey-loading .odyssey-app-shell {
-	visibility: hidden;
-}
-html.odyssey-loading::before {
-	content: "";
-	position: fixed;
-	inset: 0;
-	z-index: 2147483646;
-	background: #0b0a14;
-	pointer-events: none;
+	visibility: hidden !important;
+	pointer-events: none !important;
 }
 
 .bg-galaxy{

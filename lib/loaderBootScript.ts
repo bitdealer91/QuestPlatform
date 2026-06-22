@@ -1,0 +1,2 @@
+/** Runs synchronously in <head> before paint — skip loader on OAuth popups only. */
+export const LOADER_BOOT_SCRIPT = `(function(){try{var p=location.pathname,s=sessionStorage.getItem('odyssey_oauth_popup_v1'),q=location.search,skip=p.indexOf('/social/oauth-done')===0||s==='1'||q.indexOf('social_connected=')!==-1||q.indexOf('social_error=')!==-1;if(skip){document.documentElement.classList.remove('odyssey-loading');var g=document.getElementById('odyssey-loader-gate');if(g)g.remove();}}catch(e){}})();`;
