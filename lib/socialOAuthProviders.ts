@@ -33,12 +33,12 @@ export function buildTwitterAuthorizeUrl(opts: {
 		response_type: 'code',
 		client_id: opts.clientId,
 		redirect_uri: opts.redirectUri,
-		scope: 'users.read tweet.read offline.access',
+		scope: 'users.read',
 		state: opts.state,
 		code_challenge: opts.codeChallenge,
 		code_challenge_method: 'S256',
 	});
-	return `https://twitter.com/i/oauth2/authorize?${params}`;
+	return `https://x.com/i/oauth2/authorize?${params}`;
 }
 
 export async function exchangeDiscordCode(opts: {
