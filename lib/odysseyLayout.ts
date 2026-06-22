@@ -1,5 +1,6 @@
 /** Figma: frame `Odyssey 6` node `432:2` — 1280×832. */
 
+import { ODYSSEY_MOBILE_FRAME12_ISLAND } from '@/lib/odysseyMobileFrame12';
 import { PROGRAM_WEEKS } from '@/lib/weeks';
 
 export const ODYSSEY_STAGE_W = 1280;
@@ -181,13 +182,23 @@ function islandCenter(k: OdysseyWeekKey) {
 	return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
 }
 
+/** Bear anchor from mobile Frame 13 percentages, mapped onto desktop island bounds. */
+function bearAnchorFromMobile(k: OdysseyWeekKey) {
+	const island = ODYSSEY_WEEKS[k];
+	const fig = ODYSSEY_MOBILE_FRAME12_ISLAND[k];
+	return {
+		x: island.x + island.w * fig.bearCxPct,
+		y: island.y + island.h * fig.bearCyPct,
+	};
+}
+
 export const QUILLS_ANCHORS: Record<number, { x: number; y: number }> = {
 	1: {
 		x: ODYSSEY_BEAR_FRAME.x + ODYSSEY_BEAR_FRAME.w / 2,
 		y: ODYSSEY_BEAR_FRAME.y + ODYSSEY_BEAR_FRAME.h / 2,
 	},
 	2: islandCenter(2),
-	3: islandCenter(3),
+	3: bearAnchorFromMobile(3),
 	4: islandCenter(4),
 };
 
