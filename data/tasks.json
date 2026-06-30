@@ -53,26 +53,26 @@
     {
       "week": 1,
       "day": 3,
-      "id": "somnialend_supply_somi",
-      "title": "Supply 10 WSOMI on SomniaLend",
-      "description": "Supply at least 10 WSOMI on SomniaLend.",
+      "id": "ddex_usdso",
+      "title": "Reach $5 trading volume on USDCe/USDso token pair",
+      "description": "Reach at least $5 trading volume on USDCe/USDso token pair on dreamDEX",
       "type": "action",
-      "href": "https://app.somnialend.finance/",
+      "href": "https://app.dreamdex.io/?market=USDC.e%3AUSDso",
       "mandatory": true,
-      "brand": "Somnialend",
-      "category": "Lending",
+      "brand": "dreamDEX",
+      "category": "dex",
       "verify_method": "api",
       "verify_params": {
         "verify_api": {
-          "url": "https://somnia-lend-api.vercel.app/api/check-tasks?address=:address",
+          "url": "https://dreamdex-odyssey-verify.vercel.app/api/task1/verify/:address",
           "method": "GET",
           "success": {
-            "path": "tasks.supply_10_somi",
+            "path": "completed",
             "equals": true
           }
         }
       },
-      "logo": "/brands/somnialend.jpg"
+      "logo": "/brands/DDEX.jpg"
     },
     {
       "week": 1,
@@ -93,22 +93,26 @@
     {
       "week": 1,
       "day": 7,
-      "id": "ddex_usdso",
-      "title": "Reach $5 trading volume on USDCe/USDso token pair",
-      "description": "Reach at least $5 trading volume on USDCe/USDso token pair on dreamDEX",
+      "id": "somnialend_supply_somi",
+      "title": "Supply 10 SOMI on SomniaLend",
+      "description": "Supply at least 10 SOMI on SomniaLend.",
       "type": "action",
-      "href": "https://app.dreamdex.io/?market=USDC.e%3AUSDso",
+      "href": "https://app.somnialend.finance/",
       "mandatory": true,
-      "brand": "dreamDEX",
-      "category": "dex",
+      "brand": "Somnialend",
+      "category": "Lending",
       "verify_method": "api",
       "verify_params": {
         "verify_api": {
-          "url": "",
-          "method": "GET"
+          "url": "https://somnia-lend-api.vercel.app/api/check-tasks?address=:address",
+          "method": "GET",
+          "success": {
+            "path": "tasks.supply_10_somi",
+            "equals": true
+          }
         }
       },
-      "logo": "/brands/DDEX.jpg"
+      "logo": "/brands/somnialend.jpg"
     },
     {
       "week": 2,
@@ -124,8 +128,12 @@
       "verify_method": "api",
       "verify_params": {
         "verify_api": {
-          "url": "",
-          "method": "GET"
+          "url": "https://dreamdex-odyssey-verify.vercel.app/api/task2/verify/:address",
+          "method": "GET",
+          "success": {
+            "path": "completed",
+            "equals": true
+          }
         }
       },
       "logo": "/brands/DDEX.jpg"
@@ -214,8 +222,12 @@
       "verify_method": "api",
       "verify_params": {
         "verify_api": {
-          "url": "",
-          "method": "GET"
+          "url": "https://dreamdex-odyssey-verify.vercel.app/api/task3/verify/:address",
+          "method": "GET",
+          "success": {
+            "path": "completed",
+            "equals": true
+          }
         }
       },
       "logo": "/brands/DDEX.jpg"
@@ -327,8 +339,12 @@
       "verify_method": "api",
       "verify_params": {
         "verify_api": {
-          "url": "",
-          "method": "GET"
+          "url": "https://dreamdex-odyssey-verify.vercel.app/api/task4/verify/:address",
+          "method": "GET",
+          "success": {
+            "path": "completed",
+            "equals": true
+          }
         }
       },
       "logo": "/brands/DDEX.jpg"
@@ -337,8 +353,8 @@
       "week": 4,
       "day": 24,
       "id": "somnialend_borrow_somi",
-      "title": "Borrow 10 WSOMI on SomniaLend",
-      "description": "Borrow at least 10 WSOMI on SomniaLend.",
+      "title": "Borrow 10 SOMI on SomniaLend",
+      "description": "Borrow at least 10 SOMI on SomniaLend.",
       "type": "action",
       "href": "https://app.somnialend.finance/",
       "mandatory": true,
