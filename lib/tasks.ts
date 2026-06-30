@@ -6,50 +6,44 @@ export type Task = {
 	title: string;
 	desc?: string;
 	href?: string;
-	reward: { xp: number };
 	status: "todo" | "pending" | "done";
-	// Mandatory flag for UI highlighting
 	mandatory?: boolean;
-	// Брендинг
 	brand?: string;
 	logo?: string;
 	brand_color?: string;
 	logo_variant?: 'light' | 'dark';
-	// Теги
 	tags?: string[];
-	// Категория
 	category?: string;
-	// Верификация
 	verify_method?: "onchain" | "api" | "social";
 	verify_params?: Record<string, unknown>;
 };
 
 export type WeekSummary = {
-	id: number; // 1..4
+	id: number;
 	title: string;
-	percent: number; // 0..100
+	percent: number;
 	status: "locked" | "available" | "completed";
 };
+
+const optionalUrl = z
+	.union([z.string().url(), z.literal('')])
+	.optional()
+	.transform((v) => (v === '' ? undefined : v));
 
 export const TaskSchema = z.object({
 	id: z.string(),
 	type: z.union([z.literal('action'), z.literal('social'), z.literal('info')]),
 	title: z.string(),
 	desc: z.string().optional(),
-	href: z.string().url().optional(),
-	reward: z.object({ xp: z.number().int().min(0) }),
+	href: optionalUrl,
 	status: z.union([z.literal('todo'), z.literal('pending'), z.literal('done')]),
 	mandatory: z.boolean().optional(),
-	// Брендинг
 	brand: z.string().optional(),
 	logo: z.string().optional(),
 	brand_color: z.string().optional(),
 	logo_variant: z.union([z.literal('light'), z.literal('dark')]).optional(),
-	// Теги
 	tags: z.array(z.string()).optional(),
-	// Категория
 	category: z.string().optional(),
-	// Верификация
 	verify_method: z.union([z.literal('onchain'), z.literal('api'), z.literal('social')]).optional(),
 	verify_params: z.record(z.unknown()).optional(),
 });

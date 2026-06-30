@@ -93,7 +93,7 @@ export async function POST(req: Request){
       return NextResponse.json({ taskId, checkedOld, revoked: 0, kept: 0, sample: { revoked: [], kept: [] }, cursor });
     }
 
-    const task = await findTask(taskId) as unknown as { verify_params?: Record<string, unknown>; xp?: number } | null;
+    const task = await findTask(taskId) as unknown as { verify_params?: Record<string, unknown> } | null;
     const vp = (task?.verify_params || {}) as Record<string, unknown>;
     const contract = String(vp['contract'] || '').trim();
     const fnSig = String(vp['functionSignature'] || 'function isSomniacMinted(address) view returns (bool)');
@@ -103,7 +103,6 @@ export async function POST(req: Request){
     const functionName = (fnSig.match(/function\s+(\w+)/)?.[1] || 'isSomniacMinted') as string;
 
     const addresses = candidateKeys.map(k => k.replace('user:verified:', '').toLowerCase());
-    const xpPerTask = typeof task?.xp === 'number' ? task!.xp : 0;
     let revoked = 0;
     let kept = 0;
     const sampleRevoked: string[] = [];
@@ -134,22 +133,9 @@ export async function POST(req: Request){
         if (sampleRevoked.length < 50) sampleRevoked.push(addr);
         if (!apply || !revokeEnabled) continue;
 
-        // read current xp for the slice address
-        const xpRes = await pipeline([["GET", `user:xp:${addr}`]]);
-        let currentXp = 0;
-        try {
-          const r = (xpRes as unknown) as { result?: Array<{ result?: unknown }> } | Array<{ result?: unknown }> | null;
-          if (Array.isArray(r)) currentXp = Number(r[0]?.result || 0) || 0;
-          else if (r && Array.isArray(r.result)){
-            const bucket = r.result[0]?.result as unknown;
-            if (Array.isArray(bucket)) currentXp = Number((bucket[0] as unknown) || 0) || 0;
-          }
-        } catch { currentXp = 0; }
-
-        const newXp = Math.max(0, currentXp - xpPerTask);
-        const cmds: (string|number)[][] = [];
-        cmds.push(["SREM", `user:verified:${addr}`, taskId]);
-        cmds.push(["SET", `user:xp:${addr}`, String(newXp)]);
+        const cmds: (string|number)[][] = [
+          ["SREM", `user:verified:${addr}`, taskId],
+        ];
         // best-effort ledger mark
         try { writeFailure(addr, taskId, 'admin_revoke').catch(() => {}); } catch {}
         await pipeline(cmds);

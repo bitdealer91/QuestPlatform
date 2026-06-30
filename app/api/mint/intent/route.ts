@@ -4,6 +4,7 @@ import { pipeline } from '@/lib/redis';
 import { keccak256, toHex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { ELIGIBILITY_UNLOCK_CAP_PER_WEEK } from '@/lib/eligibilityPercent';
+import { isTaskMandatory } from '@/lib/taskSpec';
 import { KEYS_1155_ADDRESS } from '@/lib/contracts';
 import { somniaMainnet } from '@/lib/chains';
 
@@ -49,7 +50,7 @@ export async function POST(req: Request){
     if (!eligible) {
       const spec = await loadTasks();
       const tasks = (spec.tasks || []).filter(t => (t as any).week === week);
-      const mandatoryIds = tasks.filter(t => (t as any).mandatory === true || (t as any)["mandatory task"] === true).map(t => String((t as any).id));
+      const mandatoryIds = tasks.filter(t => isTaskMandatory(t as { mandatory?: boolean; [key: string]: unknown })).map(t => String((t as any).id));
       const redisRes = await pipeline([["SMEMBERS", `user:verified:${address}`]]);
       let verified: string[] = [];
       try {

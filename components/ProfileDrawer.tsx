@@ -8,7 +8,6 @@ type LedgerEvent = { ts: number; type: 'attempt'|'success'|'failure'; taskId: st
 
 type ProfileDto = {
 	address: string;
-	totalXp: number;
 	verified: string[];
 	ledger?: LedgerEvent[];
 	socialAccounts?: SocialAccounts;
@@ -44,7 +43,7 @@ export default function ProfileDrawer({ open, onClose, address }: { open: boolea
 		return () => ctrl.abort();
 	}, [open, address]);
 
-	const xp = profile?.totalXp ?? 0;
+	const verifiedCount = profile?.verified?.length ?? 0;
 
 	return (
 		<Modal open={open} onClose={onClose} title="Profile" subtitle={short} size="profile">
@@ -65,15 +64,9 @@ export default function ProfileDrawer({ open, onClose, address }: { open: boolea
 					}
 				/>
 
-				<div className="grid grid-cols-2 gap-3">
-					<div className="rounded-[var(--radius-lg)] border border-white/10 bg-[color:var(--odyssey-task-surface)] p-3">
-						<div className="text-xs text-[color:var(--odyssey-task-muted)]">Total XP</div>
-						<div className="mt-0.5 text-lg font-semibold text-white">{xp} XP</div>
-					</div>
-					<div className="rounded-[var(--radius-lg)] border border-white/10 bg-[color:var(--odyssey-task-surface)] p-3">
-						<div className="text-xs text-[color:var(--odyssey-task-muted)]">Verified tasks</div>
-						<div className="mt-0.5 text-lg font-semibold text-white">{profile?.verified?.length ?? 0}</div>
-					</div>
+				<div className="rounded-[var(--radius-lg)] border border-white/10 bg-[color:var(--odyssey-task-surface)] p-3">
+					<div className="text-xs text-[color:var(--odyssey-task-muted)]">Verified tasks</div>
+					<div className="mt-0.5 text-lg font-semibold text-white">{verifiedCount}</div>
 				</div>
 
 				<div>

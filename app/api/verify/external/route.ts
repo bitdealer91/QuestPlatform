@@ -6,6 +6,7 @@ import { findTask } from "@/lib/store";
 import { writeAttempt, writeFailure, writeSuccess } from "@/lib/ledger";
 import { pipeline } from "@/lib/redis";
 import { dotGet } from "@/lib/jsonPath";
+import { resolveVerifyString, resolveVerifyTemplate } from "@/lib/verifyApiTemplate";
 import { createPublicClient, http, parseAbi } from "viem";
 import { isSocialTask, verifySocialTask } from "@/lib/socialVerify";
 
@@ -66,30 +67,12 @@ async function fetchWithRetries(url: string, init: RequestInit = {}, retries = 2
 
 // (W3US path uses postJson with timeout)
 
-async function persistSuccess(address: string, taskId: string, xp: number){
-  // Check if task already verified to avoid double XP
-  let already = false;
-  try {
-    const check = await pipeline([["SISMEMBER", `user:verified:${address}`, taskId]]);
-    if (check && Array.isArray(check.result)){
-      const maybe = (check.result[0] as { result?: unknown } | undefined)?.result as unknown;
-      if (Array.isArray(maybe)) {
-        already = Boolean(Number(maybe[0] ?? 0));
-      } else {
-        already = Boolean(Number(maybe as number | string | undefined || 0));
-      }
-    }
-  } catch {}
-
-  const cmds: (string | number)[][] = [];
-  // Always ensure membership and last-seen timestamp
-  cmds.push(["SADD", `user:verified:${address}`, taskId]);
-  cmds.push(["SET", `user:last:${address}:${taskId}`, String(Date.now()), "EX", "2592000"]);
-  // Only grant XP once
-  if (!already && xp > 0) {
-    cmds.push(["INCRBY", `user:xp:${address}`, String(xp)]);
-  }
-  if (cmds.length > 0) await pipeline(cmds);
+async function persistSuccess(address: string, taskId: string){
+  const cmds: (string | number)[][] = [
+    ["SADD", `user:verified:${address}`, taskId],
+    ["SET", `user:last:${address}:${taskId}`, String(Date.now()), "EX", "2592000"],
+  ];
+  await pipeline(cmds);
 }
 
 function cooldownKey(addr: string, taskId?: string){
@@ -229,10 +212,8 @@ export async function POST(req: Request){
 
           if (completed && addr && taskId){
             try {
-              const xpValue = (task as { xp?: unknown } | null)?.xp;
-              const xp = typeof xpValue === 'number' ? xpValue : 0;
               writeSuccess(addr, taskId).catch(() => {});
-              persistSuccess(addr, taskId, xp).catch(() => {});
+              persistSuccess(addr, taskId).catch(() => {});
             } catch {}
           }
 
@@ -244,16 +225,12 @@ export async function POST(req: Request){
       try {
         const cfg = (vp as Record<string, unknown>)['verify_api'] as Record<string, unknown> | undefined;
         if (cfg && typeof cfg === 'object'){
+          const extAddr = addrRaw || addr;
           let debugUrl = '';
-          const rawUrl = String(cfg['url'] || '').trim();
+          const rawUrl = resolveVerifyString(String(cfg['url'] || '').trim(), extAddr, addr);
           const method = String(cfg['method'] || 'GET').toUpperCase();
           const success = (cfg['success'] || {}) as { path?: string; equals?: unknown };
-          // Use the ORIGINAL address casing for external APIs (some providers are case-sensitive)
-          const extAddr = addrRaw || addr;
           const url = rawUrl
-            .replace(':userAddress', extAddr || '')
-            .replace(':walletAddress', extAddr || '')
-            .replace(':address', extAddr || '')
             .replace(':timestamp', String(Date.now()))
             .replace('{{timestamp}}', String(Date.now()));
           debugUrl = url;
@@ -272,12 +249,12 @@ export async function POST(req: Request){
           }
           const bodyCfg = cfg['body'];
           if (init.method === 'POST' && bodyCfg && typeof bodyCfg === 'object'){
-            init.body = JSON.stringify(bodyCfg);
+            init.body = JSON.stringify(resolveVerifyTemplate(bodyCfg, extAddr, addr));
           }
           const headersCfg = cfg['headers'];
           if (headersCfg && typeof headersCfg === 'object') {
             try {
-              const h = headersCfg as Record<string, unknown>;
+              const h = resolveVerifyTemplate(headersCfg, extAddr, addr) as Record<string, unknown>;
               for (const [k, v] of Object.entries(h)){
                 (init.headers as Record<string, string>)[k] = String(v);
               }
@@ -339,10 +316,8 @@ export async function POST(req: Request){
 
           if (completed && addr && taskId){
             try {
-              const xpValue = (task as { xp?: unknown } | null)?.xp;
-              const xp = typeof xpValue === 'number' ? xpValue : 0;
               writeSuccess(addr, taskId).catch(() => {});
-              persistSuccess(addr, taskId, xp).catch(() => {});
+              persistSuccess(addr, taskId).catch(() => {});
             } catch {}
           }
           const payload = { ...obj, completed } as any;
@@ -428,10 +403,8 @@ export async function POST(req: Request){
 
           if (completed && addr && taskId){
             try {
-              const xpValue = (task as { xp?: unknown } | null)?.xp;
-              const xp = typeof xpValue === 'number' ? xpValue : 0;
               writeSuccess(addr, taskId).catch(() => {});
-              persistSuccess(addr, taskId, xp).catch(() => {});
+              persistSuccess(addr, taskId).catch(() => {});
             } catch {}
           }
 
@@ -463,10 +436,8 @@ export async function POST(req: Request){
       if (completed && addr && taskId){
         try {
           const task = await findTask(taskId);
-          const xpValue = (task as { xp?: unknown } | null)?.xp;
-          const xp = typeof xpValue === 'number' ? xpValue : 0;
           writeSuccess(addr, taskId).catch(() => {});
-          persistSuccess(addr, taskId, xp).catch(() => {});
+          persistSuccess(addr, taskId).catch(() => {});
         } catch {}
       }
 

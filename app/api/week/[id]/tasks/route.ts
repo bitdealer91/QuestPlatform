@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProgramStart, getWeekTasks } from "@/lib/store";
+import { isTaskMandatory } from "@/lib/taskSpec";
+import { getProgramElapsedDay } from "@/lib/programDay";
 import { isValidProgramWeek } from "@/lib/weeks";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -34,13 +36,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     try {
       const start = await getProgramStart();
       if (start) {
-        const now = new Date();
-        // Считаем дни с опорой на локальную дату (UTC-нейтрально): округляем до полночей
-        const dayMs = 24 * 60 * 60 * 1000;
-        const noonOffsetMs = 12 * 60 * 60 * 1000; // 12:00 UTC граница
-        // Сдвигаем границу на полдень UTC: в 12:00 UTC открывается следующий "day"
-        const elapsed = Math.max(0, Math.floor((now.getTime() - start.getTime() + noonOffsetMs) / dayMs)) + 1; // Day 1 в день старта
-        // Фильтруем по полю day
+        const elapsed = getProgramElapsedDay(start);
         const gated = items.filter((t) => (typeof (t as any).day === 'number' ? (t as any).day <= elapsed : true));
         useItems = gated;
       }
@@ -52,9 +48,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       title: t.title,
       desc: t.description,
       href: t.href,
-      reward: { xp: t.xp },
       status: "todo" as const,
-      mandatory: (t as any).mandatory === true || (t as any)["mandatory task"] === true,
+      mandatory: isTaskMandatory(t as { mandatory?: boolean; [key: string]: unknown }),
       brand: t.brand,
       logo: t.logo,
       brand_color: t.brand_color,

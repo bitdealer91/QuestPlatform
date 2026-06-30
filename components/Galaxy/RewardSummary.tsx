@@ -2,13 +2,11 @@
 import Progress from '@/components/ui/Progress';
 
 export type RewardSummaryProps = {
-	xp: number;
 	status?: 'idle' | 'pending' | 'verified' | 'error';
-	/** Стили карточки награды как в Figma `136:1451`. */
 	odysseyStyle?: boolean;
 };
 
-export default function RewardSummary({ xp, status = 'idle', odysseyStyle = false }: RewardSummaryProps) {
+export default function RewardSummary({ status = 'idle', odysseyStyle = false }: RewardSummaryProps) {
 	const getProgressValue = () => {
 		switch (status) {
 			case 'verified':
@@ -54,9 +52,8 @@ export default function RewardSummary({ xp, status = 'idle', odysseyStyle = fals
 
 	return (
 		<div className={shell}>
-			<div className={`flex items-center justify-between mb-2 ${odysseyStyle ? 'text-[12px] tracking-[-0.276px]' : 'text-sm'}`}>
-				<span className={odysseyStyle ? 'text-[color:var(--odyssey-task-muted)]' : 'text-[color:var(--muted)]'}>Reward</span>
-				<span className={odysseyStyle ? 'text-[12px] text-white' : 'font-medium'}>+{xp} XP</span>
+			<div className={`mb-2 ${odysseyStyle ? 'text-[12px] tracking-[-0.276px] text-[color:var(--odyssey-task-muted)]' : 'text-sm text-[color:var(--muted)]'}`}>
+				Task status
 			</div>
 			<Progress
 				value={getProgressValue()}

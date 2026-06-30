@@ -41,6 +41,7 @@ import { OdysseyMobileHeader } from '@/components/Odyssey/OdysseyMobileHeader';
 import { OdysseyMobileMenu } from '@/components/Odyssey/OdysseyMobileMenu';
 import { OdysseyQuills } from '@/components/Odyssey/OdysseyQuills';
 import { OdysseySocial } from '@/components/Odyssey/OdysseySocial';
+import { isPlanetWeekUnlocked, highestUnlockedPlanetWeek } from '@/lib/useWeekIslandUnlock';
 import { useReown } from '@/lib/reown';
 
 /**
@@ -183,18 +184,30 @@ function islandCenterForWeek(weekId: number): { x: number; y: number } {
 	return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
 }
 
-function parseQuillsWeek(): number {
+/** Optional dev override; when unset, quills follow island unlock schedule. */
+function parseQuillsWeekOverride(): number | null {
 	const raw = process.env.NEXT_PUBLIC_ODYSSEY_QUILLS_WEEK;
-	if (raw === undefined || raw === '') return 1;
+	if (raw === undefined || raw === '') return null;
 	const n = Number(raw);
-	if (!Number.isFinite(n)) return 1;
+	if (!Number.isFinite(n)) return null;
 	return Math.min(ODYSSEY_WEEK_COUNT, Math.max(1, Math.floor(n)));
+}
+
+function resolveQuillsWeek(
+	islandUnlockedByWeek: Record<number, boolean>,
+	envUnlockedCount: number,
+): number {
+	const override = parseQuillsWeekOverride();
+	if (override != null) return override;
+	return highestUnlockedPlanetWeek(islandUnlockedByWeek, envUnlockedCount, ODYSSEY_WEEK_COUNT);
 }
 
 type StagePlanetsProps = {
 	highlightedWeek: number | null;
-	unlockedCount: number;
+	envUnlockedCount: number;
 	mandatoryDoneByWeek: Record<number, boolean>;
+	dropUnlockedByWeek: Record<number, boolean>;
+	islandUnlockedByWeek: Record<number, boolean>;
 	openTasks: (id: number) => void;
 	onPlanetHoverChange: (id: number, hovering: boolean) => void;
 	quillsWeek: number;
@@ -203,8 +216,10 @@ type StagePlanetsProps = {
 
 function StagePlanets({
 	highlightedWeek,
-	unlockedCount,
+	envUnlockedCount,
 	mandatoryDoneByWeek,
+	dropUnlockedByWeek,
+	islandUnlockedByWeek,
 	openTasks,
 	onPlanetHoverChange,
 	quillsWeek,
@@ -216,9 +231,15 @@ function StagePlanets({
 			<OdysseyQuills week={quillsWeek} />
 
 			{PLANETS.map((p) => {
-				const locked = p.id > unlockedCount;
+				const locked = !isPlanetWeekUnlocked(p.id, islandUnlockedByWeek, envUnlockedCount);
 				const mandatoryDone = mandatoryDoneByWeek?.[p.id] === true;
-				const claimEnabled = p.id >= 1 && p.id <= ODYSSEY_WEEK_COUNT && !locked && mandatoryDone;
+				const dropUnlocked = dropUnlockedByWeek?.[p.id] === true;
+				const claimEnabled =
+					p.id >= 1 &&
+					p.id <= ODYSSEY_WEEK_COUNT &&
+					!locked &&
+					dropUnlocked &&
+					mandatoryDone;
 				const claimUrl = 'https://claims.somnia.network/';
 				const c = islandCenterForWeek(p.id);
 				const islandKey = WEEK_TO_ISLAND[p.id] ?? 1;
@@ -265,25 +286,35 @@ function StagePlanets({
 
 function MobilePlanetHit({
 	p,
-	unlockedCount,
+	envUnlockedCount,
 	mandatoryDoneByWeek,
+	dropUnlockedByWeek,
+	islandUnlockedByWeek,
 	openTasks,
 	onPlanetHoverChange,
 	hideHud,
 	hitSizePx,
 }: {
 	p: Planet;
-	unlockedCount: number;
+	envUnlockedCount: number;
 	mandatoryDoneByWeek: Record<number, boolean>;
+	dropUnlockedByWeek: Record<number, boolean>;
+	islandUnlockedByWeek: Record<number, boolean>;
 	openTasks: (id: number) => void;
 	onPlanetHoverChange: (id: number, hovering: boolean) => void;
 	hideHud?: boolean;
 	/** Зона тапа под ширину слайда карусели. */
 	hitSizePx?: number;
 }) {
-	const locked = p.id > unlockedCount;
+	const locked = !isPlanetWeekUnlocked(p.id, islandUnlockedByWeek, envUnlockedCount);
 	const mandatoryDone = mandatoryDoneByWeek?.[p.id] === true;
-	const claimEnabled = p.id >= 1 && p.id <= ODYSSEY_WEEK_COUNT && !locked && mandatoryDone;
+	const dropUnlocked = dropUnlockedByWeek?.[p.id] === true;
+	const claimEnabled =
+		p.id >= 1 &&
+		p.id <= ODYSSEY_WEEK_COUNT &&
+		!locked &&
+		dropUnlocked &&
+		mandatoryDone;
 	const claimUrl = 'https://claims.somnia.network/';
 	const hitPx =
 		hitSizePx ?? Math.min(280, Math.round(ODYSSEY_MOBILE_ISLAND_CARD_W * 0.82));
@@ -316,16 +347,19 @@ function MobilePlanetHit({
 export function PlanetsRail({
 	openTasks,
 	mandatoryDoneByWeek,
+	dropUnlockedByWeek,
+	islandUnlockedByWeek,
 }: {
 	openTasks: (id: number) => void;
 	mandatoryDoneByWeek: Record<number, boolean>;
+	dropUnlockedByWeek: Record<number, boolean>;
+	islandUnlockedByWeek: Record<number, boolean>;
 }) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const [scale, setScale] = useState(1);
 	const [profileOpen, setProfileOpen] = useState(false);
 	const [highlightedWeek, setHighlightedWeek] = useState<number | null>(null);
 	const { address, isConnected, isConnecting } = useAccount();
-	const quillsWeek = parseQuillsWeek();
 	const ctx = useReown();
 
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -343,10 +377,14 @@ export function PlanetsRail({
 	}, []);
 
 	const UNLOCK_ENV = Number(process.env.NEXT_PUBLIC_UNLOCKED_COUNT || '1');
-	const unlockedCountFromEnv = Number.isFinite(UNLOCK_ENV)
+	const envUnlockedCount = Number.isFinite(UNLOCK_ENV)
 		? Math.max(1, Math.min(PLANETS.length, Math.floor(UNLOCK_ENV)))
 		: 1;
-	const unlockedCount = Math.min(ODYSSEY_WEEK_COUNT, unlockedCountFromEnv);
+
+	const quillsWeek = useMemo(
+		() => resolveQuillsWeek(islandUnlockedByWeek, envUnlockedCount),
+		[islandUnlockedByWeek, envUnlockedCount],
+	);
 
 	const handleWallet = useCallback(() => {
 		if (!ctx?.appKit) {
@@ -357,7 +395,7 @@ export function PlanetsRail({
 	}, [ctx?.appKit]);
 
 	const mobileWeekId = PLANETS[mobileIndex]?.id ?? 1;
-	const mobileWeekLocked = mobileWeekId > unlockedCount;
+	const mobileWeekLocked = !isPlanetWeekUnlocked(mobileWeekId, islandUnlockedByWeek, envUnlockedCount);
 
 	useLayoutEffect(() => {
 		const el = containerRef.current;
@@ -501,8 +539,10 @@ export function PlanetsRail({
 				>
 					<StagePlanets
 						highlightedWeek={highlightedWeek}
-						unlockedCount={unlockedCount}
+						envUnlockedCount={envUnlockedCount}
 						mandatoryDoneByWeek={mandatoryDoneByWeek}
+						dropUnlockedByWeek={dropUnlockedByWeek}
+						islandUnlockedByWeek={islandUnlockedByWeek}
 						openTasks={openTasks}
 						onPlanetHoverChange={onPlanetHoverChange}
 						quillsWeek={quillsWeek}
@@ -582,8 +622,10 @@ export function PlanetsRail({
 																	<div className={active ? 'pointer-events-auto' : 'pointer-events-none'}>
 																		<MobilePlanetHit
 																			p={p}
-																			unlockedCount={unlockedCount}
+																			envUnlockedCount={envUnlockedCount}
 																			mandatoryDoneByWeek={mandatoryDoneByWeek}
+																			dropUnlockedByWeek={dropUnlockedByWeek}
+																			islandUnlockedByWeek={islandUnlockedByWeek}
 																			openTasks={openTasks}
 																			onPlanetHoverChange={onPlanetHoverChange}
 																			hideHud

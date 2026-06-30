@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { loadTasks } from '@/lib/store';
 import { pipeline } from '@/lib/redis';
 import { ELIGIBILITY_UNLOCK_CAP_PER_WEEK } from '@/lib/eligibilityPercent';
+import { isTaskMandatory } from '@/lib/taskSpec';
 import { isValidProgramWeek, resolveProgramWeeks } from '@/lib/weeks';
 
 export const runtime = 'nodejs';
@@ -48,7 +49,7 @@ export async function GET(req: Request){
     const spec = await loadTasks();
     const totalWeeks = resolveProgramWeeks(spec.weeks);
     const tasks = (spec.tasks || []).filter(t => (t as any).week === week);
-    const mandatoryIds = tasks.filter(t => (t as any).mandatory === true || (t as any)["mandatory task"] === true).map(t => String((t as any).id));
+    const mandatoryIds = tasks.filter(t => isTaskMandatory(t as { mandatory?: boolean; [key: string]: unknown })).map(t => String((t as any).id));
 
     // Current week index based on programStart
     const startIso = spec.programStart;

@@ -25,7 +25,6 @@ export type TaskDetailProps = {
 		description?: string;
 		type: 'action' | 'social' | 'info';
 		href?: string;
-		xp: number;
 		week?: number;
 		tags?: string[];
 		brand?: string;
@@ -161,7 +160,7 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 				setStatus('verified');
 				onVerified?.(task.id);
 				try { (await import('canvas-confetti')).default({ particleCount: 40, spread: 48, startVelocity: 28, scalar: .6, origin: { y: .88, x: .85 } }); } catch {}
-				toast.success('Verified ✅', `+${task.xp} XP`);
+				toast.success('Verified', 'Task completed.');
 			} else if (res?.error === 'social_not_linked') {
 				setStatus('error');
 				toast.info(
@@ -193,7 +192,7 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 			setStatus('error');
 			toast.error('Verification failed', 'Please try again.');
 		} finally { setLoading(false); }
-	}, [canVerify, goClicked, hasGoLink, onVerified, task.id, task.xp, walletAddress, status]);
+	}, [canVerify, goClicked, hasGoLink, onVerified, task.id, walletAddress, status]);
 
 	const tips = useMemo(() => {
 		if (isSocial) {
@@ -222,7 +221,6 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 				description: task.description,
 				type: task.type,
 				href: task.href,
-				xp: task.xp,
 				tags: task.tags,
 				brand: task.brand,
 				logo: task.logo,
@@ -231,7 +229,7 @@ export default function TaskDetail({ task, walletAddress, onVerified, alreadyVer
 				category: task.category,
 			}} />
 
-			<RewardSummary xp={task.xp} status={status} odysseyStyle />
+			<RewardSummary status={status} odysseyStyle />
 
 			{isSocial ? (
 				<SocialConnectPanel

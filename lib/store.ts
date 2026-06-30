@@ -4,7 +4,14 @@ import { TaskSpecZ, Task } from "./taskSpec";
 import { PROGRAM_WEEKS, resolveProgramWeeks } from "./weeks";
 
 const FILE = path.join(process.cwd(), "data", "tasks.json");
-let CACHE: { tasks: Task[]; programStart?: string; weeks?: number } | null = null;
+let CACHE: {
+  tasks: Task[];
+  programStart?: string;
+  weeks?: number;
+  weekDropUnlocks?: string[];
+  weekDropUnlockTime?: string;
+  weekDropUnlockTimezone?: string;
+} | null = null;
 let LAST_MODIFIED: number = 0;
 let CACHE_TIMESTAMP: number = 0;
 
@@ -85,7 +92,14 @@ export async function loadTasks(){
 
 export async function saveTasks(spec: unknown){
   const parsed = TaskSpecZ.parse(spec);
-  const data = { tasks: parsed.tasks, programStart: parsed.programStart, weeks: resolveProgramWeeks(parsed.weeks) };
+  const data = {
+    tasks: parsed.tasks,
+    programStart: parsed.programStart,
+    weeks: resolveProgramWeeks(parsed.weeks),
+    weekDropUnlocks: parsed.weekDropUnlocks,
+    weekDropUnlockTime: parsed.weekDropUnlockTime,
+    weekDropUnlockTimezone: parsed.weekDropUnlockTimezone,
+  };
   CACHE = data;
   LAST_MODIFIED = Date.now();
   CACHE_TIMESTAMP = Date.now();

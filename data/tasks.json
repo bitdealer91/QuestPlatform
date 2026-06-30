@@ -1,75 +1,407 @@
 {
-  "programStart": "2026-04-07T00:00:00Z",
+  "programStart": "2026-06-30T00:00:00Z",
+  "weekDropUnlockTime": "12:00:00",
+  "weekDropUnlockTimezone": "UTC",
   "weeks": 4,
   "tasks": [
     {
       "week": 1,
       "day": 1,
-      "id": "playonjoy",
-      "title": "Genesis Run: score 8,000 and sign transaction",
-      "description": "Open Genesis Run, reach 8,000 points, then sign the transaction in-game.",
+      "id": "prophecy_connect",
+      "title": "Prophecy: Connect EOA wallet to Prophecy",
+      "description": "Connect the same EOA wallet from Odyssey to your Prophecy Social account.",
       "type": "action",
-      "href": "https://playonjoy.com/game",
-      "xp": 20,
-      "mandatory": false,
-      "brand": "JOY",
-      "category": "Game",
+      "href": "https://prophecy.social",
+      "mandatory": true,
+      "brand": "Prophecy Social",
+      "category": "Predict",
       "verify_method": "api",
       "verify_params": {
         "verify_api": {
-          "url": "https://playonjoy.com/api/game/verify-quest?wallet=:address",
-          "method": "GET"
+          "url": "https://prophecy.social/api/airdrop/eligibility",
+          "method": "POST",
+          "headers": {
+            "Authorization": "Bearer env:PROPHECY_COMMUNITY_API_TOKEN"
+          },
+          "body": {
+            "eoas": [":addressLower"]
+          },
+          "success": {
+            "path": "results.0.linked",
+            "equals": true
+          }
         }
       },
-      "logo": "/brands/variance.png",
-      "brand_color": "#78A3C8"
+      "logo": "/brands/prop.png"
     },
     {
       "week": 1,
       "day": 2,
-      "id": "social-x-follow",
-      "title": "Follow Somnia on X",
-      "description": "Follow @Somnia_Network on X. Connect your X account, complete the follow, then verify.",
+      "id": "ddex_follow",
+      "title": "Follow @dreamDEXSomnia on X ",
+      "description": "Follow @dreamDEXSomnia on X. Connect your X account, complete the follow, then verify.",
       "type": "social",
-      "href": "https://x.com/Somnia_Network",
-      "xp": 15,
-      "mandatory": false,
+      "href": "https://x.com/intent/follow?screen_name=dreamDEXSomnia",
+      "mandatory": true,
       "category": "Social",
       "verify_method": "social",
       "verify_params": {
         "social_action": "twitter_follow",
-        "target_handle": "Somnia_Network"
+        "target_handle": "dreamDEXSomnia"
       }
     },
     {
       "week": 1,
       "day": 3,
-      "id": "social-x-like",
-      "title": "Like our post on X",
-      "description": "Like the pinned Somnia post on X, then verify.",
-      "type": "social",
-      "href": "https://x.com/Somnia_Network",
-      "xp": 10,
-      "category": "Social",
-      "verify_method": "social",
+      "id": "somnialend_supply_somi",
+      "title": "Supply 10 WSOMI on SomniaLend",
+      "description": "Supply at least 10 WSOMI on SomniaLend.",
+      "type": "action",
+      "href": "https://app.somnialend.finance/",
+      "mandatory": true,
+      "brand": "Somnialend",
+      "category": "Lending",
+      "verify_method": "api",
       "verify_params": {
-        "social_action": "twitter_like"
-      }
+        "verify_api": {
+          "url": "https://somnia-lend-api.vercel.app/api/check-tasks?address=:address",
+          "method": "GET",
+          "success": {
+            "path": "tasks.supply_10_somi",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/somnialend.jpg"
     },
     {
       "week": 1,
       "day": 4,
-      "id": "social-discord-join",
-      "title": "Join Somnia Discord",
-      "description": "Join the Somnia Discord server and connect your Discord username.",
+      "id": "somnialend_follow",
+      "title": "Follow @somnialend on X",
+      "description": "Follow @somnialend on X. Connect your X account, complete the follow, then verify.",
       "type": "social",
-      "href": "https://discord.com/invite/somnia",
-      "xp": 15,
+      "href": "https://x.com/intent/follow?screen_name=somnialend",
+      "mandatory": true,
+      "category": "Social",
+      "verify_method": "social",
+      "verify_params": {
+        "social_action": "twitter_follow",
+        "target_handle": "somnialend"
+      }
+    },
+    {
+      "week": 1,
+      "day": 7,
+      "id": "ddex_usdso",
+      "title": "Reach $5 trading volume on USDCe/USDso token pair",
+      "description": "Reach at least $5 trading volume on USDCe/USDso token pair on dreamDEX",
+      "type": "action",
+      "href": "https://app.dreamdex.io/?market=USDC.e%3AUSDso",
+      "mandatory": true,
+      "brand": "dreamDEX",
+      "category": "dex",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "",
+          "method": "GET"
+        }
+      },
+      "logo": "/brands/DDEX.jpg"
+    },
+    {
+      "week": 2,
+      "day": 9,
+      "id": "ddex_somi",
+      "title": "Make 3 trades on SOMI/USDso token pair",
+      "description": "Make at least 3 trades on SOMI/USDso token pair on dreamDEX.",
+      "type": "action",
+      "href": "https://app.dreamdex.io/?market=SOMI%3AUSDso",
+      "mandatory": true,
+      "brand": "dreamDEX",
+      "category": "dex",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "",
+          "method": "GET"
+        }
+      },
+      "logo": "/brands/DDEX.jpg"
+    },
+    {
+      "week": 2,
+      "day": 10,
+      "id": "somnialend_supply_usdso",
+      "title": "Supply 5 USDso on SomniaLend",
+      "description": "Supply at least 5 USDso on SomniaLend.",
+      "type": "action",
+      "href": "https://app.somnialend.finance/",
+      "mandatory": true,
+      "brand": "Somnialend",
+      "category": "Lending",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "https://somnia-lend-api.vercel.app/api/check-tasks?address=:address",
+          "method": "GET",
+          "success": {
+            "path": "tasks.supply_5_usdso",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/somnialend.jpg"
+    },
+    {
+      "week": 2,
+      "day": 11,
+      "id": "prophecy_follow",
+      "title": "Follow @ProphecySocial_ on X ",
+      "description": "Follow @ProphecySocial_ on X. Connect your X account, complete the follow, then verify.",
+      "type": "social",
+      "href": "https://x.com/intent/follow?screen_name=ProphecySocial_",
+      "mandatory": true,
+      "category": "Social",
+      "verify_method": "social",
+      "verify_params": {
+        "social_action": "twitter_follow",
+        "target_handle": "ProphecySocial_"
+      }
+    },
+    {
+      "week": 2,
+      "day": 14,
+      "id": "prophecy_five",
+      "title": "Make 5 predictions",
+      "description": "Make at least 5 predictions on Prophecy Social.",
+      "type": "action",
+      "href": "https://prophecy.social",
+      "mandatory": true,
+      "brand": "Prophecy Social",
+      "category": "Predict",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "https://prophecy.social/api/airdrop/eligibility",
+          "method": "POST",
+          "headers": {
+            "Authorization": "Bearer env:PROPHECY_COMMUNITY_API_TOKEN"
+          },
+          "body": {
+            "eoas": [":addressLower"]
+          },
+          "success": {
+            "path": "results.0.predictions1.done",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/prop.png"
+    },
+    {
+      "week": 3,
+      "day": 16,
+      "id": "ddex_btc",
+      "title": "Make 5 trades on BTC/USDso token pair",
+      "description": "Make at least 5 trades on BTC/USDso token pair on dreamDEX.",
+      "type": "action",
+      "href": "https://app.dreamdex.io/?market=WBTC%3AUSDso",
+      "mandatory": true,
+      "brand": "dreamDEX",
+      "category": "dex",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "",
+          "method": "GET"
+        }
+      },
+      "logo": "/brands/DDEX.jpg"
+    },
+    {
+      "week": 3,
+      "day": 17,
+      "id": "sweep",
+      "title": "Mint the Creator Badge NFT on Sweep",
+      "description": "Deploy an NFT collection on Sweep and mint the Creator Badge",
+      "type": "action",
+      "href": "https://dev.sweep.haus/Somnia-Creator-Badge",
+      "mandatory": true,
+      "brand": "Sweep",
+      "category": "nft",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "https://api-dev.sweep.haus/api/mint-events/verify?walletAddress=:address&contractAddress=0x92b49D5d06cd78f1cbf108A7776A162F43CA1243&chainId=5031",
+          "method": "GET",
+          "success": {
+            "path": "minted",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/Sweep.jpg"
+    },
+    {
+      "week": 3,
+      "day": 17,
+      "id": "somnialend_borrow_usdso",
+      "title": "Borrow 5 USDso on SomniaLend",
+      "description": "Borrow at least 5 USDso on SomniaLend ",
+      "type": "action",
+      "href": "https://app.somnialend.finance/",
+      "mandatory": true,
+      "brand": "Somnialend",
+      "category": "Lending",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "https://somnia-lend-api.vercel.app/api/check-tasks?address=:address",
+          "method": "GET",
+          "success": {
+            "path": "tasks.borrow_5_usdso",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/somnialend.jpg"
+    },
+    {
+      "week": 3,
+      "day": 18,
+      "id": "prophecy_discord",
+      "title": "Join Prop Social Discord",
+      "description": "Join Prop Social Discord server and connect your Discord username.",
+      "type": "social",
+      "href": "https://discord.com/invite/prophecysocial",
+      "mandatory": true,
       "category": "Social",
       "verify_method": "social",
       "verify_params": {
         "social_action": "discord_join"
       }
+    },
+    {
+      "week": 3,
+      "day": 21,
+      "id": "prophecy_points",
+      "title": "Earn 50 Prophecy Point",
+      "description": "Make at least 50 Prophecy Points on Prophecy Social.",
+      "type": "action",
+      "href": "https://prophecy.social",
+      "mandatory": true,
+      "brand": "Prophecy Social",
+      "category": "Predict",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "https://prophecy.social/api/airdrop/eligibility",
+          "method": "POST",
+          "headers": {
+            "Authorization": "Bearer env:PROPHECY_COMMUNITY_API_TOKEN"
+          },
+          "body": {
+            "eoas": [":addressLower"]
+          },
+          "success": {
+            "path": "results.0.points.done",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/prop.png"
+    },
+    {
+      "week": 4,
+      "day": 23,
+      "id": "ddex_eth",
+      "title": "Make 5 trades on ETH/USDso token pair ",
+      "description": "Make at least 5 trades on ETH/USDso token pair on dreamDEX",
+      "type": "action",
+      "href": "https://app.dreamdex.io/?market=WETH%3AUSDso",
+      "mandatory": true,
+      "brand": "dreamDEX",
+      "category": "dex",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "",
+          "method": "GET"
+        }
+      },
+      "logo": "/brands/DDEX.jpg"
+    },
+    {
+      "week": 4,
+      "day": 24,
+      "id": "somnialend_borrow_somi",
+      "title": "Borrow 10 WSOMI on SomniaLend",
+      "description": "Borrow at least 10 WSOMI on SomniaLend.",
+      "type": "action",
+      "href": "https://app.somnialend.finance/",
+      "mandatory": true,
+      "brand": "Somnialend",
+      "category": "Lending",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "https://somnia-lend-api.vercel.app/api/check-tasks?address=:address",
+          "method": "GET",
+          "success": {
+            "path": "tasks.borrow_10_somi",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/somnialend.jpg"
+    },
+    {
+      "week": 4,
+      "day": 25,
+      "id": "peter_follow",
+      "title": "Follow @lippylipka on X",
+      "description": "Follow @lippylipka on X. Connect your X account, complete the follow, then verify.",
+      "type": "social",
+      "href": "https://x.com/intent/follow?screen_name=lippylipka",
+      "mandatory": true,
+      "category": "Social",
+      "verify_method": "social",
+      "verify_params": {
+        "social_action": "twitter_follow",
+        "target_handle": "lippylipka"
+      }
+    },
+    {
+      "week": 4,
+      "day": 28,
+      "id": "prophecy_ten",
+      "title": "Make 10 predictions",
+      "description": "Make at least 10 predictions on Prophecy Social.",
+      "type": "action",
+      "href": "https://prophecy.social",
+      "mandatory": true,
+      "brand": "Prophecy Social",
+      "category": "Predict",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "https://prophecy.social/api/airdrop/eligibility",
+          "method": "POST",
+          "headers": {
+            "Authorization": "Bearer env:PROPHECY_COMMUNITY_API_TOKEN"
+          },
+          "body": {
+            "eoas": [":addressLower"]
+          },
+          "success": {
+            "path": "results.0.predictions2.done",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/prop.png"
     }
   ]
 }

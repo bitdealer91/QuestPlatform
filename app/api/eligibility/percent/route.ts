@@ -4,8 +4,13 @@ import { loadTasks } from "@/lib/store";
 import { dotGet } from "@/lib/jsonPath";
 import {
   ELIGIBILITY_UNLOCK_CAP_PER_WEEK,
+  isWeekDropUnlocked,
   maxProgramUnlockForWeeks,
+  resolveWeekDropSchedule,
+  weekDropUnlockAtIso,
+  type WeekDropSchedule,
 } from "@/lib/eligibilityPercent";
+import { isTaskMandatory } from "@/lib/taskSpec";
 import { resolveProgramWeeks } from "@/lib/weeks";
 
 export const runtime = "nodejs";
@@ -14,6 +19,14 @@ function toUnixSeconds(d: Date): number { return Math.floor(d.getTime() / 1000);
 
 function isLowercaseHexAddress(a: string): boolean {
   return /^0x[0-9a-f]{40}$/.test(a);
+}
+
+function dropScheduleFromSpec(spec: Awaited<ReturnType<typeof loadTasks>>): WeekDropSchedule {
+  return {
+    weekDropUnlocks: spec.weekDropUnlocks,
+    weekDropUnlockTime: spec.weekDropUnlockTime,
+    weekDropUnlockTimezone: spec.weekDropUnlockTimezone,
+  };
 }
 
 export async function GET(req: Request){
@@ -34,13 +47,22 @@ export async function GET(req: Request){
     const totalWeeks = resolveProgramWeeks(spec.weeks);
     const capPerWeek = ELIGIBILITY_UNLOCK_CAP_PER_WEEK;
     const maxProgramUnlock = maxProgramUnlockForWeeks(totalWeeks);
+    const dropSchedule = resolveWeekDropSchedule(dropScheduleFromSpec(spec));
+    const startIso = spec.programStart;
+    const start = startIso ? new Date(startIso) : null;
 
     if (describe) {
+      const weekDropUnlockAt = Array.from({ length: totalWeeks }, (_, idx) =>
+        weekDropUnlockAtIso(start, idx, dropSchedule),
+      );
       return NextResponse.json({
         describe: true,
         programWeeks: totalWeeks,
+        programStart: startIso,
         capPerWeek,
         maxProgramUnlock,
+        weekDropUnlockSchedule: dropSchedule,
+        weekDropUnlockAt,
         hint: "GET with ?address=0x… for live progress from Redis; optional debug=1.",
       });
     }
@@ -51,8 +73,6 @@ export async function GET(req: Request){
     const allTasks = spec.tasks || [];
 
     // Compute quest timeline
-    const startIso = spec.programStart;
-    const start = startIso ? new Date(startIso) : null;
     const now = new Date();
     const dayMs = 24 * 60 * 60 * 1000;
     const weeksMs = 7 * dayMs;
@@ -68,7 +88,7 @@ export async function GET(req: Request){
     for (const t of allTasks){
       const w = (t as { week?: number }).week;
       const id = (t as { id?: string }).id || "";
-      const isMandatory = ((t as unknown as Record<string, unknown>)?.["mandatory"] === true) || ((t as unknown as Record<string, unknown>)?.["mandatory task"] === true);
+      const isMandatory = isTaskMandatory(t as unknown as { mandatory?: boolean; [key: string]: unknown });
       if (!id) continue;
       if (typeof w === 'number' && w >= 1 && w <= totalWeeks){
         const idx = w - 1;
@@ -116,8 +136,8 @@ export async function GET(req: Request){
     const effectiveCurrentWeek = Math.min(currentWeek, lastWeekIdx);
 
     const weeks = mandatoryByWeek.map((ids, idx) => {
-      // Do not unlock for future weeks relative to effective current week
-      if (idx > effectiveCurrentWeek) return { unlockedPercentage: 0 };
+      // Drop % for week N is revealed only after that quest week ends (programStart + N×7d).
+      if (!isWeekDropUnlocked(start, idx, now, dropSchedule)) return { unlockedPercentage: 0 };
       const list = Array.isArray(ids) ? ids : [];
       if (list.length === 0) return { unlockedPercentage: 0 };
       const completed = list.reduce((n, id) => n + (verifiedSet.has(id) ? 1 : 0), 0);
@@ -185,7 +205,7 @@ export async function GET(req: Request){
           } catch { /* ignore */ }
         }
         const listLen = (mandatoryByWeek[week3Idx] || []).length;
-        if (listLen > 0){
+        if (listLen > 0 && isWeekDropUnlocked(start, week3Idx, now, dropSchedule)){
           const pct = Math.max(0, Math.min(capPerWeek, (extCompleted * capPerWeek) / listLen));
           weeks[week3Idx] = { unlockedPercentage: pct };
         }
@@ -208,6 +228,9 @@ export async function GET(req: Request){
       payload.debug = {
         mandatoryByWeek,
         verifiedIds: Array.from(verifiedSet),
+        weekDropUnlockAt: Array.from({ length: totalWeeks }, (_, idx) =>
+          weekDropUnlockAtIso(start, idx, dropSchedule),
+        ),
       };
     }
     return NextResponse.json(payload);

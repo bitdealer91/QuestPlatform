@@ -61,6 +61,7 @@ export default function VideoLoader() {
 			if (settledRef.current) return;
 			settledRef.current = true;
 			video.loop = false;
+			video.pause();
 			setProgress(100);
 			removeGate();
 			releaseLoaderShell();
@@ -93,10 +94,6 @@ export default function VideoLoader() {
 			videoRatioRef.current = 1;
 			updateProgress();
 			tryFinish();
-			if (!settledRef.current) {
-				video.currentTime = 0;
-				video.play?.().catch(() => {});
-			}
 		};
 
 		const onErr = () => {
@@ -104,7 +101,7 @@ export default function VideoLoader() {
 			tryFinish();
 		};
 
-		video.loop = false;
+		video.loop = true;
 
 		void preloadCriticalMapAssets(isMobile, (p) => {
 			assetRatioRef.current = p.ratio;

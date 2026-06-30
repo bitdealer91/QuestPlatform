@@ -23,7 +23,7 @@ export async function verifySocialTask(opts: {
 	address: string;
 	taskId: string;
 	task: Record<string, unknown>;
-	persistSuccess: (address: string, taskId: string, xp: number) => Promise<void>;
+	persistSuccess: (address: string, taskId: string) => Promise<void>;
 	wantDebug?: boolean;
 }): Promise<SocialVerifyPayload> {
 	const { address, taskId, task, persistSuccess, wantDebug } = opts;
@@ -51,10 +51,8 @@ export async function verifySocialTask(opts: {
 		};
 	}
 
-	const xpValue = task.xp;
-	const xp = typeof xpValue === 'number' ? xpValue : 0;
 	writeSuccess(address, taskId).catch(() => {});
-	await persistSuccess(address, taskId, xp);
+	await persistSuccess(address, taskId);
 
 	return {
 		completed: true,

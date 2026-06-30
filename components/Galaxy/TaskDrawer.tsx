@@ -66,11 +66,11 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 			if (address) localStorage.setItem(`somnia:verified:${address.toLowerCase()}`, JSON.stringify(Array.from(next)));
 			return next;
 		});
-		if (address && active) {
-			const newProgress = addVerifiedTask(address, taskId, active);
+		if (address) {
+			const newProgress = addVerifiedTask(address, taskId);
 			window.dispatchEvent(new CustomEvent('galaxy:progress-updated', { detail: { address, verifiedIds: Array.from(newProgress.verifiedTasks || new Set<string>()) } }));
 		}
-		toast.success('Verified ✅', 'Reward granted.');
+		toast.success('Verified', 'Task completed.');
 	};
 
 	return (
@@ -135,7 +135,6 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 											)}
 										</div>
 										<div className="mt-2 flex items-center gap-2 text-xs">
-											<Badge className="border-white/25 bg-transparent text-white" variant="outline">+{t.reward.xp} XP</Badge>
 											{t.type === 'social' && (
 												<Badge className="border-[#78a3c8]/50 bg-transparent text-[#78a3c8]" variant="outline">Social</Badge>
 											)}
@@ -155,7 +154,6 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 									description: active.desc,
 									type: active.type,
 									href: active.href,
-									xp: active.reward.xp,
 									verify_method: active.verify_method,
 									verify_params: active.verify_params,
 									week: weekId || undefined,

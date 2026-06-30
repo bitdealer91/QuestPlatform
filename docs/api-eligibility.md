@@ -45,10 +45,69 @@ GET /api/eligibility/percent?address=0x…
 Response includes:
 
 - `totalUnlockedPercentage` — sum of `weeks[].unlockedPercentage`
-- `currentWeek` — 1-based
+- `currentWeek` — 1-based quest calendar week from `programStart` (same for all wallets)
 - `endAt` — Unix seconds
 - `weeks` — `[{ unlockedPercentage }, …]`
 - `programWeeks`, `capPerWeek`, `maxProgramUnlock`
+
+### Week drop unlock schedule
+
+Quest tasks are available during each calendar week, but **`weeks[n].unlockedPercentage` stays `0` until that quest week ends**. Verified tasks still count — the % appears on the unlock date/time.
+
+Default unlock day for week *N* (1-based): `programStart + N × 7 days` at **00:00 UTC**.
+
+With `programStart: 2026-06-30T00:00:00Z` and no extra config:
+
+| Week slot | Unlock (UTC) |
+|-----------|----------------|
+| `weeks[0]` | 2026-07-07T00:00:00.000Z |
+| `weeks[1]` | 2026-07-14T00:00:00.000Z |
+| `weeks[2]` | 2026-07-21T00:00:00.000Z |
+| `weeks[3]` | 2026-07-28T00:00:00.000Z |
+
+Inspect computed times: `GET /api/eligibility/percent?describe=1` → `weekDropUnlockAt[]`.
+
+#### Option A — time of day (all weeks, same clock)
+
+In `data/tasks.json`:
+
+```json
+{
+  "programStart": "2026-06-30T00:00:00Z",
+  "weekDropUnlockTime": "12:00:00",
+  "weekDropUnlockTimezone": "UTC",
+  "weeks": 4,
+  "tasks": []
+}
+```
+
+Week 1 unlock becomes **2026-07-07T12:00:00Z**, week 2 **2026-07-14T12:00:00Z**, etc.
+
+Or via Vercel env (overrides JSON, no redeploy of tasks file):
+
+| Env | Example |
+|-----|---------|
+| `ELIGIBILITY_DROP_UNLOCK_TIME` | `12:00` or `12:00:00` |
+| `ELIGIBILITY_DROP_UNLOCK_TZ` | `UTC`, `Europe/Berlin`, … |
+
+#### Option B — exact timestamp per week (full manual control)
+
+In `data/tasks.json`:
+
+```json
+"weekDropUnlocks": [
+  "2026-07-07T12:00:00Z",
+  "2026-07-14T12:00:00+02:00",
+  "2026-07-21T12:00:00Z",
+  "2026-07-28T12:00:00Z"
+]
+```
+
+Or env `ELIGIBILITY_DROP_UNLOCKS` — JSON array or comma-separated ISO strings (overrides JSON).
+
+Priority: **explicit per-week ISO** → else **time + timezone on unlock day** → else midnight UTC.
+
+Logic: [`lib/eligibilityPercent.ts`](/lib/eligibilityPercent.ts) (`isWeekDropUnlocked`, `resolveWeekDropSchedule`).
 
 ---
 

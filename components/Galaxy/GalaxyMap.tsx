@@ -3,12 +3,16 @@ import { useState, useCallback, useEffect } from 'react';
 import { PlanetsRail } from '@/components/Galaxy/PlanetsRail';
 import TaskDrawer from '@/components/Galaxy/TaskDrawer';
 import { ELIGIBILITY_UNLOCK_CAP_PER_WEEK } from '@/lib/eligibilityPercent';
+import { useWeekDropUnlock } from '@/lib/useWeekDropUnlock';
+import { isPlanetWeekUnlocked, useWeekIslandUnlock } from '@/lib/useWeekIslandUnlock';
 import { useAccount } from 'wagmi';
 
 export default function GalaxyMap(){
 	const [openWeek, setOpenWeek] = useState<number | null>(null);
 	const { address } = useAccount();
 	const [mandatoryDoneByWeek, setMandatoryDoneByWeek] = useState<Record<number, boolean>>({});
+	const dropUnlockedByWeek = useWeekDropUnlock();
+	const islandUnlockedByWeek = useWeekIslandUnlock();
 
 	// Загружаем состояние обязательных задач (нужно для гейтинга Mint/Claim)
 	const refreshMandatory = useCallback(async (addr?: string) => {
@@ -49,7 +53,12 @@ export default function GalaxyMap(){
 	
 	return (
 		<div className="relative w-full h-full">
-			<PlanetsRail openTasks={openTasks} mandatoryDoneByWeek={mandatoryDoneByWeek} />
+			<PlanetsRail
+				openTasks={openTasks}
+				mandatoryDoneByWeek={mandatoryDoneByWeek}
+				dropUnlockedByWeek={dropUnlockedByWeek}
+				islandUnlockedByWeek={islandUnlockedByWeek}
+			/>
 			<TaskDrawer weekId={openWeek} onClose={() => setOpenWeek(null)} />
 		</div>
 	);
