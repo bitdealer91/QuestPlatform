@@ -53,46 +53,6 @@
     {
       "week": 1,
       "day": 3,
-      "id": "ddex_usdso",
-      "title": "Reach $5 trading volume on USDCe/USDso token pair",
-      "description": "Reach at least $5 trading volume on USDCe/USDso token pair on dreamDEX",
-      "type": "action",
-      "href": "https://app.dreamdex.io/?market=USDC.e%3AUSDso",
-      "mandatory": true,
-      "brand": "dreamDEX",
-      "category": "dex",
-      "verify_method": "api",
-      "verify_params": {
-        "verify_api": {
-          "url": "https://dreamdex-odyssey-verify.vercel.app/api/task1/verify/:address",
-          "method": "GET",
-          "success": {
-            "path": "completed",
-            "equals": true
-          }
-        }
-      },
-      "logo": "/brands/DDEX.jpg"
-    },
-    {
-      "week": 1,
-      "day": 4,
-      "id": "somnialend_follow",
-      "title": "Follow @somnialend on X",
-      "description": "Follow @somnialend on X. Connect your X account, complete the follow, then verify.",
-      "type": "social",
-      "href": "https://x.com/intent/follow?screen_name=somnialend",
-      "mandatory": true,
-      "category": "Social",
-      "verify_method": "social",
-      "verify_params": {
-        "social_action": "twitter_follow",
-        "target_handle": "somnialend"
-      }
-    },
-    {
-      "week": 1,
-      "day": 7,
       "id": "somnialend_supply_somi",
       "title": "Supply 10 SOMI on SomniaLend",
       "description": "Supply at least 10 SOMI on SomniaLend.",
@@ -115,20 +75,52 @@
       "logo": "/brands/somnialend.jpg"
     },
     {
+      "week": 1,
+      "day": 4,
+      "id": "somnialend_follow",
+      "title": "Follow @somnialend on X",
+      "description": "Follow @somnialend on X. Connect your X account, complete the follow, then verify.",
+      "type": "social",
+      "href": "https://x.com/intent/follow?screen_name=somnialend",
+      "mandatory": true,
+      "category": "Social",
+      "verify_method": "social",
+      "verify_params": {
+        "social_action": "twitter_follow",
+        "target_handle": "somnialend"
+      }
+    },
+    {
+      "week": 1,
+      "day": 7,
+      "id": "prophecy_follow",
+      "title": "Follow @ProphecySocial_ on X ",
+      "description": "Follow @ProphecySocial_ on X. Connect your X account, complete the follow, then verify.",
+      "type": "social",
+      "href": "https://x.com/intent/follow?screen_name=ProphecySocial_",
+      "mandatory": true,
+      "category": "Social",
+      "verify_method": "social",
+      "verify_params": {
+        "social_action": "twitter_follow",
+        "target_handle": "ProphecySocial_"
+      }
+    },
+    {
       "week": 2,
       "day": 9,
-      "id": "ddex_somi",
-      "title": "Make 3 trades on SOMI/USDso token pair",
-      "description": "Make at least 3 trades on SOMI/USDso token pair on dreamDEX.",
+      "id": "ddex_usdso",
+      "title": "Reach $5 trading volume on USDCe/USDso token pair",
+      "description": "Reach at least $5 trading volume on USDCe/USDso token pair on dreamDEX",
       "type": "action",
-      "href": "https://app.dreamdex.io/?market=SOMI%3AUSDso",
+      "href": "https://app.dreamdex.io/?market=USDC.e%3AUSDso",
       "mandatory": true,
       "brand": "dreamDEX",
       "category": "dex",
       "verify_method": "api",
       "verify_params": {
         "verify_api": {
-          "url": "https://dreamdex-odyssey-verify.vercel.app/api/task2/verify/:address",
+          "url": "https://dreamdex-odyssey-verify.vercel.app/api/task1/verify/:address",
           "method": "GET",
           "success": {
             "path": "completed",
@@ -165,18 +157,26 @@
     {
       "week": 2,
       "day": 11,
-      "id": "prophecy_follow",
-      "title": "Follow @ProphecySocial_ on X ",
-      "description": "Follow @ProphecySocial_ on X. Connect your X account, complete the follow, then verify.",
-      "type": "social",
-      "href": "https://x.com/intent/follow?screen_name=ProphecySocial_",
+      "id": "ddex_somi",
+      "title": "Make 3 trades on SOMI/USDso token pair",
+      "description": "Make at least 3 trades on SOMI/USDso token pair on dreamDEX.",
+      "type": "action",
+      "href": "https://app.dreamdex.io/?market=SOMI%3AUSDso",
       "mandatory": true,
-      "category": "Social",
-      "verify_method": "social",
+      "brand": "dreamDEX",
+      "category": "dex",
+      "verify_method": "api",
       "verify_params": {
-        "social_action": "twitter_follow",
-        "target_handle": "ProphecySocial_"
-      }
+        "verify_api": {
+          "url": "https://dreamdex-odyssey-verify.vercel.app/api/task2/verify/:address",
+          "method": "GET",
+          "success": {
+            "path": "completed",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/DDEX.jpg"
     },
     {
       "week": 2,
