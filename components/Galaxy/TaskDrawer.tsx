@@ -26,19 +26,35 @@ export default function TaskDrawer({ weekId, onClose }: { weekId: number | null;
 	}, [weekId]);
 
 	useEffect(() => {
-		if (!open) return;
+		if (!open || weekId == null) return;
+		const ctrl = new AbortController();
+		let cancelled = false;
 		setLoading(true);
 		setError(null);
-		getJson(`/api/week/${weekId}/tasks`, TasksSchema)
+		getJson(`/api/week/${weekId}/tasks`, TasksSchema, {
+			signal: ctrl.signal,
+			timeoutMs: 15000,
+			retries: 3,
+		})
 			.then((data) => {
+				if (cancelled) return;
 				const stored = address ? JSON.parse(localStorage.getItem(`somnia:verified:${address.toLowerCase()}`) || '[]') as string[] : [];
 				setVerifiedIds(new Set(stored));
 				const withStatus = data.map(t => stored.includes(t.id) ? { ...t, status: 'done' as const } : t);
 				setTasks(withStatus);
 				const first = withStatus[0]; if (first) setActiveId(first.id);
 			})
-			.catch((e) => setError(e?.message || 'Failed to load tasks'))
-			.finally(() => setLoading(false));
+			.catch((e) => {
+				if (cancelled || ctrl.signal.aborted) return;
+				setError(e?.message || 'Failed to load tasks');
+			})
+			.finally(() => {
+				if (!cancelled) setLoading(false);
+			});
+		return () => {
+			cancelled = true;
+			ctrl.abort();
+		};
 	}, [open, weekId, address]);
 
 	useEffect(() => {
