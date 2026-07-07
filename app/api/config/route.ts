@@ -12,6 +12,8 @@ import {
 } from "@/lib/programDay";
 import { resolveProgramWeeks } from "@/lib/weeks";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(){
 	const spec = await loadTasks();
 	const weeks = resolveProgramWeeks(spec.weeks);
@@ -39,14 +41,21 @@ export async function GET(){
 		isWeekIslandUnlocked(idx + 1, start, minDayByWeek, now),
 	);
 
-	return NextResponse.json({
-		programStart: spec.programStart,
-		weeks,
-		minDayByWeek,
-		weekDropUnlockSchedule: dropSchedule,
-		weekDropUnlockAt,
-		weekDropUnlocked,
-		weekIslandUnlockAt,
-		weekIslandUnlocked,
-	});
+	return NextResponse.json(
+		{
+			programStart: spec.programStart,
+			weeks,
+			minDayByWeek,
+			weekDropUnlockSchedule: dropSchedule,
+			weekDropUnlockAt,
+			weekDropUnlocked,
+			weekIslandUnlockAt,
+			weekIslandUnlocked,
+		},
+		{
+			headers: {
+				"Cache-Control": "no-store, max-age=0",
+			},
+		},
+	);
 }

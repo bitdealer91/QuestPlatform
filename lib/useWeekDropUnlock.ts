@@ -4,15 +4,6 @@ import { useEffect, useState } from 'react';
 
 export type WeekDropUnlockMap = Record<number, boolean>;
 
-function mapFromFlags(flags: boolean[] | undefined): WeekDropUnlockMap {
-	const map: WeekDropUnlockMap = {};
-	if (!Array.isArray(flags)) return map;
-	flags.forEach((unlocked, idx) => {
-		if (unlocked) map[idx + 1] = true;
-	});
-	return map;
-}
-
 function mapFromUnlockAt(unlockAt: Array<string | null | undefined>): WeekDropUnlockMap {
 	const now = Date.now();
 	const map: WeekDropUnlockMap = {};
@@ -20,6 +11,19 @@ function mapFromUnlockAt(unlockAt: Array<string | null | undefined>): WeekDropUn
 		if (!iso) return;
 		const ms = new Date(iso).getTime();
 		if (!Number.isNaN(ms) && now >= ms) map[idx + 1] = true;
+	});
+	return map;
+}
+
+/** Timestamps are source of truth; server flags only add extra `true` (never force locked). */
+function mergeDropUnlock(
+	unlockAt: Array<string | null | undefined>,
+	flags?: boolean[],
+): WeekDropUnlockMap {
+	const map = mapFromUnlockAt(unlockAt);
+	if (!flags?.length) return map;
+	flags.forEach((unlocked, idx) => {
+		if (unlocked) map[idx + 1] = true;
 	});
 	return map;
 }
@@ -34,7 +38,7 @@ export function useWeekDropUnlock(): WeekDropUnlockMap {
 
 		const apply = (unlockAt: Array<string | null | undefined>, flags?: boolean[]) => {
 			if (cancelled) return;
-			setDropUnlockedByWeek(flags?.length ? mapFromFlags(flags) : mapFromUnlockAt(unlockAt));
+			setDropUnlockedByWeek(mergeDropUnlock(unlockAt, flags));
 		};
 
 		const scheduleNext = (unlockAt: Array<string | null | undefined>) => {

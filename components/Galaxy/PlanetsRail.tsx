@@ -384,6 +384,12 @@ export function PlanetsRail({
 
 	const mobileWeekId = PLANETS[mobileIndex]?.id ?? 1;
 	const mobileWeekLocked = !isPlanetWeekUnlocked(mobileWeekId, islandUnlockedByWeek, envUnlockedCount);
+	const mobileClaimEnabled =
+		mobileWeekId >= 1 &&
+		mobileWeekId <= ODYSSEY_WEEK_COUNT &&
+		!mobileWeekLocked &&
+		dropUnlockedByWeek?.[mobileWeekId] === true;
+	const claimUrl = 'https://claims.somnia.network/';
 
 	useLayoutEffect(() => {
 		const el = containerRef.current;
@@ -646,6 +652,23 @@ export function PlanetsRail({
 											}}
 										>
 											Tasks
+										</button>
+										<button
+											type="button"
+											onClick={() => {
+												if (mobileClaimEnabled && typeof window !== 'undefined') {
+													window.location.href = claimUrl;
+												}
+											}}
+											disabled={!mobileClaimEnabled}
+											className="inline-flex shrink-0 items-center justify-center rounded-[19px] border border-[#78a3c8] bg-transparent text-[15px] font-normal leading-none tracking-[-0.345px] text-[#78a3c8] transition-all duration-200 hover:bg-white/5 active:scale-[0.985] active:translate-y-px disabled:cursor-not-allowed disabled:border-white/20 disabled:text-white/35 disabled:hover:bg-transparent"
+											style={{
+												fontFamily: 'var(--font-mooli), system-ui, sans-serif',
+												width: ODYSSEY_MOBILE_BUTTON_W,
+												height: ODYSSEY_MOBILE_BUTTON_H,
+											}}
+										>
+											Claim
 										</button>
 										<button
 											type="button"
