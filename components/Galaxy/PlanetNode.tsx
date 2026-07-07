@@ -13,7 +13,6 @@ export type PlanetNodeProps = {
 	onClaim?: (id: number) => void;
 	sizePx?: number;
 	claimEnabled?: boolean;
-	mandatoryDone?: boolean;
 	/** Odyssey map: island art is in the scenery layer; keep only HUD + hit area. */
 	hidePlanetArt?: boolean;
 	/** Сообщает родителю о hover по зоне недели (для подсветки материка на карте). */
@@ -38,7 +37,6 @@ function PlanetNodeImpl({
 	onClaim,
 	locked,
 	claimEnabled = false,
-	mandatoryDone = false,
 	hidePlanetArt = false,
 	onHoverChange,
 	hudTopPct,
@@ -47,7 +45,7 @@ function PlanetNodeImpl({
 }: PlanetNodeProps) {
     const [hover, setHover] = useState(false);
     const canInteract = !locked;
-	const claimUnlocked = claimEnabled && mandatoryDone;
+	const claimUnlocked = claimEnabled;
 	const tasksExplicitlyOff = /^(0|false)$/i.test(String(process.env.NEXT_PUBLIC_ENABLE_TASKS ?? ''));
 	const viewTasksEnabled = !tasksExplicitlyOff && !!onView;
 	// Для новой фазы оставляем только ручной флаг завершения.

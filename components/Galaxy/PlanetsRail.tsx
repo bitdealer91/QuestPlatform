@@ -205,7 +205,6 @@ function resolveQuillsWeek(
 type StagePlanetsProps = {
 	highlightedWeek: number | null;
 	envUnlockedCount: number;
-	mandatoryDoneByWeek: Record<number, boolean>;
 	dropUnlockedByWeek: Record<number, boolean>;
 	islandUnlockedByWeek: Record<number, boolean>;
 	openTasks: (id: number) => void;
@@ -217,7 +216,6 @@ type StagePlanetsProps = {
 function StagePlanets({
 	highlightedWeek,
 	envUnlockedCount,
-	mandatoryDoneByWeek,
 	dropUnlockedByWeek,
 	islandUnlockedByWeek,
 	openTasks,
@@ -232,14 +230,12 @@ function StagePlanets({
 
 			{PLANETS.map((p) => {
 				const locked = !isPlanetWeekUnlocked(p.id, islandUnlockedByWeek, envUnlockedCount);
-				const mandatoryDone = mandatoryDoneByWeek?.[p.id] === true;
 				const dropUnlocked = dropUnlockedByWeek?.[p.id] === true;
 				const claimEnabled =
 					p.id >= 1 &&
 					p.id <= ODYSSEY_WEEK_COUNT &&
 					!locked &&
-					dropUnlocked &&
-					mandatoryDone;
+					dropUnlocked;
 				const claimUrl = 'https://claims.somnia.network/';
 				const c = islandCenterForWeek(p.id);
 				const islandKey = WEEK_TO_ISLAND[p.id] ?? 1;
@@ -273,7 +269,6 @@ function StagePlanets({
 									: undefined
 							}
 							claimEnabled={claimEnabled}
-							mandatoryDone={mandatoryDone}
 							sizePx={hitPx}
 							onHoverChange={onPlanetHoverChange}
 						/>
@@ -287,7 +282,6 @@ function StagePlanets({
 function MobilePlanetHit({
 	p,
 	envUnlockedCount,
-	mandatoryDoneByWeek,
 	dropUnlockedByWeek,
 	islandUnlockedByWeek,
 	openTasks,
@@ -297,7 +291,6 @@ function MobilePlanetHit({
 }: {
 	p: Planet;
 	envUnlockedCount: number;
-	mandatoryDoneByWeek: Record<number, boolean>;
 	dropUnlockedByWeek: Record<number, boolean>;
 	islandUnlockedByWeek: Record<number, boolean>;
 	openTasks: (id: number) => void;
@@ -307,14 +300,12 @@ function MobilePlanetHit({
 	hitSizePx?: number;
 }) {
 	const locked = !isPlanetWeekUnlocked(p.id, islandUnlockedByWeek, envUnlockedCount);
-	const mandatoryDone = mandatoryDoneByWeek?.[p.id] === true;
 	const dropUnlocked = dropUnlockedByWeek?.[p.id] === true;
 	const claimEnabled =
 		p.id >= 1 &&
 		p.id <= ODYSSEY_WEEK_COUNT &&
 		!locked &&
-		dropUnlocked &&
-		mandatoryDone;
+		dropUnlocked;
 	const claimUrl = 'https://claims.somnia.network/';
 	const hitPx =
 		hitSizePx ?? Math.min(280, Math.round(ODYSSEY_MOBILE_ISLAND_CARD_W * 0.82));
@@ -337,7 +328,6 @@ function MobilePlanetHit({
 					: undefined
 			}
 			claimEnabled={claimEnabled}
-			mandatoryDone={mandatoryDone}
 			sizePx={hitPx}
 			onHoverChange={onPlanetHoverChange}
 		/>
@@ -346,12 +336,10 @@ function MobilePlanetHit({
 
 export function PlanetsRail({
 	openTasks,
-	mandatoryDoneByWeek,
 	dropUnlockedByWeek,
 	islandUnlockedByWeek,
 }: {
 	openTasks: (id: number) => void;
-	mandatoryDoneByWeek: Record<number, boolean>;
 	dropUnlockedByWeek: Record<number, boolean>;
 	islandUnlockedByWeek: Record<number, boolean>;
 }) {
@@ -540,7 +528,6 @@ export function PlanetsRail({
 					<StagePlanets
 						highlightedWeek={highlightedWeek}
 						envUnlockedCount={envUnlockedCount}
-						mandatoryDoneByWeek={mandatoryDoneByWeek}
 						dropUnlockedByWeek={dropUnlockedByWeek}
 						islandUnlockedByWeek={islandUnlockedByWeek}
 						openTasks={openTasks}
@@ -623,7 +610,6 @@ export function PlanetsRail({
 																		<MobilePlanetHit
 																			p={p}
 																			envUnlockedCount={envUnlockedCount}
-																			mandatoryDoneByWeek={mandatoryDoneByWeek}
 																			dropUnlockedByWeek={dropUnlockedByWeek}
 																			islandUnlockedByWeek={islandUnlockedByWeek}
 																			openTasks={openTasks}
