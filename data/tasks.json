@@ -109,26 +109,17 @@
     {
       "week": 2,
       "day": 9,
-      "id": "ddex_usdso",
-      "title": "Reach $5 trading volume on USDCe/USDso token pair",
-      "description": "Reach at least $5 trading volume on USDCe/USDso token pair on dreamDEX",
-      "type": "action",
-      "href": "https://app.dreamdex.io/?market=USDC.e%3AUSDso",
+      "id": "prophecy_discord",
+      "title": "Join Prop Social Discord",
+      "description": "Join Prop Social Discord server and connect your Discord username.",
+      "type": "social",
+      "href": "https://discord.com/invite/prophecysocial",
       "mandatory": true,
-      "brand": "dreamDEX",
-      "category": "dex",
-      "verify_method": "api",
+      "category": "Social",
+      "verify_method": "social",
       "verify_params": {
-        "verify_api": {
-          "url": "https://dreamdex-odyssey-verify.vercel.app/api/task1/verify/:address",
-          "method": "GET",
-          "success": {
-            "path": "completed",
-            "equals": true
-          }
-        }
-      },
-      "logo": "/brands/DDEX.jpg"
+        "social_action": "discord_join"
+      }
     },
     {
       "week": 2,
@@ -157,26 +148,26 @@
     {
       "week": 2,
       "day": 11,
-      "id": "ddex_somi",
-      "title": "Make 3 trades on SOMI/USDso token pair",
-      "description": "Make at least 3 trades on SOMI/USDso token pair on dreamDEX.",
+      "id": "sweep",
+      "title": "Mint the Creator Badge NFT on Sweep",
+      "description": "Deploy an NFT collection on Sweep and mint the Creator Badge",
       "type": "action",
-      "href": "https://app.dreamdex.io/?market=SOMI%3AUSDso",
+      "href": "https://dev.sweep.haus/Somnia-Creator-Badge",
       "mandatory": true,
-      "brand": "dreamDEX",
-      "category": "dex",
+      "brand": "Sweep",
+      "category": "nft",
       "verify_method": "api",
       "verify_params": {
         "verify_api": {
-          "url": "https://dreamdex-odyssey-verify.vercel.app/api/task2/verify/:address",
+          "url": "https://api-dev.sweep.haus/api/mint-events/verify?walletAddress=:address&contractAddress=0x92b49D5d06cd78f1cbf108A7776A162F43CA1243&chainId=5031",
           "method": "GET",
           "success": {
-            "path": "completed",
+            "path": "minted",
             "equals": true
           }
         }
       },
-      "logo": "/brands/DDEX.jpg"
+      "logo": "/brands/Sweep.jpg"
     },
     {
       "week": 2,
@@ -211,6 +202,78 @@
     {
       "week": 3,
       "day": 16,
+      "id": "somnialend_borrow_somi",
+      "title": "Borrow 10 SOMI on SomniaLend",
+      "description": "Borrow at least 10 SOMI on SomniaLend.",
+      "type": "action",
+      "href": "https://app.somnialend.finance/",
+      "mandatory": true,
+      "brand": "Somnialend",
+      "category": "Lending",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "https://somnia-lend-api.vercel.app/api/check-tasks?address=:address",
+          "method": "GET",
+          "success": {
+            "path": "tasks.borrow_10_somi",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/somnialend.jpg"
+    },
+    {
+      "week": 3,
+      "day": 16,
+      "id": "ddex_somi",
+      "title": "Make 3 trades on SOMI/USDso token pair",
+      "description": "Make at least 3 trades on SOMI/USDso token pair on dreamDEX.",
+      "type": "action",
+      "href": "https://app.dreamdex.io/?market=SOMI%3AUSDso",
+      "mandatory": true,
+      "brand": "dreamDEX",
+      "category": "dex",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "https://dreamdex-odyssey-verify.vercel.app/api/task2/verify/:address",
+          "method": "GET",
+          "success": {
+            "path": "completed",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/DDEX.jpg"
+    },
+    {
+      "week": 3,
+      "day": 17,
+      "id": "ddex_usdso",
+      "title": "Reach $5 trading volume on USDCe/USDso token pair",
+      "description": "Reach at least $5 trading volume on USDCe/USDso token pair on dreamDEX",
+      "type": "action",
+      "href": "https://app.dreamdex.io/?market=USDC.e%3AUSDso",
+      "mandatory": true,
+      "brand": "dreamDEX",
+      "category": "dex",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "https://dreamdex-odyssey-verify.vercel.app/api/task1/verify/:address",
+          "method": "GET",
+          "success": {
+            "path": "completed",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/DDEX.jpg"
+    },
+    {
+      "week": 3,
+      "day": 18,
       "id": "ddex_btc",
       "title": "Make 5 trades on BTC/USDso token pair",
       "description": "Make at least 5 trades on BTC/USDso token pair on dreamDEX.",
@@ -231,69 +294,6 @@
         }
       },
       "logo": "/brands/DDEX.jpg"
-    },
-    {
-      "week": 3,
-      "day": 17,
-      "id": "sweep",
-      "title": "Mint the Creator Badge NFT on Sweep",
-      "description": "Deploy an NFT collection on Sweep and mint the Creator Badge",
-      "type": "action",
-      "href": "https://dev.sweep.haus/Somnia-Creator-Badge",
-      "mandatory": true,
-      "brand": "Sweep",
-      "category": "nft",
-      "verify_method": "api",
-      "verify_params": {
-        "verify_api": {
-          "url": "https://api-dev.sweep.haus/api/mint-events/verify?walletAddress=:address&contractAddress=0x92b49D5d06cd78f1cbf108A7776A162F43CA1243&chainId=5031",
-          "method": "GET",
-          "success": {
-            "path": "minted",
-            "equals": true
-          }
-        }
-      },
-      "logo": "/brands/Sweep.jpg"
-    },
-    {
-      "week": 3,
-      "day": 17,
-      "id": "somnialend_borrow_usdso",
-      "title": "Borrow 5 USDso on SomniaLend",
-      "description": "Borrow at least 5 USDso on SomniaLend ",
-      "type": "action",
-      "href": "https://app.somnialend.finance/",
-      "mandatory": true,
-      "brand": "Somnialend",
-      "category": "Lending",
-      "verify_method": "api",
-      "verify_params": {
-        "verify_api": {
-          "url": "https://somnia-lend-api.vercel.app/api/check-tasks?address=:address",
-          "method": "GET",
-          "success": {
-            "path": "tasks.borrow_5_usdso",
-            "equals": true
-          }
-        }
-      },
-      "logo": "/brands/somnialend.jpg"
-    },
-    {
-      "week": 3,
-      "day": 18,
-      "id": "prophecy_discord",
-      "title": "Join Prop Social Discord",
-      "description": "Join Prop Social Discord server and connect your Discord username.",
-      "type": "social",
-      "href": "https://discord.com/invite/prophecysocial",
-      "mandatory": true,
-      "category": "Social",
-      "verify_method": "social",
-      "verify_params": {
-        "social_action": "discord_join"
-      }
     },
     {
       "week": 3,
@@ -352,9 +352,9 @@
     {
       "week": 4,
       "day": 24,
-      "id": "somnialend_borrow_somi",
-      "title": "Borrow 10 SOMI on SomniaLend",
-      "description": "Borrow at least 10 SOMI on SomniaLend.",
+      "id": "somnialend_borrow_usdso",
+      "title": "Borrow 5 USDso on SomniaLend",
+      "description": "Borrow at least 5 USDso on SomniaLend ",
       "type": "action",
       "href": "https://app.somnialend.finance/",
       "mandatory": true,
@@ -366,7 +366,7 @@
           "url": "https://somnia-lend-api.vercel.app/api/check-tasks?address=:address",
           "method": "GET",
           "success": {
-            "path": "tasks.borrow_10_somi",
+            "path": "tasks.borrow_5_usdso",
             "equals": true
           }
         }
