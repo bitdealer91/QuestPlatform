@@ -147,30 +147,6 @@
     },
     {
       "week": 2,
-      "day": 11,
-      "id": "sweep",
-      "title": "Mint the Creator Badge NFT on Sweep",
-      "description": "Deploy an NFT collection on Sweep and mint the Creator Badge",
-      "type": "action",
-      "href": "https://sweep.haus/quests/mint/Somnia-Creator-Badge",
-      "mandatory": true,
-      "brand": "Sweep",
-      "category": "nft",
-      "verify_method": "api",
-      "verify_params": {
-        "verify_api": {
-          "url": "https://api.sweep.haus/api/mint-events/verify?walletAddress=:address&contractAddress=0x92b49D5d06cd78f1cbf108A7776A162F43CA1243&chainId=5031",
-          "method": "GET",
-          "success": {
-            "path": "minted",
-            "equals": true
-          }
-        }
-      },
-      "logo": "/brands/Sweep.jpg"
-    },
-    {
-      "week": 2,
       "day": 14,
       "id": "prophecy_five",
       "title": "Make 5 predictions",
