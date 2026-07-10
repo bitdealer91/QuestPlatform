@@ -147,6 +147,30 @@
     },
     {
       "week": 2,
+      "day": 11,
+      "id": "somnialend_borrow_somi",
+      "title": "Borrow 10 SOMI on SomniaLend",
+      "description": "Borrow at least 10 SOMI on SomniaLend.",
+      "type": "action",
+      "href": "https://app.somnialend.finance/",
+      "mandatory": true,
+      "brand": "Somnialend",
+      "category": "Lending",
+      "verify_method": "api",
+      "verify_params": {
+        "verify_api": {
+          "url": "https://somnia-lend-api.vercel.app/api/check-tasks?address=:address",
+          "method": "GET",
+          "success": {
+            "path": "tasks.borrow_10_somi",
+            "equals": true
+          }
+        }
+      },
+      "logo": "/brands/somnialend.jpg"
+    },
+    {
+      "week": 2,
       "day": 14,
       "id": "prophecy_five",
       "title": "Make 5 predictions",
@@ -174,30 +198,6 @@
         }
       },
       "logo": "/brands/prop.png"
-    },
-    {
-      "week": 3,
-      "day": 16,
-      "id": "somnialend_borrow_somi",
-      "title": "Borrow 10 SOMI on SomniaLend",
-      "description": "Borrow at least 10 SOMI on SomniaLend.",
-      "type": "action",
-      "href": "https://app.somnialend.finance/",
-      "mandatory": true,
-      "brand": "Somnialend",
-      "category": "Lending",
-      "verify_method": "api",
-      "verify_params": {
-        "verify_api": {
-          "url": "https://somnia-lend-api.vercel.app/api/check-tasks?address=:address",
-          "method": "GET",
-          "success": {
-            "path": "tasks.borrow_10_somi",
-            "equals": true
-          }
-        }
-      },
-      "logo": "/brands/somnialend.jpg"
     },
     {
       "week": 3,
